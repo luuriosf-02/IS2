@@ -1,0 +1,15 @@
+{% load static %}
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <title>{% block title %}Mi Proyecto{% endblock %}</title>
+    <!-- 1. Primero cargamos los tokens -->
+    <link rel="stylesheet" href="{% static 'css/tokens.css' %}" />
+    <!-- 2. Luego las clases de los componentes que usan esos tokens -->
+    <link rel="stylesheet" href="{% static 'css/components.css' %}" />
+  </head>
+  <body>
+    <main class="container">{% block content %}{% endblock %}</main>
+  </body>
+</html>

@@ -1,0 +1,10 @@
+{
+  // 1. Fuerza a VS Code a aplicar colores según el significado semántico del código
+  "editor.semanticHighlighting.enabled": true,
+
+  // 2. Eleva el nivel de análisis de Pylance para que escanee los paquetes externos
+  "python.analysis.typeCheckingMode": "basic",
+
+  // 3. Activa la indexación completa de librerías de terceros (Django, psycopg2, etc.)
+  "python.analysis.indexing": true
+}

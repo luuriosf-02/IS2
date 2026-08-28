@@ -1,0 +1,28 @@
+<nav class="navbar">
+    <a href="{% url 'home' %}" class="navbar-brand">Global Exchange</a>
+    
+    <!-- Contenedor alineado centralmente para evitar saltos de altura -->
+    <div style="display: flex; align-items: center; gap: 1rem;">
+        {% if user.is_authenticated %}
+            <!-- Bloque cuando está logueado -->
+            <div class="user-avatar">
+                {{ user.first_name|slice:":1" }}{{ user.last_name|slice:":1" }}
+            </div>
+            
+            <div class="navbar-user-info">
+                <span class="user-name">{{ user.first_name }} {{ user.last_name }}</span>
+                
+                {% include 'components/pill.html' with text=user.role %}
+            </div>
+
+            <a href="{% url 'logout' %}" class="navbar-action-btn navbar-btn-logout">
+                Cerrar Sesión
+            </a>
+        {% else %}
+            <!-- Bloque cuando NO está logueado -->
+            <a href="/oidc/authenticate/" class="navbar-action-btn navbar-btn-login">
+                Iniciar Sesión
+            </a>
+        {% endif %}
+    </div>
+</nav>

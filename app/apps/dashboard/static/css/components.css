@@ -1,0 +1,205 @@
+/* --- Botón --- */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-family-base);
+  font-weight: var(--font-weight-medium);
+  font-size: var(--font-size-base);
+  padding: 0.625rem 1.25rem;
+  border-radius: var(--radius-md);
+  border: none;
+  cursor: pointer;
+  transition:
+    background-color 0.2s ease,
+    transform 0.1s ease;
+  text-decoration: none;
+}
+
+.btn-primary {
+  background-color: var(--color-primary-500);
+  color: var(--color-neutral-0);
+}
+
+.btn-primary:hover {
+  background-color: var(--color-primary-600);
+}
+
+/* --- Enlace (Link) --- */
+.link-text {
+  font-family: var(--font-family-base);
+  color: var(--color-primary-500);
+  text-decoration: none;
+  font-weight: var(--font-weight-medium);
+  transition: color 0.2s ease;
+}
+
+.link-text:hover {
+  color: var(--color-primary-750, #6d28d9);
+  text-decoration: underline;
+}
+
+/* --- Párrafo --- */
+.text-body {
+  font-family: var(--font-family-base);
+  font-size: var(--font-size-base);
+  color: var(--color-neutral-700);
+  line-height: 1.6;
+  margin-bottom: 1rem;
+}
+
+/* --- Imagen Responsiva --- */
+.img-fluid {
+  max-width: 100%;
+  height: auto;
+  border-radius: var(--radius-md);
+  object-fit: cover;
+}
+
+/* --- Navbar --- */
+.navbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background-color: var(--color-neutral-0, #ffffff);
+    border-bottom: 1px solid var(--color-neutral-200, #e5e7eb);
+    
+    /* --- Padding lateral más amplio que el main-container --- */
+    padding-left: clamp(1rem, 4vw, 4rem);
+    padding-right: clamp(1rem, 4vw, 4rem);
+    
+    /* Altura consistente para el navbar */
+    height: 70px;
+    box-sizing: border-box;
+    width: 100%;
+}
+
+.navbar-brand {
+  font-weight: var(--font-weight-bold);
+  font-size: var(--font-size-lg);
+  color: var(--color-primary-500);
+  text-decoration: none;
+}
+
+.navbar-user {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.navbar-user-info {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.1rem; /* Muy poco espacio entre el nombre y el pill */
+}
+
+.user-avatar {
+  width: 38px;
+  height: 38px;
+  border-radius: var(--radius-full);
+  background-color: var(--color-primary-100);
+  color: var(--color-primary-600);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: var(--font-weight-semibold);
+  font-size: var(--font-size-sm);
+}
+
+.user-name {
+    font-weight: var(--font-weight-semibold); /* Nombre con más peso visual */
+    font-size: var(--font-size-sm);
+    color: var(--color-neutral-900);
+    line-height: 1.2;
+}
+
+/* --- Tarjeta (Card) --- */
+.card {
+  background-color: var(--color-neutral-0);
+  border: 1px solid var(--color-neutral-200);
+  border-radius: var(--radius-lg);
+  padding: 1.5rem;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+  transition: box-shadow 0.2s ease;
+}
+
+.card:hover {
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05);
+}
+
+.card-title {
+  font-size: var(--font-size-xl);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-neutral-900);
+  margin-bottom: 0.75rem;
+}
+
+/* --- Pill / Badge de Rol --- */
+.badge-pill {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.05rem 0.4rem; /* Menor altura y relleno */
+    font-family: var(--font-family-base);
+    font-size: 0.65rem;      /* Letra más pequeña (aprox 10px-11px) */
+    font-weight: var(--font-weight-medium);
+    border-radius: var(--radius-full);
+    background-color: var(--color-primary-100);
+    color: var(--color-primary-700, #6d28d9);
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    line-height: 1.2;
+}
+
+
+
+
+
+/* --- Botones específicos para la Navbar --- */
+.navbar-action-btn {
+    font-family: var(--font-family-base);
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-medium);
+    padding: 0.5rem 1rem;
+    border-radius: var(--radius-md);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Botón de Iniciar Sesión (Sólido) */
+.navbar-btn-login {
+    background-color: var(--color-primary-500);
+    color: var(--color-neutral-0);
+    border: none;
+}
+.navbar-btn-login:hover {
+    background-color: var(--color-primary-600);
+}
+
+/* Botón de Cerrar Sesión (Sutil / Outline o texto limpio que ocupe el mismo espacio visual) */
+.navbar-btn-logout {
+    background: transparent;
+    color: var(--color-neutral-700);
+    border: 1px solid var(--color-neutral-200);
+}
+.navbar-btn-logout:hover {
+    background-color: var(--color-neutral-100);
+    color: var(--color-danger);
+    border-color: var(--color-danger);
+}
+
+/* --- Contenedor principal para limitar el contenido sin aislar el fondo --- */
+.main-container {
+    width: 100%;
+    max-width: 1400px;     /* El ancho máximo que prefieres */
+    margin-left: auto;
+    margin-right: auto;
+    box-sizing: border-box;
+    padding-left: clamp(1rem, 3vw, 2.5rem);
+    padding-right: clamp(1rem, 3vw, 2.5rem);
+    flex: 1; /* Hace que el contenedor crezca si es necesario para empujar el footer abajo si lo hubiera */
+}

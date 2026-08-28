@@ -1,0 +1,41 @@
+{% extends 'layouts/base.html' %}
+
+{% block content %}
+    <!-- 1. Navbar con el usuario actual y opción de login/logout -->
+    {% include 'components/navbar.html' %}
+
+    <div class="main-container" style="padding-top: 2.5rem; padding-bottom: 2.5rem;">
+        
+        <!-- 2. Saludo condicional: Solo si tiene sesión iniciada -->
+        {% if user.is_authenticated %}
+            <div style="margin-bottom: 2rem;">
+                <h1 style="font-size: 1.75rem; font-weight: 600; color: var(--color-neutral-900); margin-bottom: 0.5rem;">
+                    Bienvenido, {{ user.first_name }} {{ user.last_name }} 👋
+                </h1>
+                {% include 'components/paragraph.html' with text="Nos alegra tenerte de vuelta. Gestiona tus operaciones y revisa las cotizaciones del día desde tu panel." %}
+            </div>
+        {% else %}
+            <div style="margin-bottom: 2rem;">
+                <h1 style="font-size: 1.75rem; font-weight: 600; color: var(--color-neutral-900); margin-bottom: 0.5rem;">
+                    Bienvenido a nuestra plataforma financiera
+                </h1>
+                {% include 'components/paragraph.html' with text="Inicia sesión para acceder a servicios de cambio de divisas seguros y preferenciales." %}
+            </div>
+        {% endif %}
+
+        <!-- 3. Tarjeta informativa sobre la Casa de Cambio -->
+        <div class="card">
+            <h3 class="card-title">Sobre Nuestra Empresa</h3>
+            
+            <div class="card-body">
+                {% include 'components/paragraph.html' with text="Somos una casa de cambio líder comprometida con ofrecerte las mejores tasas del mercado para tus operaciones en moneda extranjera, garantizando rapidez, transparencia y seguridad en cada transacción." %}
+                
+                <div style="margin-top: 1.2rem; display: flex; gap: 1rem; align-items: center;">
+                    {% include 'components/button.html' with text="Ver Cotizaciones" %}
+                    {% include 'components/link.html' with text="Conoce nuestras sucursales" href="/sucursales/" %}
+                </div>
+            </div>
+        </div>
+
+    </div>
+{% endblock %}

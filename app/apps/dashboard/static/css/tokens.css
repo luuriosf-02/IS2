@@ -1,0 +1,70 @@
+/* Importar tipografía Poppins desde Google Fonts */
+@import url("https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&display=swap");
+
+:root {
+  /* ==========================================
+       TYPOGRAPHY TOKENS (Poppins)
+       ================================---------- */
+  --font-family-base: "Poppins", sans-serif;
+
+  --font-weight-light: 300;
+  --font-weight-regular: 400;
+  --font-weight-medium: 500;
+  --font-weight-semibold: 600;
+  --font-weight-bold: 700;
+
+  --font-size-sm: 0.875rem; /* 14px */
+  --font-size-base: 1rem; /* 16px */
+  --font-size-lg: 1.125rem; /* 18px */
+  --font-size-xl: 1.25rem; /* 20px */
+  --font-size-2xl: 1.5rem; /* 24px */
+
+  /* ==========================================
+       COLOR TOKENS (Violet Theme + Variants)
+       ================================---------- */
+  /* Primary (Violeta Principal) */
+  --color-primary-50: #f5f3ff;
+  --color-primary-100: #ede9fe;
+  --color-primary-500: #8b5cf6; /* Color Base */
+  --color-primary-600: #7c3aed; /* Hover state */
+  --color-primary-700: #6d28d9; /* Active state */
+
+  /* Secondary (Violeta Oscuro / Acento de contraste) */
+  --color-secondary-50: #fdf4ff;
+  --color-secondary-100: #fae8ff;
+  --color-secondary-500: #d946ef; /* Magenta sutil de acento */
+  --color-secondary-600: #c026d3;
+
+  /* Neutros (Fondos, textos, bordes) */
+  --color-neutral-0: #ffffff;
+  --color-neutral-100: #f8fafc;
+  --color-neutral-200: #e2e8f0;
+  --color-neutral-700: #334155;
+  --color-neutral-900: #0f172a; /* Texto principal */
+
+  /* Estados */
+  --color-success: #10b981;
+  --color-danger: #ef4444;
+  --color-warning: #f59e0b;
+
+  /* ==========================================
+       SPACING & RADIUS TOKENS
+       ================================---------- */
+  --radius-sm: 0.375rem;
+  --radius-md: 0.5rem;
+  --radius-lg: 1rem;
+  --radius-full: 9999px;
+}
+
+/* Aplicación global base usando los tokens */
+body {
+    font-family: var(--font-family-base, sans-serif);
+    background-color: var(--color-neutral-50, #f9fafb);
+    color: var(--color-neutral-900, #111827);
+    margin: 0;
+    padding: 0;
+    min-height: 100vh; /* Asegura que ocupe al menos toda la altura de la pantalla */
+    display: flex;
+    flex-direction: column;
+}
+

@@ -1,0 +1,7 @@
+<div class="card">
+  {% if title %}
+  <h3 class="card-title">{{ title }}</h3>
+  {% endif %}
+
+  <div class="card-body">{{ content|safe }}</div>
+</div>

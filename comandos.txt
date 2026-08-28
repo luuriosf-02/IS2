@@ -1,0 +1,5 @@
+# Para exportar configuración del keycloak
+docker-compose exec keycloak /opt/keycloak/bin/kc.sh export --dir /opt/keycloak/data/import --realm global_exchange --users realm_file
+
+# Para hacer migraciones de bd de django
+docker-compose exec web python manage.py migrate
