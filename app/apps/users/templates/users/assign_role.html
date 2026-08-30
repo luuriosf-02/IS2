@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Asignar rol | Global Exchange</title>
+
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: Arial, Helvetica, sans-serif;
+            background-color: #f6f7fb;
+            color: #172033;
+        }
+
+        header {
+            background-color: white;
+            border-bottom: 1px solid #e5e7eb;
+            padding: 18px 60px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .brand {
+            font-size: 22px;
+            font-weight: 700;
+            color: #8754f6;
+        }
+
+        .header-button {
+            text-decoration: none;
+            background-color: #8754f6;
+            color: white;
+            padding: 12px 20px;
+            border-radius: 9px;
+            font-weight: 600;
+        }
+
+        .container {
+            max-width: 1100px;
+            margin: 70px auto;
+            padding: 0 25px;
+        }
+
+        .title {
+            font-size: 30px;
+            margin-bottom: 10px;
+        }
+
+        .subtitle {
+            font-size: 16px;
+            color: #5f6877;
+            margin-bottom: 30px;
+        }
+
+        .card {
+            background-color: white;
+            border: 1px solid #e3e6ec;
+            border-radius: 16px;
+            padding: 32px;
+            box-shadow: 0 4px 14px rgba(0, 0, 0, 0.05);
+        }
+
+        .card h2 {
+            margin-bottom: 24px;
+            font-size: 22px;
+        }
+
+        .form-group {
+            margin-bottom: 22px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+        }
+
+        select {
+            width: 100%;
+            padding: 12px 14px;
+            border: 1px solid #d5d9e2;
+            border-radius: 8px;
+            font-size: 15px;
+            background-color: white;
+        }
+
+        select:focus {
+            outline: none;
+            border-color: #8754f6;
+            box-shadow: 0 0 0 3px rgba(135, 84, 246, 0.15);
+        }
+
+        .button {
+            background-color: #8754f6;
+            color: white;
+            border: none;
+            border-radius: 9px;
+            padding: 12px 22px;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        .button:hover {
+            background-color: #7441e8;
+        }
+
+        .message {
+            margin-bottom: 20px;
+            padding: 12px 15px;
+            border-radius: 8px;
+        }
+
+        .message.success {
+            background-color: #ecfdf3;
+            color: #166534;
+            border: 1px solid #bbf7d0;
+        }
+
+        .message.error {
+            background-color: #fef2f2;
+            color: #b91c1c;
+            border: 1px solid #fecaca;
+        }
+
+        .info-box {
+            margin-top: 25px;
+            padding: 18px;
+            background-color: #f7f3ff;
+            border-radius: 10px;
+            color: #5e3bb5;
+        }
+
+        @media (max-width: 700px) {
+            header {
+                padding: 16px 22px;
+            }
+
+            .container {
+                margin-top: 40px;
+            }
+
+            .card {
+                padding: 22px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+<header>
+    <div class="brand">
+        Global Exchange
+    </div>
+
+    <a href="/" class="header-button">
+        Volver al inicio
+    </a>
+</header>
+
+<main class="container">
+
+    <h1 class="title">
+        Gestión de roles y permisos
+    </h1>
+
+    <p class="subtitle">
+        Asigná un rol a un usuario para definir las funcionalidades a las que tendrá acceso.
+    </p>
+
+    <section class="card">
+
+        <h2>Asignar rol a usuario</h2>
+
+        {% if message %}
+            <div class="message success">
+                {{ message }}
+            </div>
+        {% endif %}
+
+        {% if error %}
+            <div class="message error">
+                {{ error }}
+            </div>
+        {% endif %}
+
+        <form method="post">
+            {% csrf_token %}
+
+            <div class="form-group">
+                <label for="user_id">
+                    Usuario
+                </label>
+
+                <select name="user_id" id="user_id" required>
+                    <option value="">
+                        Seleccione un usuario
+                    </option>
+
+                    {% for user in users %}
+                        <option value="{{ user.id }}">
+                            {% if user.firstName or user.lastName %}
+                                {{ user.firstName }} {{ user.lastName }}
+                                -
+                            {% endif %}
+
+                            {{ user.username }}
+
+                            {% if user.email %}
+                                ({{ user.email }})
+                            {% endif %}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="role_name">
+                    Rol
+                </label>
+
+                <select name="role_name" id="role_name" required>
+                    <option value="">
+                        Seleccione un rol
+                    </option>
+
+                    {% for role in roles %}
+                        <option value="{{ role.name }}">
+                            {{ role.name }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <button type="submit" class="button">
+                Asignar rol
+            </button>
+
+        </form>
+
+        <div class="info-box">
+            Los permisos del usuario se determinan según el rol asignado en Keycloak.
+        </div>
+
+    </section>
+
+</main>
+
+</body>
+</html>

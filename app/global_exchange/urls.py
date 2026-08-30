@@ -34,9 +34,11 @@ from apps.dashboard.views import home, custom_logout
 #         """
 #     return HttpResponse(html)
 
+
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('', home, name='home'),
-    path('logout/', custom_logout, name='logout'),
-    path('oidc/', include('mozilla_django_oidc.urls')), # URLs automáticas para login/logout
+    path('logout/', custom_logout,name='logout'),
+    path('oidc/', include('mozilla_django_oidc.urls')),
+    path('users/', include('apps.users.urls')),
 ]
