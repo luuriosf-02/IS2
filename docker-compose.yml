@@ -39,13 +39,15 @@ services:
     image: quay.io/keycloak/keycloak:24.0
     container_name: app_keycloak
     restart: always
-    command: start-dev --import-realm
+    command: start-dev --db=dev-file --import-realm
     environment:
       KEYCLOAK_ADMIN: ${KEYCLOAK_ADMIN}
       KEYCLOAK_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD}
+      KC_HOSTNAME: "localhost"
       KC_HOSTNAME_PORT: "8080"
       KC_HOSTNAME_STRICT: "false"
       KC_HOSTNAME_STRICT_HTTPS: "false"
+      KC_PROXY_HEADERS: "xforwarded"
     ports:
       - "8080:8080"
     volumes:
