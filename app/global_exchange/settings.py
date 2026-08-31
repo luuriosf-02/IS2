@@ -21,7 +21,6 @@ ALLOWED_HOSTS = []
 # Application definition
 
 INSTALLED_APPS = [
-<<<<<<< HEAD
     "django.contrib.admin",
     "django.contrib.auth",
     "django.contrib.contenttypes",
@@ -33,18 +32,7 @@ INSTALLED_APPS = [
 
     "apps.dashboard",
     "apps.users",
-    "apps.clients.apps.ClientsConfig",
-=======
-    'django.contrib.admin',
-    'django.contrib.auth',
-    'django.contrib.contenttypes',
-    'django.contrib.sessions',
-    'django.contrib.messages',
-    'django.contrib.staticfiles',
-    'mozilla_django_oidc',
-    'apps.dashboard',
     'apps.clientes',
->>>>>>> origin/feature/SCRUM-24
 ]
 
 AUTHENTICATION_BACKENDS= (
