@@ -40,6 +40,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'mozilla_django_oidc',
     'apps.dashboard',
+    "apps.client_links",
 ]
 
 AUTHENTICATION_BACKENDS= (
