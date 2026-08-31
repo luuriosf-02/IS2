@@ -39,14 +39,14 @@
 
         <!-- 4. Tarjeta de Gestión de Clientes -->
         {% if user.is_authenticated %}
-            <div class="card" style="margin-top: 2rem; background: linear-gradient(135deg, var(--color-blue-50) 0%, var(--color-indigo-50) 100%);">
+            <div class="card" style="margin-top: 2rem;">
                 <h3 class="card-title">Gestión de Clientes</h3>
                 
                 <div class="card-body">
                     {% include 'components/paragraph.html' with text="Accede al portal de gestión de clientes para visualizar, administrar y consultar toda la información de tus clientes registrados en el sistema." %}
                     
                     <div style="margin-top: 1.2rem;">
-                        <a href="{% url 'clientes:lista' %}" style="background-color: var(--color-blue-600); color: white; padding: 0.75rem 1.5rem; border-radius: 0.25rem; text-decoration: none; font-weight: 500; display: inline-block; hover: background-color: var(--color-blue-700); transition: background-color 0.2s ease;">
+                        <a href="{% url 'clientes:lista' %}" style="background-color: var(--color-primary-500); color: white; padding: 0.75rem 1.5rem; border-radius: 0.3rem; text-decoration: none; font-weight: 500; display: inline-block; hover: background-color: var(--color-primary-700); transition: background-color 0.2s ease;">
                             👥 Ir a Gestión de Clientes
                         </a>
                     </div>
