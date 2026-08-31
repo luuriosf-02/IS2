@@ -1,9 +1,4 @@
 from django.shortcuts import render
-from .services.keycloak_service import (
-    get_users,
-    get_roles,
-    assign_role_to_user,
-)
 
 from .services.keycloak_service import (
     get_users,
