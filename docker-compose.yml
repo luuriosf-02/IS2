@@ -17,7 +17,6 @@ services:
       interval: 5s
       timeout: 5s
       retries: 5
-      start_period: 10s
 
   # 2. APLICACIÓN DJANGO (Backend Principal)
   web:
@@ -40,7 +39,7 @@ services:
     image: quay.io/keycloak/keycloak:24.0
     container_name: app_keycloak
     restart: always
-    command: start-dev --import-realm
+    command: start-dev --db=dev-file --import-realm
     environment:
       KEYCLOAK_ADMIN: ${KEYCLOAK_ADMIN}
       KEYCLOAK_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD}
