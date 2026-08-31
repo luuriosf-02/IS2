@@ -1,47 +1,61 @@
-from django.conf import settings
 from django.db import models
 
 
 class Client(models.Model):
-    name = models.CharField(max_length=150)
-    document_number = models.CharField(max_length=30, unique=True)
-
-    def __str__(self):
-        return self.name
-
-
-class UserClientLink(models.Model):
-    STATUS_CHOICES = [
-        ("PENDING", "Pendiente"),
-        ("APPROVED", "Aprobada"),
-        ("REJECTED", "Rechazada"),
+    PERSON_TYPE_CHOICES = [
+        ("PHYSICAL", "Persona Física"),
+        ("LEGAL", "Persona Jurídica"),
     ]
 
-    user = models.ForeignKey(
-        settings.AUTH_USER_MODEL,
-        on_delete=models.CASCADE,
-        related_name="client_links",
-    )
-    client = models.ForeignKey(
-        Client,
-        on_delete=models.CASCADE,
-        related_name="user_links",
-    )
-    status = models.CharField(
-        max_length=10,
-        choices=STATUS_CHOICES,
-        default="PENDING",
-    )
-    requested_at = models.DateTimeField(auto_now_add=True)
-    reviewed_at = models.DateTimeField(null=True, blank=True)
+    CATEGORY_CHOICES = [
+        ("RETAIL", "Minorista"),
+        ("CORPORATE", "Corporativo"),
+        ("VIP", "VIP"),
+    ]
 
-    class Meta:
-        constraints = [
-            models.UniqueConstraint(
-                fields=["user", "client"],
-                name="unique_user_client_link",
-            )
-        ]
+    name = models.CharField(
+        max_length=150,
+        verbose_name="Nombre o razón social",
+    )
+
+    document_number = models.CharField(
+        max_length=30,
+        unique=True,
+        verbose_name="Número de documento",
+    )
+
+    person_type = models.CharField(
+        max_length=10,
+        choices=PERSON_TYPE_CHOICES,
+        verbose_name="Tipo de persona",
+    )
+
+    category = models.CharField(
+        max_length=10,
+        choices=CATEGORY_CHOICES,
+        default="RETAIL",
+        verbose_name="Categoría",
+    )
+
+    is_verified = models.BooleanField(
+        default=False,
+        verbose_name="Cliente verificado",
+    )
+
+    is_active = models.BooleanField(
+        default=True,
+        verbose_name="Activo",
+    )
+
+    created_at = models.DateTimeField(
+        auto_now_add=True,
+        verbose_name="Fecha de creación",
+    )
 
     def __str__(self):
-        return f"{self.user} - {self.client}"
+        return f"{self.name} - {self.document_number}"
+
+    class Meta:
+        verbose_name = "Cliente"
+        verbose_name_plural = "Clientes"
+        ordering = ["name"]
