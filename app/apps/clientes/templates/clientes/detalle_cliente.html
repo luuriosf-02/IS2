@@ -1,0 +1,114 @@
+{% extends 'layouts/base.html' %}
+
+{% block content %}
+    <!-- Navbar -->
+    {% include 'components/navbar.html' %}
+
+    <div class="main-container" style="padding-top: 2.5rem; padding-bottom: 2.5rem;">
+        
+        <!-- Botón de retorno -->
+        <div style="margin-bottom: 1.5rem;">
+            <a href="{% url 'clientes:lista' %}" class="link-text">
+                ← Volver a la lista de clientes
+            </a>
+        </div>
+
+        <!-- Encabezado -->
+        <div style="margin-bottom: 2.5rem;">
+            <h1 class="section-title">{{ cliente.nombre_razon_social }}</h1>
+            {% include 'components/paragraph.html' with text="Información detallada del cliente" %}
+        </div>
+
+        <!-- Grid de Información Principal -->
+        <div class="card" style="margin-bottom: 2rem;">
+            <h3 class="card-title">Información del Cliente</h3>
+            
+            <div class="card-body">
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 2rem;">
+                    
+                    <!-- Documento -->
+                    <div>
+                        <p style="font-size: var(--font-size-sm); text-transform: uppercase; letter-spacing: 0.05em; font-weight: var(--font-weight-semibold); color: var(--color-neutral-600); margin-bottom: 0.5rem;">
+                            Documento (RUC/CI)
+                        </p>
+                        <p style="font-size: var(--font-size-lg); font-weight: var(--font-weight-semibold); color: var(--color-neutral-900); margin: 0; font-family: monospace;">
+                            {{ cliente.documento }}
+                        </p>
+                    </div>
+
+                    <!-- Tipo de Persona -->
+                    <div>
+                        <p style="font-size: var(--font-size-sm); text-transform: uppercase; letter-spacing: 0.05em; font-weight: var(--font-weight-semibold); color: var(--color-neutral-600); margin-bottom: 0.5rem;">
+                            Tipo de Persona
+                        </p>
+                        <div>
+                            {% include 'components/badge.html' with text=cliente.get_tipo_persona_display variant='primary' %}
+                        </div>
+                    </div>
+
+                    <!-- Categoría -->
+                    <div>
+                        <p style="font-size: var(--font-size-sm); text-transform: uppercase; letter-spacing: 0.05em; font-weight: var(--font-weight-semibold); color: var(--color-neutral-600); margin-bottom: 0.5rem;">
+                            Categoría
+                        </p>
+                        <div>
+                            {% if cliente.categoria == 'A' %}
+                                {% include 'components/badge.html' with text=cliente.get_categoria_display variant='success' %}
+                            {% elif cliente.categoria == 'B' %}
+                                {% include 'components/badge.html' with text=cliente.get_categoria_display variant='warning' %}
+                            {% else %}
+                                {% include 'components/badge.html' with text=cliente.get_categoria_display variant='danger' %}
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <!-- Límite de Crédito -->
+                    <div>
+                        <p style="font-size: var(--font-size-sm); text-transform: uppercase; letter-spacing: 0.05em; font-weight: var(--font-weight-semibold); color: var(--color-neutral-600); margin-bottom: 0.5rem;">
+                            Límite de Crédito
+                        </p>
+                        <p style="font-size: var(--font-size-xl); font-weight: var(--font-weight-bold); color: var(--color-success); margin: 0;">
+                            ${{ cliente.limite_credito|floatformat:2 }}
+                        </p>
+                    </div>
+
+                    <!-- Estado -->
+                    <div>
+                        <p style="font-size: var(--font-size-sm); text-transform: uppercase; letter-spacing: 0.05em; font-weight: var(--font-weight-semibold); color: var(--color-neutral-600); margin-bottom: 0.5rem;">
+                            Estado
+                        </p>
+                        <div>
+                            {% if cliente.activo %}
+                                {% include 'components/badge.html' with text='✓ Activo' variant='success' %}
+                            {% else %}
+                                {% include 'components/badge.html' with text='✗ Inactivo' variant='neutral' %}
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <!-- Fecha de Registro -->
+                    <div>
+                        <p style="font-size: var(--font-size-sm); text-transform: uppercase; letter-spacing: 0.05em; font-weight: var(--font-weight-semibold); color: var(--color-neutral-600); margin-bottom: 0.5rem;">
+                            Fecha de Registro
+                        </p>
+                        <p style="font-size: var(--font-size-base); font-weight: var(--font-weight-medium); color: var(--color-neutral-900); margin: 0;">
+                            {{ cliente.fecha_creacion|date:"d/m/Y H:i" }}
+                        </p>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+
+        <!-- Botones de Acción -->
+        <div class="action-buttons">
+            <a href="{% url 'clientes:editar' cliente.pk %}" class="btn btn-primary">
+                ✏️ Editar Cliente
+            </a>
+            <a href="{% url 'clientes:lista' %}" class="btn btn-neutral">
+                ← Volver a la lista
+            </a>
+        </div>
+
+    </div>
+{% endblock %}

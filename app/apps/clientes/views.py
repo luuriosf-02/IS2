@@ -1,0 +1,72 @@
+from django.shortcuts import render, redirect, get_object_or_404
+from django.contrib.auth.decorators import login_required
+from django.contrib import messages
+from .models import Cliente
+from .forms import ClienteForm
+
+@login_required(login_url='oidc_authentication_request_view')
+def lista_clientes(request):
+    """Vista para listar todos los clientes registrados."""
+    clientes = Cliente.objects.all().order_by('-fecha_creacion')
+    context = {
+        'clientes': clientes,
+    }
+    return render(request, 'clientes/lista_clientes.html', context)
+
+@login_required(login_url='oidc_authentication_request_view')
+def crear_cliente(request):
+    """Vista para crear un nuevo cliente."""
+    if request.method == 'POST':
+        form = ClienteForm(request.POST)
+        if form.is_valid():
+            cliente = form.save()
+            messages.success(request, f'Cliente "{cliente.nombre_razon_social}" creado exitosamente.')
+            return redirect('clientes:detalle', pk=cliente.pk)
+        else:
+            for field, errors in form.errors.items():
+                for error in errors:
+                    messages.error(request, f'{field}: {error}')
+    else:
+        form = ClienteForm()
+    
+    context = {
+        'form': form,
+        'titulo': 'Crear Nuevo Cliente',
+        'accion': 'Crear',
+    }
+    return render(request, 'clientes/form_cliente.html', context)
+
+@login_required(login_url='oidc_authentication_request_view')
+def editar_cliente(request, pk):
+    """Vista para editar un cliente existente."""
+    cliente = get_object_or_404(Cliente, pk=pk)
+    
+    if request.method == 'POST':
+        form = ClienteForm(request.POST, instance=cliente)
+        if form.is_valid():
+            cliente = form.save()
+            messages.success(request, f'Cliente "{cliente.nombre_razon_social}" actualizado exitosamente.')
+            return redirect('clientes:detalle', pk=cliente.pk)
+        else:
+            for field, errors in form.errors.items():
+                for error in errors:
+                    messages.error(request, f'{field}: {error}')
+    else:
+        form = ClienteForm(instance=cliente)
+    
+    context = {
+        'form': form,
+        'cliente': cliente,
+        'titulo': f'Editar Cliente: {cliente.nombre_razon_social}',
+        'accion': 'Actualizar',
+    }
+    return render(request, 'clientes/form_cliente.html', context)
+
+@login_required(login_url='oidc_authentication_request_view')
+def detalle_cliente(request, pk):
+    """Vista para ver el detalle de un cliente específico."""
+    cliente = get_object_or_404(Cliente, pk=pk)
+    context = {
+        'cliente': cliente,
+    }
+    return render(request, 'clientes/detalle_cliente.html', context)

@@ -21,6 +21,7 @@ ALLOWED_HOSTS = []
 # Application definition
 
 INSTALLED_APPS = [
+<<<<<<< HEAD
     "django.contrib.admin",
     "django.contrib.auth",
     "django.contrib.contenttypes",
@@ -33,6 +34,17 @@ INSTALLED_APPS = [
     "apps.dashboard",
     "apps.users",
     "apps.clients.apps.ClientsConfig",
+=======
+    'django.contrib.admin',
+    'django.contrib.auth',
+    'django.contrib.contenttypes',
+    'django.contrib.sessions',
+    'django.contrib.messages',
+    'django.contrib.staticfiles',
+    'mozilla_django_oidc',
+    'apps.dashboard',
+    'apps.clientes',
+>>>>>>> origin/feature/SCRUM-24
 ]
 
 AUTHENTICATION_BACKENDS= (
@@ -243,9 +255,9 @@ WSGI_APPLICATION = 'global_exchange.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': os.environ.get('POSTGRES_DB', 'midb'),
-        'USER': os.environ.get('POSTGRES_USER', 'miusuario'),
-        'PASSWORD': os.environ.get('POSTGRES_PASSWORD', 'miclave'),
+        'NAME': os.environ.get('POSTGRES_DB', 'gblex'),
+        'USER': os.environ.get('POSTGRES_USER', 'postgres'),
+        'PASSWORD': os.environ.get('POSTGRES_PASSWORD', 'postgres'),
         'HOST': 'db',  # Mismo nombre del servicio definido en docker-compose.yml
         'PORT': '5432',
     }

@@ -1,0 +1,181 @@
+{% extends 'layouts/base.html' %}
+
+{% block content %}
+    <!-- Navbar -->
+    {% include 'components/navbar.html' %}
+
+    <div class="main-container" style="padding-top: 2.5rem; padding-bottom: 2.5rem;">
+        
+        <!-- Botón de retorno -->
+        <div style="margin-bottom: 1.5rem;">
+            <a href="{% url 'clientes:lista' %}" class="link-text">
+                ← Volver a la lista de clientes
+            </a>
+        </div>
+
+        <!-- Encabezado con componente section-title -->
+        <div style="margin-bottom: 2.5rem;">
+            {% include 'components/section-title.html' with title=titulo description="Completa los campos requeridos para registrar o actualizar la información del cliente." %}
+        </div>
+
+        <!-- Mensajes de Éxito o Error -->
+        {% if messages %}
+            <div style="margin-bottom: 2rem;">
+                {% for message in messages %}
+                    <div style="padding: 1rem; border-radius: var(--radius-md); margin-bottom: 0.75rem; background-color: var(--color-primary-50); border-left: 4px solid var(--color-primary-500);">
+                        <p style="color: var(--color-primary-700); margin: 0; font-weight: var(--font-weight-medium);">
+                            {{ message }}
+                        </p>
+                    </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+
+        <!-- Formulario -->
+        <div class="card">
+            <h3 class="card-title">Información del Cliente</h3>
+            
+            <div class="card-body">
+                <form method="post" style="display: grid; gap: 1.5rem;">
+                    {% csrf_token %}
+                    
+                    <!-- Nombre o Razón Social -->
+                    <div class="form-group">
+                        <label for="{{ form.nombre_razon_social.id_for_label }}" class="form-label">
+                            {{ form.nombre_razon_social.label }} <span class="required">*</span>
+                        </label>
+                        <input type="text" 
+                               id="{{ form.nombre_razon_social.id_for_label }}" 
+                               name="{{ form.nombre_razon_social.name }}" 
+                               placeholder="Ej: Juan Pérez o Empresa S.A."
+                               value="{{ form.nombre_razon_social.value|default:'' }}">
+                        {% if form.nombre_razon_social.errors %}
+                            <div class="form-error">
+                                {% for error in form.nombre_razon_social.errors %}
+                                    <p>{{ error }}</p>
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+
+                    <!-- Documento -->
+                    <div class="form-group">
+                        <label for="{{ form.documento.id_for_label }}" class="form-label">
+                            {{ form.documento.label }} <span class="required">*</span>
+                        </label>
+                        <input type="text" 
+                               id="{{ form.documento.id_for_label }}" 
+                               name="{{ form.documento.name }}" 
+                               placeholder="Ej: 12345678 o RUC-123456-1"
+                               value="{{ form.documento.value|default:'' }}">
+                        {% if form.documento.errors %}
+                            <div class="form-error">
+                                {% for error in form.documento.errors %}
+                                    <p>{{ error }}</p>
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                        {% if form.documento.help_text %}
+                            <p class="form-help">ℹ️ {{ form.documento.help_text|safe }}</p>
+                        {% endif %}
+                    </div>
+
+                    <!-- Tipo de Persona y Categoría -->
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 1.5rem;">
+                        <!-- Tipo de Persona -->
+                        <div class="form-group">
+                            <label for="{{ form.tipo_persona.id_for_label }}" class="form-label">
+                                {{ form.tipo_persona.label }} <span class="required">*</span>
+                            </label>
+                            <select id="{{ form.tipo_persona.id_for_label }}" 
+                                    name="{{ form.tipo_persona.name }}">
+                                <option value="">-- Seleccionar --</option>
+                                {% for value, label in form.tipo_persona.field.choices %}
+                                    <option value="{{ value }}" {% if form.tipo_persona.value == value %}selected{% endif %}>
+                                        {{ label }}
+                                    </option>
+                                {% endfor %}
+                            </select>
+                            {% if form.tipo_persona.errors %}
+                                <div class="form-error">
+                                    {% for error in form.tipo_persona.errors %}
+                                        <p>{{ error }}</p>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+
+                        <!-- Categoría -->
+                        <div class="form-group">
+                            <label for="{{ form.categoria.id_for_label }}" class="form-label">
+                                {{ form.categoria.label }} <span class="required">*</span>
+                            </label>
+                            <select id="{{ form.categoria.id_for_label }}" 
+                                    name="{{ form.categoria.name }}">
+                                <option value="">-- Seleccionar --</option>
+                                {% for value, label in form.categoria.field.choices %}
+                                    <option value="{{ value }}" {% if form.categoria.value == value %}selected{% endif %}>
+                                        {{ label }}
+                                    </option>
+                                {% endfor %}
+                            </select>
+                            {% if form.categoria.errors %}
+                                <div class="form-error">
+                                    {% for error in form.categoria.errors %}
+                                        <p>{{ error }}</p>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <!-- Límite de Crédito -->
+                    <div class="form-group">
+                        <label for="{{ form.limite_credito.id_for_label }}" class="form-label">
+                            {{ form.limite_credito.label }} <span class="required">*</span>
+                        </label>
+                        <input type="number" 
+                               id="{{ form.limite_credito.id_for_label }}" 
+                               name="{{ form.limite_credito.name }}" 
+                               placeholder="0.00"
+                               value="{{ form.limite_credito.value|default:'' }}"
+                               step="0.01"
+                               min="0">
+                        {% if form.limite_credito.errors %}
+                            <div class="form-error">
+                                {% for error in form.limite_credito.errors %}
+                                    <p>{{ error }}</p>
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                        {% if form.limite_credito.help_text %}
+                            <p class="form-help">ℹ️ {{ form.limite_credito.help_text|safe }}</p>
+                        {% endif %}
+                    </div>
+
+                    <!-- Activo (Checkbox) -->
+                    <div class="form-checkbox-wrapper">
+                        <input type="checkbox" 
+                               id="{{ form.activo.id_for_label }}" 
+                               name="{{ form.activo.name }}"
+                               {% if form.activo.value %}checked{% endif %}>
+                        <label for="{{ form.activo.id_for_label }}" class="form-checkbox-label">
+                            {{ form.activo.label }}
+                        </label>
+                    </div>
+
+                    <!-- Botones de Acción -->
+                    <div class="action-buttons" style="margin-top: 2rem; border-top: 1px solid var(--color-neutral-200); padding-top: 2rem;">
+                        <button type="submit" class="btn btn-primary">
+                            ✓ {{ accion }} Cliente
+                        </button>
+                        <a href="{% url 'clientes:lista' %}" class="btn btn-neutral">
+                            ✕ Cancelar
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+    </div>
+{% endblock %}
