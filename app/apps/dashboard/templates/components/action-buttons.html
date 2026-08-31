@@ -1,0 +1,14 @@
+{% comment %} Grupo de botones de acción {% endcomment %}
+<div class="action-buttons">
+  {% for button in buttons %}
+    {% if button.url %}
+      <a href="{{ button.url }}" class="btn btn-{{ button.variant|default:'primary' }}">
+        {{ button.text }}
+      </a>
+    {% else %}
+      <button type="{{ button.type|default:'button' }}" class="btn btn-{{ button.variant|default:'primary' }}">
+        {{ button.text }}
+      </button>
+    {% endif %}
+  {% endfor %}
+</div>

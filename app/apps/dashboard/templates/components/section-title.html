@@ -1,0 +1,14 @@
+{% comment %} Título de sección con descripción opcional {% endcomment %}
+<div class="section-header">
+  <div>
+    <h1 class="section-title">{{ title }}</h1>
+    {% if description %}
+      <p class="text-body">{{ description }}</p>
+    {% endif %}
+  </div>
+  {% if action_button %}
+    <div class="section-action">
+      {{ action_button|safe }}
+    </div>
+  {% endif %}
+</div>

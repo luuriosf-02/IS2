@@ -6,89 +6,100 @@
 
     <div class="main-container" style="padding-top: 2.5rem; padding-bottom: 2.5rem;">
         
-        <!-- Encabezado -->
-        <div style="margin-bottom: 2rem; display: flex; justify-content: space-between; align-items: center;">
+        <!-- Encabezado con botón de crear -->
+        <div class="section-header">
             <div>
-                <h1 style="font-size: 1.75rem; font-weight: 600; color: var(--color-neutral-900); margin-bottom: 0.5rem;">
-                    Gestión de Clientes 👥
-                </h1>
+                <h1 class="section-title">Gestión de Clientes 👥</h1>
                 {% include 'components/paragraph.html' with text="Visualiza y gestiona toda la información de tus clientes registrados." %}
+            </div>
+            <div class="section-action">
+                <a href="{% url 'clientes:crear' %}" class="btn btn-success">
+                    ➕ Crear Nuevo Cliente
+                </a>
             </div>
         </div>
 
-        <!-- Tabla de Clientes -->
+        <!-- Mensajes -->
+        {% if messages %}
+            <div style="margin-bottom: 2rem;">
+                {% for message in messages %}
+                    <div style="padding: 1rem; border-radius: var(--radius-md); margin-bottom: 0.75rem; background-color: {% if 'success' in message.tags %}#d1fae5{% else %}#fee2e2{% endif %}; border-left: 4px solid {% if 'success' in message.tags %}var(--color-success){% else %}var(--color-danger){% endif %};">
+                        <p style="color: {% if 'success' in message.tags %}#065f46{% else %}#991b1b{% endif %}; margin: 0; font-weight: var(--font-weight-medium);">
+                            {{ message }}
+                        </p>
+                    </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+
+        <!-- Tarjeta de Clientes -->
         <div class="card">
             <h3 class="card-title">Clientes Registrados</h3>
             
             <div class="card-body">
                 {% if clientes %}
-                    <table style="width: 100%; border-collapse: collapse; margin-top: 1rem;">
+                    <table style="width: 100%; border-collapse: collapse;">
                         <thead>
                             <tr style="background-color: var(--color-neutral-100); border-bottom: 2px solid var(--color-neutral-200);">
-                                <th style="padding: 0.75rem; text-align: left; font-weight: 600;">Nombre/Razón Social</th>
-                                <th style="padding: 0.75rem; text-align: left; font-weight: 600;">RUC/CI</th>
-                                <th style="padding: 0.75rem; text-align: left; font-weight: 600;">Tipo</th>
-                                <th style="padding: 0.75rem; text-align: left; font-weight: 600;">Categoría</th>
-                                <th style="padding: 0.75rem; text-align: left; font-weight: 600;">Límite Crédito</th>
-                                <th style="padding: 0.75rem; text-align: left; font-weight: 600;">Estado</th>
-                                <th style="padding: 0.75rem; text-align: left; font-weight: 600;">Acciones</th>
+                                <th style="padding: 1rem; text-align: left; font-weight: var(--font-weight-semibold); color: var(--color-neutral-900);">Nombre</th>
+                                <th style="padding: 1rem; text-align: left; font-weight: var(--font-weight-semibold); color: var(--color-neutral-900);">RUC/CI</th>
+                                <th style="padding: 1rem; text-align: left; font-weight: var(--font-weight-semibold); color: var(--color-neutral-900);">Tipo</th>
+                                <th style="padding: 1rem; text-align: left; font-weight: var(--font-weight-semibold); color: var(--color-neutral-900);">Categoría</th>
+                                <th style="padding: 1rem; text-align: left; font-weight: var(--font-weight-semibold); color: var(--color-neutral-900);">Límite</th>
+                                <th style="padding: 1rem; text-align: left; font-weight: var(--font-weight-semibold); color: var(--color-neutral-900);">Estado</th>
+                                <th style="padding: 1rem; text-align: left; font-weight: var(--font-weight-semibold); color: var(--color-neutral-900);">Acciones</th>
                             </tr>
                         </thead>
                         <tbody>
                             {% for cliente in clientes %}
-                                <tr style="border-bottom: 1px solid var(--color-neutral-200); hover: background-color: var(--color-neutral-50);">
-                                    <td style="padding: 0.75rem;">
-                                        <span style="font-weight: 500;">{{ cliente.nombre_razon_social }}</span>
+                                <tr style="border-bottom: 1px solid var(--color-neutral-200);">
+                                    <td style="padding: 1rem; color: var(--color-neutral-900);">
+                                        <span style="font-weight: var(--font-weight-medium);">{{ cliente.nombre_razon_social }}</span>
                                     </td>
-                                    <td style="padding: 0.75rem;">{{ cliente.documento }}</td>
-                                    <td style="padding: 0.75rem;">
-                                        <span style="background-color: var(--color-blue-100); color: var(--color-blue-700); padding: 0.25rem 0.75rem; border-radius: 0.25rem; font-size: 0.875rem; font-weight: 500;">
-                                            {{ cliente.get_tipo_persona_display }}
-                                        </span>
+                                    <td style="padding: 1rem; color: var(--color-neutral-700); font-family: monospace;">{{ cliente.documento }}</td>
+                                    <td style="padding: 1rem;">
+                                        {% include 'components/badge.html' with text=cliente.get_tipo_persona_display variant='primary' %}
                                     </td>
-                                    <td style="padding: 0.75rem;">
+                                    <td style="padding: 1rem;">
                                         {% if cliente.categoria == 'A' %}
-                                            <span style="background-color: var(--color-green-100); color: var(--color-green-700); padding: 0.25rem 0.75rem; border-radius: 0.25rem; font-size: 0.875rem; font-weight: 500;">
-                                                {{ cliente.get_categoria_display }}
-                                            </span>
+                                            {% include 'components/badge.html' with text=cliente.get_categoria_display variant='success' %}
                                         {% elif cliente.categoria == 'B' %}
-                                            <span style="background-color: var(--color-yellow-100); color: var(--color-yellow-700); padding: 0.25rem 0.75rem; border-radius: 0.25rem; font-size: 0.875rem; font-weight: 500;">
-                                                {{ cliente.get_categoria_display }}
-                                            </span>
+                                            {% include 'components/badge.html' with text=cliente.get_categoria_display variant='warning' %}
                                         {% else %}
-                                            <span style="background-color: var(--color-red-100); color: var(--color-red-700); padding: 0.25rem 0.75rem; border-radius: 0.25rem; font-size: 0.875rem; font-weight: 500;">
-                                                {{ cliente.get_categoria_display }}
-                                            </span>
+                                            {% include 'components/badge.html' with text=cliente.get_categoria_display variant='danger' %}
                                         {% endif %}
                                     </td>
-                                    <td style="padding: 0.75rem;">
+                                    <td style="padding: 1rem; color: var(--color-neutral-900); font-weight: var(--font-weight-semibold);">
                                         ${{ cliente.limite_credito|floatformat:2 }}
                                     </td>
-                                    <td style="padding: 0.75rem;">
+                                    <td style="padding: 1rem;">
                                         {% if cliente.activo %}
-                                            <span style="background-color: var(--color-green-100); color: var(--color-green-700); padding: 0.25rem 0.75rem; border-radius: 0.25rem; font-size: 0.875rem; font-weight: 500;">
-                                                Activo
-                                            </span>
+                                            {% include 'components/badge.html' with text='✓ Activo' variant='success' %}
                                         {% else %}
-                                            <span style="background-color: var(--color-neutral-200); color: var(--color-neutral-700); padding: 0.25rem 0.75rem; border-radius: 0.25rem; font-size: 0.875rem; font-weight: 500;">
-                                                Inactivo
-                                            </span>
+                                            {% include 'components/badge.html' with text='✗ Inactivo' variant='neutral' %}
                                         {% endif %}
                                     </td>
-                                    <td style="padding: 0.75rem;">
-                                        <a href="{% url 'clientes:detalle' cliente.pk %}" style="color: var(--color-blue-600); text-decoration: none; font-weight: 500; hover: text-decoration: underline;">
-                                            Ver Detalle →
-                                        </a>
+                                    <td style="padding: 1rem;">
+                                        <div style="display: flex; gap: 0.5rem;">
+                                            <a href="{% url 'clientes:detalle' cliente.pk %}" class="btn btn-primary" style="padding: 0.5rem 0.75rem; font-size: var(--font-size-sm);">
+                                                👁️ Ver
+                                            </a>
+                                            <a href="{% url 'clientes:editar' cliente.pk %}" class="btn btn-outline" style="padding: 0.5rem 0.75rem; font-size: var(--font-size-sm);">
+                                                ✏️ Editar
+                                            </a>
+                                        </div>
                                     </td>
                                 </tr>
                             {% endfor %}
                         </tbody>
                     </table>
                 {% else %}
-                    <div style="text-align: center; padding: 2rem;">
-                        <p style="color: var(--color-neutral-600); margin-bottom: 1rem;">No hay clientes registrados aún.</p>
-                        <a href="{% url 'admin:clientes_cliente_add' %}" style="color: var(--color-blue-600); text-decoration: none; font-weight: 500;">
-                            ➕ Agregar nuevo cliente desde el panel de administración
+                    <div style="text-align: center; padding: 3rem 2rem;">
+                        <p style="color: var(--color-neutral-600); margin-bottom: 1.5rem; font-size: var(--font-size-lg);">
+                            📭 No hay clientes registrados aún.
+                        </p>
+                        <a href="{% url 'clientes:crear' %}" class="btn btn-success">
+                            ➕ Crear Primer Cliente
                         </a>
                     </div>
                 {% endif %}
