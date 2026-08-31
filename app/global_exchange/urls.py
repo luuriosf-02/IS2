@@ -39,4 +39,5 @@ urlpatterns = [
     path('', home, name='home'),
     path('logout/', custom_logout, name='logout'),
     path('oidc/', include('mozilla_django_oidc.urls')), # URLs automáticas para login/logout
+    path('clientes/', include('apps.clientes.urls')), # URLs de la app clientes
 ]

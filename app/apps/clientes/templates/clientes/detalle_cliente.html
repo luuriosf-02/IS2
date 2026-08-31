@@ -1,0 +1,133 @@
+{% extends 'layouts/base.html' %}
+
+{% block content %}
+    <!-- Navbar -->
+    {% include 'components/navbar.html' %}
+
+    <div class="main-container" style="padding-top: 2.5rem; padding-bottom: 2.5rem;">
+        
+        <!-- Botón de retorno -->
+        <div style="margin-bottom: 2rem;">
+            <a href="{% url 'clientes:lista' %}" style="color: var(--color-blue-600); text-decoration: none; font-weight: 500; display: inline-flex; align-items: center; gap: 0.5rem;">
+                ← Volver a la lista de clientes
+            </a>
+        </div>
+
+        <!-- Encabezado -->
+        <div style="margin-bottom: 2rem;">
+            <h1 style="font-size: 1.75rem; font-weight: 600; color: var(--color-neutral-900); margin-bottom: 0.5rem;">
+                {{ cliente.nombre_razon_social }}
+            </h1>
+            {% include 'components/paragraph.html' with text="Información detallada del cliente" %}
+        </div>
+
+        <!-- Tarjeta principal con información del cliente -->
+        <div class="card" style="margin-bottom: 2rem;">
+            <h3 class="card-title">Información Principal</h3>
+            
+            <div class="card-body">
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 2rem;">
+                    
+                    <!-- Información de Identidad -->
+                    <div>
+                        <p style="color: var(--color-neutral-600); font-size: 0.875rem; margin-bottom: 0.25rem; text-transform: uppercase; letter-spacing: 0.05em; font-weight: 600;">
+                            Documento (RUC/CI)
+                        </p>
+                        <p style="font-size: 1.125rem; font-weight: 500; color: var(--color-neutral-900);">
+                            {{ cliente.documento }}
+                        </p>
+                    </div>
+
+                    <!-- Tipo de Persona -->
+                    <div>
+                        <p style="color: var(--color-neutral-600); font-size: 0.875rem; margin-bottom: 0.25rem; text-transform: uppercase; letter-spacing: 0.05em; font-weight: 600;">
+                            Tipo de Persona
+                        </p>
+                        <span style="background-color: var(--color-blue-100); color: var(--color-blue-700); padding: 0.5rem 0.75rem; border-radius: 0.25rem; font-weight: 500; display: inline-block;">
+                            {{ cliente.get_tipo_persona_display }}
+                        </span>
+                    </div>
+
+                    <!-- Categoría -->
+                    <div>
+                        <p style="color: var(--color-neutral-600); font-size: 0.875rem; margin-bottom: 0.25rem; text-transform: uppercase; letter-spacing: 0.05em; font-weight: 600;">
+                            Categoría
+                        </p>
+                        {% if cliente.categoria == 'A' %}
+                            <span style="background-color: var(--color-green-100); color: var(--color-green-700); padding: 0.5rem 0.75rem; border-radius: 0.25rem; font-weight: 500; display: inline-block;">
+                                {{ cliente.get_categoria_display }}
+                            </span>
+                        {% elif cliente.categoria == 'B' %}
+                            <span style="background-color: var(--color-yellow-100); color: var(--color-yellow-700); padding: 0.5rem 0.75rem; border-radius: 0.25rem; font-weight: 500; display: inline-block;">
+                                {{ cliente.get_categoria_display }}
+                            </span>
+                        {% else %}
+                            <span style="background-color: var(--color-red-100); color: var(--color-red-700); padding: 0.5rem 0.75rem; border-radius: 0.25rem; font-weight: 500; display: inline-block;">
+                                {{ cliente.get_categoria_display }}
+                            </span>
+                        {% endif %}
+                    </div>
+
+                </div>
+            </div>
+        </div>
+
+        <!-- Tarjeta de Crédito y Estado -->
+        <div class="card" style="margin-bottom: 2rem;">
+            <h3 class="card-title">Límite de Crédito y Estado</h3>
+            
+            <div class="card-body">
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 2rem;">
+                    
+                    <!-- Límite de Crédito -->
+                    <div>
+                        <p style="color: var(--color-neutral-600); font-size: 0.875rem; margin-bottom: 0.25rem; text-transform: uppercase; letter-spacing: 0.05em; font-weight: 600;">
+                            Límite de Crédito
+                        </p>
+                        <p style="font-size: 1.5rem; font-weight: 600; color: var(--color-green-600);">
+                            ${{ cliente.limite_credito|floatformat:2 }}
+                        </p>
+                    </div>
+
+                    <!-- Estado -->
+                    <div>
+                        <p style="color: var(--color-neutral-600); font-size: 0.875rem; margin-bottom: 0.25rem; text-transform: uppercase; letter-spacing: 0.05em; font-weight: 600;">
+                            Estado
+                        </p>
+                        {% if cliente.activo %}
+                            <span style="background-color: var(--color-green-100); color: var(--color-green-700); padding: 0.5rem 0.75rem; border-radius: 0.25rem; font-weight: 500; display: inline-block;">
+                                ✓ Activo
+                            </span>
+                        {% else %}
+                            <span style="background-color: var(--color-neutral-200); color: var(--color-neutral-700); padding: 0.5rem 0.75rem; border-radius: 0.25rem; font-weight: 500; display: inline-block;">
+                                ✗ Inactivo
+                            </span>
+                        {% endif %}
+                    </div>
+
+                    <!-- Fecha de Creación -->
+                    <div>
+                        <p style="color: var(--color-neutral-600); font-size: 0.875rem; margin-bottom: 0.25rem; text-transform: uppercase; letter-spacing: 0.05em; font-weight: 600;">
+                            Fecha de Registro
+                        </p>
+                        <p style="font-size: 1.125rem; font-weight: 500; color: var(--color-neutral-900);">
+                            {{ cliente.fecha_creacion|date:"d/m/Y H:i" }}
+                        </p>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+
+        <!-- Acciones -->
+        <div style="display: flex; gap: 1rem;">
+            <a href="{% url 'admin:clientes_cliente_change' cliente.pk %}" style="background-color: var(--color-blue-600); color: white; padding: 0.75rem 1.5rem; border-radius: 0.25rem; text-decoration: none; font-weight: 500; display: inline-block; hover: background-color: var(--color-blue-700);">
+                ✏️ Editar Cliente
+            </a>
+            <a href="{% url 'clientes:lista' %}" style="background-color: var(--color-neutral-300); color: var(--color-neutral-900); padding: 0.75rem 1.5rem; border-radius: 0.25rem; text-decoration: none; font-weight: 500; display: inline-block; hover: background-color: var(--color-neutral-400);">
+                ← Volver a la lista
+            </a>
+        </div>
+
+    </div>
+{% endblock %}

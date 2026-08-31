@@ -1,0 +1,99 @@
+{% extends 'layouts/base.html' %}
+
+{% block content %}
+    <!-- Navbar -->
+    {% include 'components/navbar.html' %}
+
+    <div class="main-container" style="padding-top: 2.5rem; padding-bottom: 2.5rem;">
+        
+        <!-- Encabezado -->
+        <div style="margin-bottom: 2rem; display: flex; justify-content: space-between; align-items: center;">
+            <div>
+                <h1 style="font-size: 1.75rem; font-weight: 600; color: var(--color-neutral-900); margin-bottom: 0.5rem;">
+                    Gestión de Clientes 👥
+                </h1>
+                {% include 'components/paragraph.html' with text="Visualiza y gestiona toda la información de tus clientes registrados." %}
+            </div>
+        </div>
+
+        <!-- Tabla de Clientes -->
+        <div class="card">
+            <h3 class="card-title">Clientes Registrados</h3>
+            
+            <div class="card-body">
+                {% if clientes %}
+                    <table style="width: 100%; border-collapse: collapse; margin-top: 1rem;">
+                        <thead>
+                            <tr style="background-color: var(--color-neutral-100); border-bottom: 2px solid var(--color-neutral-200);">
+                                <th style="padding: 0.75rem; text-align: left; font-weight: 600;">Nombre/Razón Social</th>
+                                <th style="padding: 0.75rem; text-align: left; font-weight: 600;">RUC/CI</th>
+                                <th style="padding: 0.75rem; text-align: left; font-weight: 600;">Tipo</th>
+                                <th style="padding: 0.75rem; text-align: left; font-weight: 600;">Categoría</th>
+                                <th style="padding: 0.75rem; text-align: left; font-weight: 600;">Límite Crédito</th>
+                                <th style="padding: 0.75rem; text-align: left; font-weight: 600;">Estado</th>
+                                <th style="padding: 0.75rem; text-align: left; font-weight: 600;">Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for cliente in clientes %}
+                                <tr style="border-bottom: 1px solid var(--color-neutral-200); hover: background-color: var(--color-neutral-50);">
+                                    <td style="padding: 0.75rem;">
+                                        <span style="font-weight: 500;">{{ cliente.nombre_razon_social }}</span>
+                                    </td>
+                                    <td style="padding: 0.75rem;">{{ cliente.documento }}</td>
+                                    <td style="padding: 0.75rem;">
+                                        <span style="background-color: var(--color-blue-100); color: var(--color-blue-700); padding: 0.25rem 0.75rem; border-radius: 0.25rem; font-size: 0.875rem; font-weight: 500;">
+                                            {{ cliente.get_tipo_persona_display }}
+                                        </span>
+                                    </td>
+                                    <td style="padding: 0.75rem;">
+                                        {% if cliente.categoria == 'A' %}
+                                            <span style="background-color: var(--color-green-100); color: var(--color-green-700); padding: 0.25rem 0.75rem; border-radius: 0.25rem; font-size: 0.875rem; font-weight: 500;">
+                                                {{ cliente.get_categoria_display }}
+                                            </span>
+                                        {% elif cliente.categoria == 'B' %}
+                                            <span style="background-color: var(--color-yellow-100); color: var(--color-yellow-700); padding: 0.25rem 0.75rem; border-radius: 0.25rem; font-size: 0.875rem; font-weight: 500;">
+                                                {{ cliente.get_categoria_display }}
+                                            </span>
+                                        {% else %}
+                                            <span style="background-color: var(--color-red-100); color: var(--color-red-700); padding: 0.25rem 0.75rem; border-radius: 0.25rem; font-size: 0.875rem; font-weight: 500;">
+                                                {{ cliente.get_categoria_display }}
+                                            </span>
+                                        {% endif %}
+                                    </td>
+                                    <td style="padding: 0.75rem;">
+                                        ${{ cliente.limite_credito|floatformat:2 }}
+                                    </td>
+                                    <td style="padding: 0.75rem;">
+                                        {% if cliente.activo %}
+                                            <span style="background-color: var(--color-green-100); color: var(--color-green-700); padding: 0.25rem 0.75rem; border-radius: 0.25rem; font-size: 0.875rem; font-weight: 500;">
+                                                Activo
+                                            </span>
+                                        {% else %}
+                                            <span style="background-color: var(--color-neutral-200); color: var(--color-neutral-700); padding: 0.25rem 0.75rem; border-radius: 0.25rem; font-size: 0.875rem; font-weight: 500;">
+                                                Inactivo
+                                            </span>
+                                        {% endif %}
+                                    </td>
+                                    <td style="padding: 0.75rem;">
+                                        <a href="{% url 'clientes:detalle' cliente.pk %}" style="color: var(--color-blue-600); text-decoration: none; font-weight: 500; hover: text-decoration: underline;">
+                                            Ver Detalle →
+                                        </a>
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                {% else %}
+                    <div style="text-align: center; padding: 2rem;">
+                        <p style="color: var(--color-neutral-600); margin-bottom: 1rem;">No hay clientes registrados aún.</p>
+                        <a href="{% url 'admin:clientes_cliente_add' %}" style="color: var(--color-blue-600); text-decoration: none; font-weight: 500;">
+                            ➕ Agregar nuevo cliente desde el panel de administración
+                        </a>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+
+    </div>
+{% endblock %}
