@@ -48,12 +48,20 @@
   "failureFactor" : 30,
   "roles" : {
     "realm" : [ {
+      "id" : "94cbe4b1-0d4a-460f-ac98-0bf5924d3aa6",
+      "name" : "Contador",
+      "description" : "Se encarga de auditoría contable, revisión de transacciones y facturación electrónica.",
+      "composite" : false,
+      "clientRole" : false,
+      "containerId" : "a3567d59-38f3-4391-998f-c3292b8307b3",
+      "attributes" : { }
+    }, {
       "id" : "e38a6329-7311-4279-960b-67cae76dd89b",
       "name" : "default-roles-global_exchange",
       "description" : "${role_default-roles}",
       "composite" : true,
       "composites" : {
-        "realm" : [ "offline_access", "uma_authorization" ],
+        "realm" : [ "uma_authorization" ],
         "client" : {
           "account" : [ "manage-account", "view-profile" ]
         }
@@ -62,9 +70,25 @@
       "containerId" : "a3567d59-38f3-4391-998f-c3292b8307b3",
       "attributes" : { }
     }, {
-      "id" : "c103f59b-480b-4a6d-a5e3-8e39eb90e09a",
-      "name" : "offline_access",
-      "description" : "${role_offline-access}",
+      "id" : "51838862-98d8-4298-9476-ec0004722cec",
+      "name" : "Analista Cambiario",
+      "description" : "Ajusta las tasas de cambio y monitorea reportes de rentabilidad.",
+      "composite" : false,
+      "clientRole" : false,
+      "containerId" : "a3567d59-38f3-4391-998f-c3292b8307b3",
+      "attributes" : { }
+    }, {
+      "id" : "2297782e-9470-48d0-90aa-102d0810312e",
+      "name" : "Cliente",
+      "description" : "Usuario verificado que puede comprar/vender divisas.",
+      "composite" : false,
+      "clientRole" : false,
+      "containerId" : "a3567d59-38f3-4391-998f-c3292b8307b3",
+      "attributes" : { }
+    }, {
+      "id" : "6432f077-9fc4-427b-b0c8-4606f949a48a",
+      "name" : "Cajero",
+      "description" : "Está asignado a una sucursal y maneja operaciones presenciales: recepción/entrega de billetes, movimientos de caja, validación básica del cliente y cierre de jornada.",
       "composite" : false,
       "clientRole" : false,
       "containerId" : "a3567d59-38f3-4391-998f-c3292b8307b3",
@@ -379,6 +403,29 @@
   "webAuthnPolicyPasswordlessAcceptableAaguids" : [ ],
   "webAuthnPolicyPasswordlessExtraOrigins" : [ ],
   "users" : [ {
+    "id" : "41f3559d-5303-426b-b706-fe91eccd9508",
+    "username" : "lujan",
+    "firstName" : "Lujan",
+    "lastName" : "Rios",
+    "email" : "malujan.riosf@gmail.com",
+    "emailVerified" : true,
+    "createdTimestamp" : 1788186040366,
+    "enabled" : true,
+    "totp" : false,
+    "credentials" : [ {
+      "id" : "a9fa5c5e-fd93-4f5a-a81d-6114d3be2f56",
+      "type" : "password",
+      "userLabel" : "My password",
+      "createdDate" : 1788186052669,
+      "secretData" : "{\"value\":\"CKkLxatp0vlHzbc8QBZBgjrHe9LsMRzFyDUHffN4L/b/gYXmgRGc95LO7B/i1YFzdIshfbJrzd09FALryJsKiQ==\",\"salt\":\"Q/rY5DpUUFTfXmCP5XQV1Q==\",\"additionalParameters\":{}}",
+      "credentialData" : "{\"hashIterations\":210000,\"algorithm\":\"pbkdf2-sha512\",\"additionalParameters\":{}}"
+    } ],
+    "disableableCredentialTypes" : [ ],
+    "requiredActions" : [ ],
+    "realmRoles" : [ "default-roles-global_exchange" ],
+    "notBefore" : 0,
+    "groups" : [ ]
+  }, {
     "id" : "4cc25311-d264-4e7b-a91e-d00e566e831d",
     "username" : "pepito",
     "firstName" : "Teacher",
@@ -423,10 +470,6 @@
     "realmRoles" : [ "default-roles-global_exchange" ],
     "notBefore" : 0,
     "groups" : [ ]
-  } ],
-  "scopeMappings" : [ {
-    "clientScope" : "offline_access",
-    "roles" : [ "offline_access" ]
   } ],
   "clientScopeMappings" : {
     "account" : [ {
@@ -1215,7 +1258,7 @@
       "subType" : "authenticated",
       "subComponents" : { },
       "config" : {
-        "allowed-protocol-mapper-types" : [ "oidc-address-mapper", "oidc-usermodel-attribute-mapper", "saml-user-property-mapper", "oidc-usermodel-property-mapper", "saml-role-list-mapper", "oidc-sha256-pairwise-sub-mapper", "saml-user-attribute-mapper", "oidc-full-name-mapper" ]
+        "allowed-protocol-mapper-types" : [ "saml-user-attribute-mapper", "oidc-usermodel-attribute-mapper", "oidc-address-mapper", "saml-role-list-mapper", "saml-user-property-mapper", "oidc-sha256-pairwise-sub-mapper", "oidc-full-name-mapper", "oidc-usermodel-property-mapper" ]
       }
     }, {
       "id" : "73359704-df19-4fc2-9b5d-3401849d09b7",
@@ -1250,7 +1293,7 @@
       "subType" : "anonymous",
       "subComponents" : { },
       "config" : {
-        "allowed-protocol-mapper-types" : [ "saml-user-property-mapper", "oidc-full-name-mapper", "saml-user-attribute-mapper", "saml-role-list-mapper", "oidc-usermodel-property-mapper", "oidc-address-mapper", "oidc-usermodel-attribute-mapper", "oidc-sha256-pairwise-sub-mapper" ]
+        "allowed-protocol-mapper-types" : [ "saml-user-property-mapper", "oidc-full-name-mapper", "oidc-address-mapper", "oidc-usermodel-attribute-mapper", "saml-user-attribute-mapper", "oidc-usermodel-property-mapper", "saml-role-list-mapper", "oidc-sha256-pairwise-sub-mapper" ]
       }
     }, {
       "id" : "709538eb-e175-4338-83bb-22434bdd39f2",
