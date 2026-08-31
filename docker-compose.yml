@@ -43,11 +43,19 @@ services:
     environment:
       KEYCLOAK_ADMIN: ${KEYCLOAK_ADMIN}
       KEYCLOAK_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD}
+      # Conexión a PostgreSQL
+      KC_DB: postgres
+      KC_DB_URL: jdbc:postgresql://db:5432/${POSTGRES_DB}
+      KC_DB_USERNAME: ${POSTGRES_USER}
+      KC_DB_PASSWORD: ${POSTGRES_PASSWORD}
+      # Configuración de red
       KC_HOSTNAME: "localhost"
       KC_HOSTNAME_PORT: "8080"
       KC_HOSTNAME_STRICT: "false"
       KC_HOSTNAME_STRICT_HTTPS: "false"
       KC_PROXY_HEADERS: "xforwarded"
+      # Aumento de tiempo límite para la importación
+      #JAVA_OPTS_APPEND: "-Darjuna.system.entity.arjuna.lite.transactionTimeout=1800"
     ports:
       - "8080:8080"
     volumes:
@@ -81,7 +89,7 @@ services:
       GF_SECURITY_ADMIN_USER: ${GF_SECURITY_ADMIN_USER}
       GF_SECURITY_ADMIN_PASSWORD: ${GF_SECURITY_ADMIN_PASSWORD}
     ports:
-      - "3001:3000" # Se expone en el 3001 para evitar colisión con PostgREST (3000)
+      - "3002:3000" # Se expone en el 3002 para evitar colisión con PostgREST (3000)
     volumes:
       - grafana_data:/var/lib/grafana
     depends_on:
