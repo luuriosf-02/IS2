@@ -1,5 +1,5 @@
 from django.test import TestCase
-from app.apps.clientes.models import Cliente
+from app.apps.crud.models import Cliente
 
 class ClienteModelTest(TestCase):
     """
