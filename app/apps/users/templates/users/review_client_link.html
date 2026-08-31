@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Revisar solicitud | Global Exchange</title>
+
+    <style>
+        body {
+            margin: 0;
+            font-family: Arial, Helvetica, sans-serif;
+            background-color: #f6f7fb;
+            color: #172033;
+        }
+
+        .container {
+            max-width: 750px;
+            margin: 60px auto;
+            padding: 0 25px;
+        }
+
+        .card {
+            padding: 32px;
+            border: 1px solid #e3e6ec;
+            border-radius: 16px;
+            background-color: white;
+        }
+
+        .data {
+            margin-bottom: 25px;
+            padding: 18px;
+            border-radius: 9px;
+            background-color: #f7f3ff;
+        }
+
+        textarea {
+            width: 100%;
+            padding: 12px;
+            box-sizing: border-box;
+        }
+
+        .button {
+            margin-top: 20px;
+            padding: 12px 20px;
+            border: none;
+            border-radius: 9px;
+            background-color: #8754f6;
+            color: white;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        .errorlist {
+            color: #b91c1c;
+        }
+    </style>
+</head>
+
+<body>
+<main class="container">
+    <h1>Revisar solicitud</h1>
+
+    <section class="card">
+        <div class="data">
+            <p>
+                <strong>Usuario:</strong>
+                {{ link.user.username }}
+            </p>
+
+            <p>
+                <strong>Correo:</strong>
+                {{ link.user.email }}
+            </p>
+
+            <p>
+                <strong>Cliente:</strong>
+                {{ link.client.name }}
+            </p>
+
+            <p>
+                <strong>Documento:</strong>
+                {{ link.client.document_number }}
+            </p>
+        </div>
+
+        <form method="post">
+            {% csrf_token %}
+
+            {{ form.non_field_errors }}
+
+            <div>
+                {{ form.action.errors }}
+                {{ form.action.label_tag }}
+                {{ form.action }}
+            </div>
+
+            <div>
+                {{ form.rejection_reason.errors }}
+                {{ form.rejection_reason.label_tag }}
+                {{ form.rejection_reason }}
+            </div>
+
+            <button type="submit" class="button">
+                Guardar decisión
+            </button>
+        </form>
+    </section>
+</main>
+</body>
+</html>
