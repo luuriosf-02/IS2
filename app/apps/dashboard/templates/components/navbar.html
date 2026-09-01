@@ -12,7 +12,7 @@
             <div class="navbar-user-info">
                 <span class="user-name">{{ user.first_name }} {{ user.last_name }}</span>
                 
-                {% include 'components/pill.html' with text=user.role %}
+                {% include 'components/pill.html' with text=user.profile.role%}
             </div>
 
             <a href="{% url 'logout' %}" class="navbar-action-btn navbar-btn-logout">
