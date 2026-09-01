@@ -33,6 +33,7 @@ INSTALLED_APPS = [
     "apps.dashboard",
     "apps.users",
     'apps.clientes',
+    "apps.clients",
 ]
 
 AUTHENTICATION_BACKENDS= (
