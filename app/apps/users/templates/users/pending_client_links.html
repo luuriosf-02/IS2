@@ -1,107 +1,49 @@
-<!DOCTYPE html>
-<html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Solicitudes pendientes | Global Exchange</title>
+{% extends 'layouts/base.html' %}
 
-    <style>
-        body {
-            margin: 0;
-            font-family: Arial, Helvetica, sans-serif;
-            background-color: #f6f7fb;
-            color: #172033;
-        }
+{% block title %}Solicitudes pendientes | Global Exchange{% endblock %}
 
-        .container {
-            max-width: 1100px;
-            margin: 60px auto;
-            padding: 0 25px;
-        }
+{% block content %}
+{% include 'components/navbar.html' %}
 
-        table {
-            width: 100%;
-            margin-top: 25px;
-            border-collapse: collapse;
-            background-color: white;
-        }
-
-        th,
-        td {
-            padding: 15px;
-            border-bottom: 1px solid #e5e7eb;
-            text-align: left;
-        }
-
-        th {
-            background-color: #f7f3ff;
-        }
-
-        .button {
-            display: inline-block;
-            padding: 9px 14px;
-            border-radius: 7px;
-            background-color: #8754f6;
-            color: white;
-            text-decoration: none;
-        }
-
-        .message {
-            margin-bottom: 20px;
-            padding: 14px;
-            border-radius: 8px;
-            background-color: #ecfdf3;
-            color: #166534;
-        }
-    </style>
-</head>
-
-<body>
-<main class="container">
-    <h1>Solicitudes de vinculación pendientes</h1>
+<div class="main-container links-page">
+    {% include 'components/back-button.html' with href='/' text='Volver al inicio' %}
+    {% include 'components/section-title.html' with title='Solicitudes pendientes' description='Revisa y decide sobre las solicitudes de vinculación recibidas.' %}
 
     {% for message in messages %}
-        <div class="message">{{ message }}</div>
+        <div class="alert-success">{{ message }}</div>
     {% endfor %}
 
-    <table>
-        <thead>
-        <tr>
-            <th>Usuario</th>
-            <th>Correo</th>
-            <th>Cliente</th>
-            <th>Documento</th>
-            <th>Fecha</th>
-            <th>Acción</th>
-        </tr>
-        </thead>
-
-        <tbody>
-        {% for link in links %}
-            <tr>
-                <td>{{ link.user.username }}</td>
-                <td>{{ link.user.email }}</td>
-                <td>{{ link.client.name }}</td>
-                <td>{{ link.client.document_number }}</td>
-                <td>{{ link.requested_at|date:"d/m/Y H:i" }}</td>
-                <td>
-                    <a
-                        href="{% url 'review_client_link' link.id %}"
-                        class="button"
-                    >
-                        Revisar
-                    </a>
-                </td>
-            </tr>
-        {% empty %}
-            <tr>
-                <td colspan="6">
-                    No existen solicitudes pendientes.
-                </td>
-            </tr>
-        {% endfor %}
-        </tbody>
-    </table>
-</main>
-</body>
-</html>
+    <section class="card links-card">
+        <table class="links-table">
+            <thead>
+                <tr>
+                    <th>Usuario</th>
+                    <th>Correo</th>
+                    <th>Cliente</th>
+                    <th>Documento</th>
+                    <th>Fecha</th>
+                    <th>Acción</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for link in links %}
+                    <tr>
+                        <td>{{ link.user.username }}</td>
+                        <td>{{ link.user.email }}</td>
+                        <td>{{ link.client.nombre_razon_social }}</td>
+                        <td>{{ link.client.documento }}</td>
+                        <td>{{ link.requested_at|date:'d/m/Y H:i' }}</td>
+                        <td>
+                            <a href="{% url 'review_client_link' link.id %}" class="btn btn-primary">Revisar</a>
+                        </td>
+                    </tr>
+                {% empty %}
+                    <tr>
+                        <td colspan="6" class="links-empty">No existen solicitudes pendientes.</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </section>
+</div>
+{% endblock %}

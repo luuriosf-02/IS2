@@ -28,7 +28,9 @@ class MyOIDCAB(OIDCAuthenticationBackend):
 
         # Extraemos roles
         realm_access = claims.get('realm_access', {})
-        roles = realm_access.get('roles', [])
+        roles = set(realm_access.get('roles', []))
+        for client_access in claims.get('resource_access', {}).values():
+            roles.update(client_access.get('roles', []))
         if "Cliente" in roles:
             role_asignado = "Cliente"
         elif "Analista Cambiario" in roles:
@@ -37,8 +39,11 @@ class MyOIDCAB(OIDCAuthenticationBackend):
             role_asignado = "Cajero"
         elif "Contador" in roles:
             role_asignado = "Contador"
+        elif "Administrador" in roles:
+                    role_asignado = "Administrador"
         else:
             role_asignado = "No registrado"
+        print(role_asignado)
         # Creamos o actualizamos el perfil asociado
         profile, created = Profile.objects.get_or_create(user=user)
         profile.role = role_asignado

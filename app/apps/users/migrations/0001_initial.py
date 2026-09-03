@@ -10,7 +10,7 @@ class Migration(migrations.Migration):
     initial = True
 
     dependencies = [
-        ('clients', '0001_initial'),
+        ('clientes', '0001_initial'),
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
     ]
 
@@ -23,7 +23,7 @@ class Migration(migrations.Migration):
                 ('requested_at', models.DateTimeField(auto_now_add=True, verbose_name='Fecha de solicitud')),
                 ('reviewed_at', models.DateTimeField(blank=True, null=True, verbose_name='Fecha de revisión')),
                 ('rejection_reason', models.TextField(blank=True, verbose_name='Motivo del rechazo')),
-                ('client', models.ForeignKey(on_delete=django.db.models.deletion.PROTECT, related_name='user_links', to='clients.client', verbose_name='Cliente')),
+                ('client', models.ForeignKey(on_delete=django.db.models.deletion.PROTECT, related_name='user_links', to='clientes.cliente', verbose_name='Cliente')),
                 ('reviewed_by', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.PROTECT, related_name='reviewed_client_links', to=settings.AUTH_USER_MODEL, verbose_name='Revisado por')),
                 ('user', models.ForeignKey(on_delete=django.db.models.deletion.PROTECT, related_name='client_links', to=settings.AUTH_USER_MODEL, verbose_name='Usuario')),
             ],

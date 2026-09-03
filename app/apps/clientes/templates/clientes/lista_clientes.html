@@ -9,12 +9,12 @@
         <!-- Encabezado con botón de crear -->
         <div class="section-header">
             <div>
-                <h1 class="section-title">Gestión de Clientes 👥</h1>
+                <h1 class="section-title">Gestión de Clientes</h1>
                 {% include 'components/paragraph.html' with text="Visualiza y gestiona toda la información de tus clientes registrados." %}
             </div>
             <div class="section-action">
                 <a href="{% url 'clientes:crear' %}" class="btn btn-success">
-                    ➕ Crear Nuevo Cliente
+                    + Crear Nuevo Cliente
                 </a>
             </div>
         </div>
@@ -82,10 +82,10 @@
                                     <td style="padding: 1rem;">
                                         <div style="display: flex; gap: 0.5rem;">
                                             <a href="{% url 'clientes:detalle' cliente.pk %}" class="btn btn-primary" style="padding: 0.5rem 0.75rem; font-size: var(--font-size-sm);">
-                                                👁️ Ver
+                                                Ver
                                             </a>
                                             <a href="{% url 'clientes:editar' cliente.pk %}" class="btn btn-outline" style="padding: 0.5rem 0.75rem; font-size: var(--font-size-sm);">
-                                                ✏️ Editar
+                                                Editar
                                             </a>
                                         </div>
                                     </td>
@@ -96,10 +96,10 @@
                 {% else %}
                     <div style="text-align: center; padding: 3rem 2rem;">
                         <p style="color: var(--color-neutral-600); margin-bottom: 1.5rem; font-size: var(--font-size-lg);">
-                            📭 No hay clientes registrados aún.
+                            **No hay clientes registrados aún.
                         </p>
                         <a href="{% url 'clientes:crear' %}" class="btn btn-success">
-                            ➕ Crear Primer Cliente
+                            + Crear Primer Cliente
                         </a>
                     </div>
                 {% endif %}

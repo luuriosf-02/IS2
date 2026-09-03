@@ -3,7 +3,7 @@ from django.db import models
 
 from django.contrib.auth.models import User
 
-from apps.clients.models import Client
+from apps.clientes.models import Cliente
 
 
 class UserClientLink(models.Model):
@@ -27,7 +27,7 @@ class UserClientLink(models.Model):
     )
 
     client = models.ForeignKey(
-        Client,
+        Cliente,
         on_delete=models.PROTECT,
         related_name="user_links",
         verbose_name="Cliente",
@@ -78,7 +78,7 @@ class UserClientLink(models.Model):
         verbose_name_plural = "Vinculaciones usuario-cliente"
 
     def __str__(self):
-        return f"{self.user.username} - {self.client.name}"
+        return f"{self.user.username} - {self.client.nombre_razon_social}"
 
 
 class Profile(models.Model):

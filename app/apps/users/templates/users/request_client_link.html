@@ -1,138 +1,32 @@
-<!DOCTYPE html>
-<html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Solicitar vinculación | Global Exchange</title>
+{% extends 'layouts/base.html' %}
 
-    <style>
-        * {
-            box-sizing: border-box;
-        }
+{% block title %}Solicitar vinculación | Global Exchange{% endblock %}
 
-        body {
-            margin: 0;
-            font-family: Arial, Helvetica, sans-serif;
-            background-color: #f6f7fb;
-            color: #172033;
-        }
+{% block content %}
+{% include 'components/navbar.html' %}
 
-        header {
-            background-color: white;
-            border-bottom: 1px solid #e5e7eb;
-            padding: 18px 60px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .brand {
-            color: #8754f6;
-            font-size: 22px;
-            font-weight: 700;
-        }
-
-        .header-button,
-        .button {
-            display: inline-block;
-            border: none;
-            border-radius: 9px;
-            background-color: #8754f6;
-            color: white;
-            padding: 12px 20px;
-            text-decoration: none;
-            font-size: 15px;
-            font-weight: 600;
-            cursor: pointer;
-        }
-
-        .container {
-            max-width: 900px;
-            margin: 60px auto;
-            padding: 0 25px;
-        }
-
-        .title {
-            margin-bottom: 10px;
-        }
-
-        .subtitle {
-            margin-bottom: 30px;
-            color: #5f6877;
-        }
-
-        .card {
-            padding: 32px;
-            border: 1px solid #e3e6ec;
-            border-radius: 16px;
-            background-color: white;
-            box-shadow: 0 4px 14px rgba(0, 0, 0, 0.05);
-        }
-
-        .client-list {
-            margin: 25px 0;
-        }
-
-        .client-list div {
-            margin-bottom: 12px;
-            padding: 14px;
-            border: 1px solid #e3e6ec;
-            border-radius: 9px;
-        }
-
-        .errorlist {
-            color: #b91c1c;
-        }
-
-        .links {
-            margin-top: 20px;
-        }
-
-        .links a {
-            color: #8754f6;
-            font-weight: 600;
-        }
-    </style>
-</head>
-
-<body>
-<header>
-    <div class="brand">Global Exchange</div>
-
-    <a href="/" class="header-button">
-        Volver al inicio
-    </a>
-</header>
-
-<main class="container">
-    <h1 class="title">Solicitar vinculación</h1>
-
-    <p class="subtitle">
-        Seleccioná uno o más clientes con los que necesitás operar.
-    </p>
+<div class="main-container links-page">
+    {% include 'components/back-button.html' with href='/users/client-links/mine/' text='Volver a mis vinculaciones' %}
+    {% include 'components/section-title.html' with title='Solicitar vinculación' description='Seleccioná uno o más clientes con los que necesitás operar.' %}
 
     <section class="card">
         <form method="post">
             {% csrf_token %}
-
             {{ form.non_field_errors }}
             {{ form.clients.errors }}
 
-            <div class="client-list">
+            <div class="client-options">
                 {{ form.clients }}
             </div>
 
-            <button type="submit" class="button">
-                Enviar solicitud
-            </button>
+            <button type="submit" class="btn btn-primary">Enviar solicitud</button>
         </form>
 
-        <div class="links">
-            <a href="{% url 'my_client_links' %}">
-                Ver mis vinculaciones
-            </a>
-        </div>
+        <p class="text-body links-note">
+            Solo se muestran clientes disponibles creados por vos.
+        </p>
+
+        <a href="{% url 'my_client_links' %}" class="link-text">Ver mis vinculaciones</a>
     </section>
-</main>
-</body>
-</html>
+</div>
+{% endblock %}

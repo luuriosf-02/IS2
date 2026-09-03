@@ -1,13 +1,13 @@
 from django import forms
 
-from apps.clients.models import Client
+from apps.clientes.models import Cliente
 
 from .models import UserClientLink
 
 
 class ClientLinkRequestForm(forms.Form):
     clients = forms.ModelMultipleChoiceField(
-        queryset=Client.objects.none(),
+        queryset=Cliente.objects.none(),
         widget=forms.CheckboxSelectMultiple,
         label="Clientes",
         required=True,
@@ -24,8 +24,8 @@ class ClientLinkRequestForm(forms.Form):
             flat=True,
         )
 
-        available_clients = Client.objects.filter(
-            is_active=True,
+        available_clients = Cliente.objects.filter(
+            creado_por=user,
         ).exclude(
             id__in=clients_with_approved_links,
         )

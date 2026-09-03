@@ -1,6 +1,6 @@
 from django.contrib.auth.decorators import login_required
-from django.contrib.auth.decorators import user_passes_test
 from django.contrib import messages
+from django.core.exceptions import PermissionDenied
 from django.shortcuts import get_object_or_404
 from django.shortcuts import redirect
 from django.shortcuts import render
@@ -18,10 +18,20 @@ from .services.keycloak_service import (
 
 def assign_role(request):
     context = {}
+    excluded_roles = {
+        "Administrador",
+        "default-roles-global_exchange",
+        "offline_access",
+        "uma_authorization",
+    }
 
     try:
         users = get_users()
-        roles = get_roles()
+        roles = [
+            role
+            for role in get_roles()
+            if role.get("name") not in excluded_roles
+        ]
 
         context["users"] = users
         context["roles"] = roles
@@ -30,10 +40,14 @@ def assign_role(request):
             user_id = request.POST.get("user_id")
             role_name = request.POST.get("role_name")
 
+            valid_role_names = {role.get("name") for role in roles}
+
             if not user_id or not role_name:
                 context["error"] = (
                     "Debe seleccionar un usuario y un rol."
                 )
+            elif role_name not in valid_role_names:
+                context["error"] = "El rol seleccionado no es válido."
             else:
                 assign_role_to_user(
                     user_id,
@@ -104,6 +118,7 @@ def request_client_link(request):
 def my_client_links(request):
     links = UserClientLink.objects.filter(
         user=request.user,
+        client__creado_por=request.user,
     ).select_related("client")
 
     return render(
@@ -115,14 +130,25 @@ def my_client_links(request):
     )
 
 
-def is_administrator(user):
-    return user.is_authenticated and (
-        user.is_staff or user.is_superuser
-    )
+def can_review_client_links(user):
+    if not user.is_authenticated:
+        return False
+
+    if user.is_staff or user.is_superuser:
+        return True
+
+    return getattr(
+        getattr(user, "profile", None),
+        "role",
+        None,
+    ) == "Administrador"
 
 
-@user_passes_test(is_administrator)
+@login_required
 def pending_client_links(request):
+    if not can_review_client_links(request.user):
+        raise PermissionDenied
+
     links = UserClientLink.objects.filter(
         status=UserClientLink.STATUS_PENDING,
     ).select_related(
@@ -139,8 +165,11 @@ def pending_client_links(request):
     )
 
 
-@user_passes_test(is_administrator)
+@login_required
 def review_client_link(request, link_id):
+    if not can_review_client_links(request.user):
+        raise PermissionDenied
+
     link = get_object_or_404(
         UserClientLink.objects.select_related(
             "user",
@@ -158,6 +187,11 @@ def review_client_link(request, link_id):
             if action == "approve":
                 link.status = UserClientLink.STATUS_APPROVED
                 link.rejection_reason = ""
+                link.client.activacion_permitida = True
+                link.client.activo = False
+                link.client.save(
+                    update_fields=["activacion_permitida", "activo"]
+                )
 
                 success_message = (
                     "La vinculación fue aprobada correctamente."

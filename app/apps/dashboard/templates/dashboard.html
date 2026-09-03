@@ -32,26 +32,35 @@
                 
                 <div style="margin-top: 1.2rem; display: flex; gap: 1rem; align-items: center;">
                     {% include 'components/button.html' with text="Ver Cotizaciones" %}
-                    {% include 'components/link.html' with text="Conoce nuestras sucursales" href="/sucursales/" %}
+                    {% include 'components/link.html' with text="Conocé nuestros valores" href="#" %}
                 </div>
             </div>
         </div>
 
-        <!-- 4. Tarjeta de Gestión de Clientes -->
-        {% if user.is_authenticated %}
-            <div class="card" style="margin-top: 2rem;">
-                <h3 class="card-title">Gestión de Clientes</h3>
-                
-                <div class="card-body">
-                    {% include 'components/paragraph.html' with text="Accede al portal de gestión de clientes para visualizar, administrar y consultar toda la información de tus clientes registrados en el sistema." %}
-                    
-                    <div style="margin-top: 1.2rem;">
-                        <a href="{% url 'clientes:lista' %}" style="background-color: var(--color-primary-500); color: white; padding: 0.75rem 1.5rem; border-radius: 0.3rem; text-decoration: none; font-weight: 500; display: inline-block; hover: background-color: var(--color-primary-700); transition: background-color 0.2s ease;">
-                            👥 Ir a Gestión de Clientes
-                        </a>
+        <!-- 4. Acciones según el rol del usuario -->
+        {% if user.is_authenticated and user.profile.role == 'Administrador' %}
+                <div class="card dashboard-actions-card">
+                    <h3 class="card-title">Administración</h3>
+                    {% include 'components/paragraph.html' with text="Gestiona las solicitudes de vinculación y los roles de los usuarios." %}
+                    <div class="action-buttons">
+                        <a href="{% url 'pending_client_links' %}" class="btn btn-primary">Solicitudes pendientes</a>
+                        <a href="{% url 'assign_role' %}" class="btn btn-outline">Asignar roles</a>
                     </div>
                 </div>
-            </div>
+        {% endif %}
+
+        {% if user.is_authenticated %}
+            {% if user.profile.role == 'Cliente' or user.profile.role == 'No registrado' %}
+                <div class="card dashboard-actions-card">
+                    <h3 class="card-title">Mis vinculaciones</h3>
+                    {% include 'components/paragraph.html' with text="Solicita acceso a tus clientes y consulta el estado de tus vinculaciones." %}
+                    <div class="action-buttons">
+                        <a href="{% url 'clientes:lista' %}" class="btn btn-primary">Mis clientes registrados</a>
+                        <a href="{% url 'my_client_links' %}" class="btn btn-primary">Mis vinculaciones</a>
+                        <a href="{% url 'request_client_link' %}" class="btn btn-outline">Solicitar vinculación</a>
+                    </div>
+                </div>
+            {% endif %}
         {% endif %}
 
     </div>

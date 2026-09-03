@@ -56,12 +56,20 @@
       "containerId" : "a3567d59-38f3-4391-998f-c3292b8307b3",
       "attributes" : { }
     }, {
+      "id" : "61c395af-1b04-44f1-adcd-7ea04327da23",
+      "name" : "offline_access",
+      "description" : "${role_offline-access}",
+      "composite" : false,
+      "clientRole" : false,
+      "containerId" : "a3567d59-38f3-4391-998f-c3292b8307b3",
+      "attributes" : { }
+    }, {
       "id" : "e38a6329-7311-4279-960b-67cae76dd89b",
       "name" : "default-roles-global_exchange",
       "description" : "${role_default-roles}",
       "composite" : true,
       "composites" : {
-        "realm" : [ "uma_authorization" ],
+        "realm" : [ "offline_access", "uma_authorization" ],
         "client" : {
           "account" : [ "manage-account", "view-profile" ]
         }
@@ -97,6 +105,14 @@
       "id" : "7ecd5d2e-a87b-490a-84b0-66d52a96c523",
       "name" : "uma_authorization",
       "description" : "${role_uma_authorization}",
+      "composite" : false,
+      "clientRole" : false,
+      "containerId" : "a3567d59-38f3-4391-998f-c3292b8307b3",
+      "attributes" : { }
+    }, {
+      "id" : "1d89e90b-b5d6-4b32-899e-7f1d2061b812",
+      "name" : "Administrador",
+      "description" : "",
       "composite" : false,
       "clientRole" : false,
       "containerId" : "a3567d59-38f3-4391-998f-c3292b8307b3",
@@ -403,6 +419,32 @@
   "webAuthnPolicyPasswordlessAcceptableAaguids" : [ ],
   "webAuthnPolicyPasswordlessExtraOrigins" : [ ],
   "users" : [ {
+    "id" : "6ab5e03c-20ba-41d4-b2fb-252b4cc8ba3a",
+    "username" : "admin",
+    "firstName" : "Administrador",
+    "lastName" : "0",
+    "email" : "admin@admin.com",
+    "emailVerified" : true,
+    "createdTimestamp" : 1788453297863,
+    "enabled" : true,
+    "totp" : false,
+    "credentials" : [ {
+      "id" : "968601bd-bc11-4ca9-bd2e-d5c924409d05",
+      "type" : "password",
+      "userLabel" : "My password",
+      "createdDate" : 1788453308695,
+      "secretData" : "{\"value\":\"GYofgToGovxts3Os4JrJy8a9/Ewz7lY/Rs8ie7pqkPJgqXXAcgnfSAKMKnQN/IdKNL0igZZHqVRXdBLPjvteOQ==\",\"salt\":\"p9XBNoq/nV6TC2GvWItC1g==\",\"additionalParameters\":{}}",
+      "credentialData" : "{\"hashIterations\":210000,\"algorithm\":\"pbkdf2-sha512\",\"additionalParameters\":{}}"
+    } ],
+    "disableableCredentialTypes" : [ ],
+    "requiredActions" : [ ],
+    "realmRoles" : [ "default-roles-global_exchange", "Administrador" ],
+    "clientRoles" : {
+      "realm-management" : [ "realm-admin" ]
+    },
+    "notBefore" : 0,
+    "groups" : [ ]
+  }, {
     "id" : "41f3559d-5303-426b-b706-fe91eccd9508",
     "username" : "lujan",
     "firstName" : "Lujan",
@@ -422,7 +464,7 @@
     } ],
     "disableableCredentialTypes" : [ ],
     "requiredActions" : [ ],
-    "realmRoles" : [ "default-roles-global_exchange" ],
+    "realmRoles" : [ "default-roles-global_exchange", "Cajero" ],
     "notBefore" : 0,
     "groups" : [ ]
   }, {
@@ -453,7 +495,7 @@
     "firstName" : "Juan",
     "lastName" : "Rodriguez",
     "email" : "fe142536475000xcsd@gmail.com",
-    "emailVerified" : false,
+    "emailVerified" : true,
     "createdTimestamp" : 1787800235966,
     "enabled" : true,
     "totp" : false,
@@ -467,7 +509,7 @@
     } ],
     "disableableCredentialTypes" : [ ],
     "requiredActions" : [ ],
-    "realmRoles" : [ "default-roles-global_exchange" ],
+    "realmRoles" : [ "default-roles-global_exchange", "Cliente" ],
     "notBefore" : 0,
     "groups" : [ ]
   } ],
@@ -639,6 +681,23 @@
     "authenticationFlowBindingOverrides" : { },
     "fullScopeAllowed" : true,
     "nodeReRegistrationTimeout" : -1,
+    "protocolMappers" : [ {
+      "id" : "096df976-ac52-4465-b0f9-9b89838183f9",
+      "name" : "user realm role",
+      "protocol" : "openid-connect",
+      "protocolMapper" : "oidc-usermodel-realm-role-mapper",
+      "consentRequired" : false,
+      "config" : {
+        "introspection.token.claim" : "true",
+        "multivalued" : "true",
+        "userinfo.token.claim" : "true",
+        "id.token.claim" : "true",
+        "lightweight.claim" : "false",
+        "access.token.claim" : "true",
+        "claim.name" : "realm_access.roles",
+        "jsonType.label" : "String"
+      }
+    } ],
     "defaultClientScopes" : [ "web-origins", "acr", "roles", "profile", "email" ],
     "optionalClientScopes" : [ "address", "phone", "offline_access", "microprofile-jwt" ]
   }, {
@@ -1258,7 +1317,7 @@
       "subType" : "authenticated",
       "subComponents" : { },
       "config" : {
-        "allowed-protocol-mapper-types" : [ "saml-user-attribute-mapper", "oidc-usermodel-attribute-mapper", "oidc-address-mapper", "saml-role-list-mapper", "saml-user-property-mapper", "oidc-sha256-pairwise-sub-mapper", "oidc-full-name-mapper", "oidc-usermodel-property-mapper" ]
+        "allowed-protocol-mapper-types" : [ "oidc-usermodel-property-mapper", "oidc-usermodel-attribute-mapper", "saml-user-attribute-mapper", "oidc-address-mapper", "oidc-full-name-mapper", "saml-user-property-mapper", "saml-role-list-mapper", "oidc-sha256-pairwise-sub-mapper" ]
       }
     }, {
       "id" : "73359704-df19-4fc2-9b5d-3401849d09b7",
@@ -1293,7 +1352,7 @@
       "subType" : "anonymous",
       "subComponents" : { },
       "config" : {
-        "allowed-protocol-mapper-types" : [ "saml-user-property-mapper", "oidc-full-name-mapper", "oidc-address-mapper", "oidc-usermodel-attribute-mapper", "saml-user-attribute-mapper", "oidc-usermodel-property-mapper", "saml-role-list-mapper", "oidc-sha256-pairwise-sub-mapper" ]
+        "allowed-protocol-mapper-types" : [ "oidc-full-name-mapper", "saml-user-attribute-mapper", "oidc-usermodel-property-mapper", "oidc-address-mapper", "saml-user-property-mapper", "saml-role-list-mapper", "oidc-usermodel-attribute-mapper", "oidc-sha256-pairwise-sub-mapper" ]
       }
     }, {
       "id" : "709538eb-e175-4338-83bb-22434bdd39f2",

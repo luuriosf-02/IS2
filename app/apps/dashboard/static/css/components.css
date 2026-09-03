@@ -209,6 +209,10 @@
     flex: 1; /* Hace que el contenedor crezca si es necesario para empujar el footer abajo si lo hubiera */
 }
 
+  .dashboard-actions-card {
+    margin-top: 2rem;
+  }
+
 /* --- Variantes de Botones basadas en Violeta y Gris --- */
 .btn-secondary {
   background-color: var(--color-neutral-700);
@@ -297,6 +301,181 @@
   background-color: var(--color-neutral-100);
   color: var(--color-neutral-700);
   border: 1px solid var(--color-neutral-200);
+}
+
+/* --- Pantallas de vinculaciones --- */
+.links-page {
+  padding-top: 2rem;
+  padding-bottom: 3rem;
+}
+
+.page-back {
+  margin-bottom: 1.5rem;
+}
+
+.links-card {
+  overflow-x: auto;
+}
+
+.links-table {
+  width: 100%;
+  min-width: 680px;
+  border-collapse: collapse;
+  color: var(--color-neutral-900);
+}
+
+.links-table th,
+.links-table td {
+  padding: 0.9rem 1rem;
+  border-bottom: 1px solid var(--color-neutral-200);
+  text-align: left;
+  vertical-align: middle;
+}
+
+.links-table th {
+  background-color: var(--color-neutral-100);
+  color: var(--color-neutral-700);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-semibold);
+}
+
+.links-table tbody tr:last-child td {
+  border-bottom: 0;
+}
+
+.links-table tbody tr:hover {
+  background-color: var(--color-primary-50);
+}
+
+.status-pending,
+.status-approved,
+.status-rejected {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.25rem 0.65rem;
+  border-radius: var(--radius-full);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+}
+
+.status-pending {
+  background-color: #fef3c7;
+  color: #92400e;
+}
+
+.status-approved {
+  background-color: #d1fae5;
+  color: #065f46;
+}
+
+.status-rejected {
+  background-color: #fee2e2;
+  color: #991b1b;
+}
+
+.links-empty {
+  padding: 2rem 1rem !important;
+  color: var(--color-neutral-700);
+  text-align: center !important;
+}
+
+.form-field {
+  margin-bottom: 1.5rem;
+}
+
+.form-field label {
+  display: block;
+  margin-bottom: 0.5rem;
+  color: var(--color-neutral-900);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-semibold);
+}
+
+.form-control {
+  width: 100%;
+  padding: 0.7rem 0.85rem;
+  border: 1px solid var(--color-neutral-200);
+  border-radius: var(--radius-md);
+  background-color: var(--color-neutral-0);
+  color: var(--color-neutral-900);
+  font: inherit;
+}
+
+.form-control:focus {
+  outline: 2px solid var(--color-primary-100);
+  border-color: var(--color-primary-500);
+}
+
+.client-options {
+  display: grid;
+  gap: 0.75rem;
+  margin: 1rem 0 1.5rem;
+}
+
+.client-options div {
+  padding: 0.85rem 1rem;
+  border: 1px solid var(--color-neutral-200);
+  border-radius: var(--radius-md);
+  background-color: var(--color-neutral-0);
+}
+
+.client-options div:hover {
+  border-color: var(--color-primary-500);
+  background-color: var(--color-primary-50);
+}
+
+.form-errors,
+.alert-success,
+.alert-error {
+  margin-bottom: 1.25rem;
+  padding: 0.85rem 1rem;
+  border-radius: var(--radius-md);
+  font-size: var(--font-size-sm);
+}
+
+.form-errors,
+.alert-error {
+  background-color: #fef2f2;
+  border: 1px solid #fecaca;
+  color: #991b1b;
+}
+
+.alert-success {
+  background-color: #ecfdf5;
+  border: 1px solid #a7f3d0;
+  color: #065f46;
+}
+
+.links-note {
+  margin-top: 1.5rem;
+  padding: 1rem;
+  border-left: 3px solid var(--color-primary-500);
+  background-color: var(--color-primary-50);
+}
+
+.review-data {
+  margin-bottom: 1.5rem;
+  padding: 1rem;
+  border-radius: var(--radius-md);
+  background-color: var(--color-neutral-100);
+}
+
+.review-data p {
+  margin: 0.45rem 0;
+}
+
+.review-data p:first-child {
+  margin-top: 0;
+}
+
+.review-data p:last-child {
+  margin-bottom: 0;
+}
+
+@media (max-width: 700px) {
+  .links-page {
+    padding-top: 1rem;
+  }
 }
 
 .badge-warning {

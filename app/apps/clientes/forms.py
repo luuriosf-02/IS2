@@ -4,6 +4,12 @@ from .models import Cliente
 
 class ClienteForm(forms.ModelForm):
     """Formulario para crear y editar clientes."""
+
+    def __init__(self, *args, permitir_activacion=False, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['activo'].disabled = not permitir_activacion
+        if not self.instance.pk:
+            self.fields['activo'].initial = False
     
     class Meta:
         model = Cliente
