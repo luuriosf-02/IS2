@@ -1,6 +1,8 @@
 from django.conf import settings
 from django.db import models
 
+from django.contrib.auth.models import User
+
 from apps.clients.models import Client
 
 
@@ -77,3 +79,14 @@ class UserClientLink(models.Model):
 
     def __str__(self):
         return f"{self.user.username} - {self.client.name}"
+
+
+class Profile(models.Model):
+    # Relación uno a uno con el usuario nativo de Django
+    user = models.OneToOneField(User, on_delete=models.CASCADE)
+    
+    # Campo para guardar el rol que viene de OIDC
+    role = models.CharField(max_length=50, default='Cliente')
+    
+    def __str__(self):
+        return f"{self.user.username} - {self.role}"

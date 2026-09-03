@@ -1,4 +1,5 @@
 from mozilla_django_oidc.auth import OIDCAuthenticationBackend
+from apps.users.models import Profile
 
 class MyOIDCAB(OIDCAuthenticationBackend):
     def verify_claims(self, claims):
@@ -23,17 +24,22 @@ class MyOIDCAB(OIDCAuthenticationBackend):
         user.first_name = claims.get('given_name', '')
         user.last_name = claims.get('family_name', '')
         user.email = claims.get('email', '')
-        
-        # Extraemos roles de prueba
+        user.save() # Guardamos el usuario base
+
+        # Extraemos roles
         realm_access = claims.get('realm_access', {})
-        print(realm_access)
         roles = realm_access.get('roles', [])
-        
-        print("Roles encontrados:", roles) # Para ver qué trae exactamente
-        
-        if len(roles) > 0:
-            user.role = roles[0]
+        if "Cliente" in roles:
+            role_asignado = "Cliente"
+        elif "Analista Cambiario" in roles:
+            role_asignado = "Analista Cambiario"
+        elif "Cajero" in roles:
+            role_asignado = "Cajero"
+        elif "Contador" in roles:
+            role_asignado = "Contador"
         else:
-            user.role = 'Cliente'
-            
-        user.save()
+            role_asignado = "No registrado"
+        # Creamos o actualizamos el perfil asociado
+        profile, created = Profile.objects.get_or_create(user=user)
+        profile.role = role_asignado
+        profile.save()
