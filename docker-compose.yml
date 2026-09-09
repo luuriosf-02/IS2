@@ -39,7 +39,7 @@ services:
     image: quay.io/keycloak/keycloak:24.0
     container_name: app_keycloak
     restart: always
-    command: start-dev --db=dev-file --import-realm
+    command: start-dev --db=dev-file --import-realm --spi-theme-cache-themes=false --spi-theme-cache-templates=false
     environment:
       KEYCLOAK_ADMIN: ${KEYCLOAK_ADMIN}
       KEYCLOAK_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD}
@@ -56,6 +56,7 @@ services:
     volumes:
       - keycloak_data:/opt/keycloak/data
       - ./keycloak-export:/opt/keycloak/data/import
+      - ./themes:/opt/keycloak/themes
     depends_on:
       db:
         condition: service_healthy
