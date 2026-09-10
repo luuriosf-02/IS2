@@ -1,0 +1,83 @@
+{% extends 'layouts/base.html' %}
+
+{% block content %}
+<div class="container my-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="text-primary font-weight-bold">Gestión de Tasas y Divisas</h2>
+            <p class="text-muted">Panel de administración exclusivo para Analistas Cambiarios.</p>
+        </div>
+        <a href="{% url 'home' %}" class="btn btn-outline-secondary">Volver al Inicio</a>
+    </div>
+
+    <!-- Formulario para Registrar / Actualizar Cotizaciones -->
+    <div class="card p-4 mb-4 shadow-sm">
+        <h4 class="text-secondary mb-3">Actualizar Cotización</h4>
+        <form method="POST" action="{% url 'gestion_divisas' %}">
+            {% csrf_token %}
+            
+            <div class="row g-3">
+                <div class="col-md-4">
+                    <label for="moneda" class="form-label font-weight-bold">Divisa</label>
+                    <select name="moneda" id="moneda" class="form-select" required>
+                        <option value="USD">USD - Dólar Estadounidense</option>
+                        <option value="EUR">EUR - Euro</option>
+                        <option value="BRL">BRL - Real Brasileño</option>
+                        <option value="ARS">ARS - Peso Argentino</option>
+                        <option value="PYG">PYG - Guaraní</option>
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <label for="compra" class="form-label font-weight-bold">Precio Compra</label>
+                    <input type="number" step="0.0001" name="compra" id="compra" class="form-control" placeholder="Ej: 7300" required>
+                </div>
+                <div class="col-md-4">
+                    <label for="venta" class="form-label font-weight-bold">Precio Venta</label>
+                    <input type="number" step="0.0001" name="venta" id="venta" class="form-control" placeholder="Ej: 7400" required>
+                </div>
+            </div>
+
+            <button type="submit" class="btn btn-primary mt-4" style="background-color: #7c5dfa; border: none;">
+                Guardar Cotización
+            </button>
+        </form>
+    </div>
+
+    <!-- Tabla de Cotizaciones Cargadas -->
+    <div class="card p-4 shadow-sm">
+        <h4 class="text-secondary mb-3">Cotizaciones Vigentes del Día</h4>
+        <div class="table-responsive">
+            <table class="table table-hover align-middle">
+                <thead class="table-light">
+                    <tr>
+                        <th>Moneda</th>
+                        <th>Compra</th>
+                        <th>Venta</th>
+                        <th>Última Actualización</th>
+                        <th>Modificado Por</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% if tasas %}
+                        {% for t in tasas %}
+                        <tr>
+                            <td><strong>{{ t.moneda.codigo|default:t.moneda }}</strong></td>
+                            <td class="text-success font-weight-bold">{{ t.tasa_compra|floatformat:"-2" }}</td>
+                            <td class="text-danger font-weight-bold">{{ t.tasa_venta|floatformat:"-2" }}</td>
+                            <td>{{ t.fecha_actualizacion|date:"H:i - d/m/Y" }}</td>
+                            <td>{{ t.usuario_modificador|default:"Sistema" }}</td>
+                        </tr>
+                        {% endfor %}
+                    {% else %}
+                        <tr>
+                            <td colspan="5" class="text-center text-muted py-3">
+                                No hay cotizaciones cargadas aún. Usa el formulario de arriba para agregar una.
+                            </td>
+                        </tr>
+                    {% endif %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

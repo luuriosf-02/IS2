@@ -27,3 +27,18 @@ def custom_logout(request):
     
     # 4. Redirige al usuario a Keycloak para destruir su sesión allá también
     return redirect(keycloak_logout_url)
+
+
+def home(request):
+    es_analista = False
+    
+    if request.user.is_authenticated:
+        # Verifica por grupo, por superusuario o si el nombre de usuario es 'analista'
+        es_grupo_analista = request.user.groups.filter(name__icontains='analista').exists()
+        es_usuario_analista = request.user.username.lower() in ['analista', 'analista cambiario']
+        
+        es_analista = es_grupo_analista or es_usuario_analista or request.user.is_superuser
+
+    return render(request, 'dashboard.html', {
+        'es_analista': es_analista,
+    })

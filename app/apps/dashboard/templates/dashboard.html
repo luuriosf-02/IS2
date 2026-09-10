@@ -1,6 +1,8 @@
 {% extends 'layouts/base.html' %}
 
 {% block content %}
+<p class="text-danger fw-bold">
+</p>
     <!-- 1. Navbar con el usuario actual y opción de login/logout -->
     {% include 'components/navbar.html' %}
 
@@ -25,17 +27,24 @@
 
         <!-- 3. Tarjeta informativa sobre la Casa de Cambio -->
         <div class="card">
-            <h3 class="card-title">Sobre Nuestra Empresa</h3>
-            
-            <div class="card-body">
-                {% include 'components/paragraph.html' with text="Somos una casa de cambio líder comprometida con ofrecerte las mejores tasas del mercado para tus operaciones en moneda extranjera, garantizando rapidez, transparencia y seguridad en cada transacción." %}
-                
-                <div style="margin-top: 1.2rem; display: flex; gap: 1rem; align-items: center;">
-                    {% include 'components/button.html' with text="Ver Cotizaciones" %}
-                    {% include 'components/link.html' with text="Conocé nuestros valores" href="#" %}
-                </div>
-            </div>
+    <h3 class="card-title">Sobre Nuestra Empresa</h3>
+    
+    <div class="card-body">
+        {% include 'components/paragraph.html' with text="Somos una casa de cambio líder comprometida con ofrecerte las mejores tasas del mercado para tus operaciones en moneda extranjera, garantizando rapidez, transparencia y seguridad en cada transacción." %}
+        
+        <div style="margin-top: 1.2rem; display: flex; gap: 1rem; align-items: center;">
+            {% if user.is_authenticated and es_analista %}
+                <a href="{% url 'gestion_divisas' %}" style="background-color: #7c5dfa; color: white; padding: 0.6rem 1.2rem; border-radius: 8px; text-decoration: none; font-weight: 600; display: inline-block;">
+                    Gestionar Tasas y Divisas
+                </a>
+            {% else %}
+                {% include 'components/button.html' with text="Ver Cotizaciones" %}
+            {% endif %}
+
+            {% include 'components/link.html' with text="Conocé nuestros valores" href="#" %}
         </div>
+    </div>
+</div>
 
         <!-- 4. Acciones según el rol del usuario -->
         {% if user.is_authenticated and user.profile.role == 'Administrador' %}
@@ -65,3 +74,14 @@
 
     </div>
 {% endblock %}
+
+{% if user.is_authenticated and es_analista %}
+    <div class="my-4 p-4 border rounded bg-light">
+        <h4 class="text-primary">Acciones de Analista Cambiario</h4>
+        <p class="text-muted">Gestiona las cotizaciones y divisas del día desde aquí:</p>
+        
+        <a href="{% url 'gestion_divisas' %}" class="btn btn-primary btn-lg">
+            <i class="bi bi-currency-exchange"></i> Ir a Gestión de Tasas
+        </a>
+    </div>
+{% endif %}
