@@ -1,6 +1,8 @@
-from django.test import TestCase
+from django.test import TestCase, RequestFactory
 from django.contrib.auth import get_user_model
 from apps.divisas.models import Moneda, TasaCambio, Notificacion
+from apps.divisas.views import gestion_divisas_view
+from apps.users.models import Profile
 
 User = get_user_model()
 
@@ -34,3 +36,21 @@ class DivisasTestCase(TestCase):
         )
         self.assertEqual(tasa.tasa_compra, 7500.00)
         self.assertTrue(Notificacion.objects.filter(usuario=self.user).exists())
+
+    def test_analista_puede_acceder_por_profile_role(self):
+        """El acceso debe validarse con el rol guardado en Profile, no solo con grupos de Django."""
+        factory = RequestFactory()
+        user = User.objects.create_user(
+            username='analista_perfil',
+            email='analista@example.com',
+            password='password123',
+            is_active=True,
+        )
+        Profile.objects.create(user=user, role='Analista Cambiario')
+
+        request = factory.get('/divisas/gestion-tasas/')
+        request.user = user
+
+        response = gestion_divisas_view(request)
+
+        self.assertEqual(response.status_code, 200)

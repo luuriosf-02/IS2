@@ -5,8 +5,10 @@ from .models import TasaCambio, Moneda
 
 @login_required
 def gestion_divisas_view(request):
+    profile = getattr(request.user, 'profile', None)
     es_analista = (
-        request.user.groups.filter(name='Analista Cambiario').exists()
+        bool(profile and profile.role == 'Analista Cambiario')
+        or request.user.groups.filter(name='Analista Cambiario').exists()
         or request.user.username.lower() == 'analista'
     )
 
