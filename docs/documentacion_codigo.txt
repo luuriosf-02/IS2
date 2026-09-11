@@ -1,0 +1,54 @@
+DOCUMENTACION AUTOMATICA DEL CODIGO FUENTE
+
+Python Library Documentation: package app.apps.clientes in app.apps
+
+NAME
+    app.apps.clientes
+
+PACKAGE CONTENTS
+    admin
+    apps
+    forms
+    migrations (package)
+    models
+    tests
+    urls
+    views
+
+FILE
+    /mnt/d/Ruth/IIN/is2/IS2/app/apps/clientes/__init__.py
+
+
+==================================================
+Python Library Documentation: package app.apps.users in app.apps
+
+NAME
+    app.apps.users
+
+PACKAGE CONTENTS
+    forms
+    migrations (package)
+    models
+    urls
+    views
+
+FILE
+    /mnt/d/Ruth/IIN/is2/IS2/app/apps/users/__init__.py
+
+
+==================================================
+Python Library Documentation: package app.apps.dashboard in app.apps
+
+NAME
+    app.apps.dashboard
+
+PACKAGE CONTENTS
+    models
+    urls
+    views
+
+FILE
+    /mnt/d/Ruth/IIN/is2/IS2/app/apps/dashboard/__init__.py
+
+
+==================================================
