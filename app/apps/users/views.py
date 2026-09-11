@@ -8,7 +8,9 @@ from django.utils import timezone
 
 from .forms import ClientLinkRequestForm
 from .forms import ReviewClientLinkForm
+from .forms import TasaCambioForm
 from .models import UserClientLink
+from .models import TasaCambio
 from .services.keycloak_service import (
     assign_role_to_user,
     get_roles,
@@ -225,4 +227,28 @@ def review_client_link(request, link_id):
             "link": link,
             "form": form,
         },
+        
     )
+@login_required
+def gestion_divisas_view(request):
+    # Verificación de Rol por nombre exacto de Keycloak
+    es_analista = request.user.groups.filter(name='Analista Cambiario').exists()
+    
+    if not es_analista and not request.user.is_superuser:
+        return render(request, '403.html', status=403)
+
+    tasas = TasaCambio.objects.all()
+
+    if request.method == 'POST':
+        form = TasaCambioForm(request.POST)
+        if form.is_valid():
+            form.save()
+            messages.success(request, 'Tasa de cambio actualizada correctamente.')
+            return redirect('gestion_divisas')
+    else:
+        form = TasaCambioForm()
+
+    return render(request, 'divisas/gestion_tasas.html', {
+        'form': form,
+        'tasas': tasas
+    })

@@ -1,11 +1,13 @@
 from django.urls import path
 
-from .views import assign_role
-from .views import my_client_links
-from .views import pending_client_links
-from .views import request_client_link
-from .views import review_client_link
-
+from .views import (
+    assign_role,
+    gestion_divisas_view,
+    my_client_links,
+    pending_client_links,
+    request_client_link,
+    review_client_link,
+)
 
 urlpatterns = [
     path(
@@ -32,5 +34,10 @@ urlpatterns = [
         "client-links/<int:link_id>/review/",
         review_client_link,
         name="review_client_link",
+    ),
+    path(
+        "gestion-tasas/",
+        gestion_divisas_view,
+        name="gestion_divisas",
     ),
 ]

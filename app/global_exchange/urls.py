@@ -4,7 +4,6 @@ URL configuration for global_exchange project.
 
 from django.contrib import admin
 from django.urls import path, include
-
 from apps.dashboard.views import home, custom_logout
 
 
@@ -17,5 +16,6 @@ urlpatterns = [
     path('users/', include('apps.users.urls')),
     path('oidc/', include('mozilla_django_oidc.urls')), # URLs automáticas para login/logout
     path('clientes/', include('apps.clientes.urls')), # URLs de la app clientes
+    path('divisas/', include('apps.divisas.urls')),
     path("medios-pago/", include("apps.payments.urls")),
 ]
