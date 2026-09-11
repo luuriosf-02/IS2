@@ -35,6 +35,19 @@ def obtener_cliente_del_usuario(user):
 
 @login_required
 def lista_medios_pago(request):
+    """
+    Muestra los medios de pago del cliente vinculado al usuario.
+
+    Args:
+        request: Solicitud HTTP del usuario autenticado.
+
+    Returns:
+        HttpResponse: Página con la lista de medios de pago.
+
+    Raises:
+        PermissionDenied: Si el usuario no posee una vinculación
+        aprobada con un cliente.
+    """
     cliente = obtener_cliente_del_usuario(request.user)
 
     medios_pago = MedioPago.objects.filter(

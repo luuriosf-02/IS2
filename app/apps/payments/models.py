@@ -4,6 +4,13 @@ from apps.clientes.models import Cliente
 
 
 class MedioPago(models.Model):
+    """
+    Representa un medio de pago registrado por un cliente.
+
+    Almacena datos identificativos como el tipo, la marca,
+    los últimos cuatro dígitos y el vencimiento. No almacena
+    el número completo de la tarjeta ni el código CVV.
+    """
     TIPO_CHOICES = [
         ("CREDITO", "Tarjeta de crédito"),
         ("DEBITO", "Tarjeta de débito"),

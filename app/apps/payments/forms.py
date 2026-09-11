@@ -6,6 +6,12 @@ from .models import MedioPago
 
 
 class MedioPagoForm(forms.ModelForm):
+    """
+    Formulario para crear y modificar medios de pago.
+
+    Valida que los últimos cuatro dígitos sean numéricos
+    y que la fecha de vencimiento no haya pasado.
+    """
     class Meta:
         model = MedioPago
 
