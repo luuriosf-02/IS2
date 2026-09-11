@@ -1,29 +1,107 @@
-# apps/dashboard/views.py (o donde tengas tus vistas)
+# apps/dashboard/views.py
+from decimal import Decimal, InvalidOperation
 from django.shortcuts import render, redirect
 from django.contrib.auth import logout as django_logout
 
+CURRENCIES = [
+    {"code": "USD", "name": "Dólar estadounidense", "compra": Decimal("0.96"), "venta": Decimal("1.00")},
+    {"code": "EUR", "name": "Euro", "compra": Decimal("0.90"), "venta": Decimal("0.94")},
+    {"code": "GBP", "name": "Libra esterlina", "compra": Decimal("0.81"), "venta": Decimal("0.85")},
+    {"code": "CLP", "name": "Peso chileno", "compra": Decimal("930.00"), "venta": Decimal("970.00")},
+    {"code": "ARS", "name": "Peso argentino", "compra": Decimal("920.00"), "venta": Decimal("980.00")},
+]
+
+
+def get_currency(code):
+    for currency in CURRENCIES:
+        if currency["code"] == code:
+            return currency
+    return CURRENCIES[0]
+
+
+def format_money(value):
+    return f"{value.quantize(Decimal('0.01')):,.2f}"
+
+
+def calculate_conversion(amount, from_currency, to_currency):
+    amount = Decimal(str(amount))
+    source = get_currency(from_currency)
+    target = get_currency(to_currency)
+
+    if source["code"] == target["code"]:
+        return {
+            "amount": amount,
+            "result": amount,
+            "from_currency": source["code"],
+            "to_currency": target["code"],
+            "source_sell": source["venta"],
+            "target_buy": target["compra"],
+            "source_buy": source["compra"],
+            "target_sell": target["venta"],
+        }
+
+    usd_value = amount / source["venta"]
+    converted = usd_value * target["compra"]
+
+    return {
+        "amount": amount,
+        "result": converted,
+        "from_currency": source["code"],
+        "to_currency": target["code"],
+        "source_sell": source["venta"],
+        "target_buy": target["compra"],
+        "source_buy": source["compra"],
+        "target_sell": target["venta"],
+    }
+
+
 def home(request):
-    # Django ya inyecta `request.user` gracias a Keycloak y la autenticación
     return render(request, 'dashboard.html', {'user': request.user})
 
+
+def currency_converter(request):
+    from_currency = request.POST.get('from_currency', 'USD')
+    to_currency = request.POST.get('to_currency', 'EUR')
+    amount_value = request.POST.get('amount', '100')
+    conversion = None
+    error = None
+
+    if request.method == 'POST':
+        try:
+            amount = Decimal(amount_value)
+            if amount <= 0:
+                error = 'El importe debe ser mayor a cero.'
+            else:
+                conversion = calculate_conversion(amount, from_currency, to_currency)
+        except (InvalidOperation, ValueError):
+            error = 'Ingresa un importe válido para continuar.'
+
+    return render(
+        request,
+        'simulador/conversion.html',
+        {
+            'user': request.user,
+            'currencies': CURRENCIES,
+            'from_currency': from_currency,
+            'to_currency': to_currency,
+            'amount': amount_value,
+            'conversion': conversion,
+            'error': error,
+        },
+    )
+
+
 def custom_logout(request):
-    # 1. Cierra la sesión localmente en Django
     django_logout(request)
-    
-    # 2. Configura los datos de tu servidor Keycloak
-    # (Reemplaza estos valores con la URL de tu Keycloak, tu realm y tu client_id)
+
     KEYCLOAK_URL = "http://localhost:8080/realms/global_exchange/protocol/openid-connect/logout"
     CLIENT_ID = "django_client"
-    
-    # URL a la que Keycloak devolverá al usuario después de cerrar sesión (la página principal de tu app)
     redirect_uri = request.build_absolute_uri('/')
-    
-    # 3. Construye la URL de cierre de sesión global de Keycloak
+
     keycloak_logout_url = (
         f"{KEYCLOAK_URL}"
         f"?client_id={CLIENT_ID}"
         f"&post_logout_redirect_uri={redirect_uri}"
     )
-    
-    # 4. Redirige al usuario a Keycloak para destruir su sesión allá también
+
     return redirect(keycloak_logout_url)

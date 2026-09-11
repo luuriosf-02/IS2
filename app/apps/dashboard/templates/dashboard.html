@@ -30,9 +30,9 @@
             <div class="card-body">
                 {% include 'components/paragraph.html' with text="Somos una casa de cambio líder comprometida con ofrecerte las mejores tasas del mercado para tus operaciones en moneda extranjera, garantizando rapidez, transparencia y seguridad en cada transacción." %}
                 
-                <div style="margin-top: 1.2rem; display: flex; gap: 1rem; align-items: center;">
-                    {% include 'components/button.html' with text="Ver Cotizaciones" %}
-                    {% include 'components/link.html' with text="Conocé nuestros valores" href="#" %}
+                <div style="margin-top: 1.2rem; display: flex; gap: 1rem; align-items: center; flex-wrap: wrap;">
+                    <a href="{% url 'simulador' %}" class="btn btn-primary">Ver simulador</a>
+                    <a href="{% url 'simulador' %}" class="link-text">Conocer tasas</a>
                 </div>
             </div>
         </div>
