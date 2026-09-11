@@ -1,0 +1,47 @@
+{% extends "payments/base.html" %}
+
+{% block title %}
+    Eliminar medio de pago
+{% endblock %}
+
+{% block content %}
+    <section class="page-header">
+        <div>
+            <h1>Eliminar medio de pago</h1>
+
+            <p>
+                Esta acción eliminará definitivamente el registro.
+            </p>
+        </div>
+    </section>
+
+    <section class="panel">
+        <p>
+            ¿Confirmás que querés eliminar
+            <strong>{{ medio_pago.alias }}</strong>,
+            {{ medio_pago.get_marca_display }}
+            terminada en
+            <strong>{{ medio_pago.ultimos_cuatro }}</strong>?
+        </p>
+
+        <form method="post">
+            {% csrf_token %}
+
+            <div class="actions">
+                <button
+                    class="button button-danger"
+                    type="submit"
+                >
+                    Sí, eliminar
+                </button>
+
+                <a
+                    class="button button-secondary"
+                    href="{% url 'payments:lista' %}"
+                >
+                    Cancelar
+                </a>
+            </div>
+        </form>
+    </section>
+{% endblock %}

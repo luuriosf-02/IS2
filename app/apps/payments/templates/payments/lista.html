@@ -1,0 +1,355 @@
+{% extends "payments/base.html" %}
+
+{% block title %}
+    Medios de pago | Global Exchange
+{% endblock %}
+
+{% block content %}
+<style>
+    .payments-header {
+        margin-bottom: 28px;
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 20px;
+    }
+
+    .payments-header h1 {
+        margin: 0 0 10px;
+        color: #111827;
+        font-size: 32px;
+        line-height: 1.2;
+    }
+
+    .payments-header p {
+        margin: 0;
+        color: #667085;
+        font-size: 16px;
+    }
+
+    .lila-button {
+        min-height: 44px;
+        padding: 11px 18px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        background: #8954f6;
+        border: 1px solid #8954f6;
+        border-radius: 9px;
+        box-shadow: 0 4px 10px rgba(137, 84, 246, 0.2);
+        color: #ffffff;
+        font-size: 14px;
+        font-weight: 700;
+        text-decoration: none;
+        transition:
+            background 0.2s,
+            border-color 0.2s,
+            transform 0.2s,
+            box-shadow 0.2s;
+    }
+
+    .lila-button:hover {
+        background: #7040dc;
+        border-color: #7040dc;
+        box-shadow: 0 6px 14px rgba(137, 84, 246, 0.28);
+        color: #ffffff;
+        transform: translateY(-1px);
+    }
+
+    .payment-grid {
+        display: grid;
+        grid-template-columns:
+            repeat(auto-fill, minmax(310px, 1fr));
+        gap: 20px;
+    }
+
+    .payment-card {
+        padding: 24px;
+        background: #ffffff;
+        border: 1px solid #e3e7ee;
+        border-radius: 14px;
+        box-shadow: 0 5px 18px rgba(16, 24, 40, 0.06);
+        transition:
+            transform 0.2s,
+            box-shadow 0.2s,
+            border-color 0.2s;
+    }
+
+    .payment-card:hover {
+        border-color: #cdb8fc;
+        box-shadow: 0 9px 24px rgba(137, 84, 246, 0.11);
+        transform: translateY(-2px);
+    }
+
+    .card-header {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 14px;
+    }
+
+    .card-header h2 {
+        margin: 0 0 5px;
+        color: #111827;
+        font-size: 20px;
+    }
+
+    .card-type {
+        margin: 0;
+        color: #667085;
+        font-size: 14px;
+    }
+
+    .default-badge {
+        padding: 6px 10px;
+        background: #f1eaff;
+        border-radius: 999px;
+        color: #7040dc;
+        font-size: 12px;
+        font-weight: 700;
+    }
+
+    .card-number {
+        margin: 25px 0;
+        color: #222035;
+        font-size: 20px;
+        font-weight: 700;
+        letter-spacing: 2px;
+    }
+
+    .payment-data {
+        margin: 10px 0;
+        display: flex;
+        justify-content: space-between;
+        gap: 15px;
+        color: #667085;
+        font-size: 14px;
+    }
+
+    .payment-data strong {
+        color: #344054;
+    }
+
+    .status-active,
+    .status-inactive {
+        padding: 4px 9px;
+        border-radius: 999px;
+        font-size: 12px;
+        font-weight: 700;
+    }
+
+    .status-active {
+        background: #e7f6ed;
+        color: #157347;
+    }
+
+    .status-inactive {
+        background: #fee4e2;
+        color: #b42318;
+    }
+
+    .card-actions {
+        margin-top: 22px;
+        padding-top: 18px;
+        display: flex;
+        gap: 10px;
+        border-top: 1px solid #eaecf0;
+    }
+
+    .edit-button,
+    .delete-button {
+        min-height: 39px;
+        padding: 9px 15px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 8px;
+        font-size: 14px;
+        font-weight: 650;
+        text-decoration: none;
+        transition:
+            background 0.2s,
+            border-color 0.2s;
+    }
+
+    .edit-button {
+        background: #f1eaff;
+        border: 1px solid #d9c7ff;
+        color: #7040dc;
+    }
+
+    .edit-button:hover {
+        background: #e6d9ff;
+        border-color: #c6aafb;
+    }
+
+    .delete-button {
+        background: #ffffff;
+        border: 1px solid #f0aaa5;
+        color: #b42318;
+    }
+
+    .delete-button:hover {
+        background: #fee4e2;
+    }
+
+    .empty-state {
+        padding: 65px 25px;
+        background: #ffffff;
+        border: 1px solid #e3e7ee;
+        border-radius: 14px;
+        box-shadow: 0 5px 18px rgba(16, 24, 40, 0.05);
+        text-align: center;
+    }
+
+    .empty-icon {
+        width: 64px;
+        height: 64px;
+        margin: 0 auto 18px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: #f1eaff;
+        border-radius: 50%;
+        color: #8954f6;
+        font-size: 28px;
+    }
+
+    .empty-state h2 {
+        margin: 0 0 9px;
+        color: #111827;
+    }
+
+    .empty-state p {
+        margin: 0 0 24px;
+        color: #667085;
+    }
+
+    @media (max-width: 700px) {
+        .payments-header {
+            flex-direction: column;
+        }
+
+        .payments-header .lila-button {
+            width: 100%;
+        }
+
+        .payment-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
+
+<section class="payments-header">
+    <div>
+        <h1>Medios de pago</h1>
+
+        <p>
+            Cliente:
+            <strong>{{ cliente.nombre_razon_social }}</strong>
+        </p>
+    </div>
+
+    <a
+        class="lila-button"
+        href="{% url 'payments:crear' %}"
+    >
+        <span>＋</span>
+        Registrar medio de pago
+    </a>
+</section>
+
+{% if medios_pago %}
+    <section class="payment-grid">
+        {% for medio in medios_pago %}
+            <article class="payment-card">
+                <div class="card-header">
+                    <div>
+                        <h2>{{ medio.alias }}</h2>
+
+                        <p class="card-type">
+                            {{ medio.get_tipo_display }}
+                        </p>
+                    </div>
+
+                    {% if medio.predeterminado %}
+                        <span class="default-badge">
+                            Predeterminado
+                        </span>
+                    {% endif %}
+                </div>
+
+                <div class="card-number">
+                    •••• •••• •••• {{ medio.ultimos_cuatro }}
+                </div>
+
+                <div class="payment-data">
+                    <strong>Marca</strong>
+                    <span>{{ medio.get_marca_display }}</span>
+                </div>
+
+                <div class="payment-data">
+                    <strong>Titular</strong>
+                    <span>{{ medio.titular }}</span>
+                </div>
+
+                <div class="payment-data">
+                    <strong>Vencimiento</strong>
+
+                    <span>
+                        {{ medio.mes_vencimiento|stringformat:"02d" }}/{{ medio.anio_vencimiento }}
+                    </span>
+                </div>
+
+                <div class="payment-data">
+                    <strong>Estado</strong>
+
+                    {% if medio.activo %}
+                        <span class="status-active">
+                            Activo
+                        </span>
+                    {% else %}
+                        <span class="status-inactive">
+                            Inactivo
+                        </span>
+                    {% endif %}
+                </div>
+
+                <div class="card-actions">
+                    <a
+                        class="edit-button"
+                        href="{% url 'payments:editar' medio.pk %}"
+                    >
+                        Editar
+                    </a>
+
+                    <a
+                        class="delete-button"
+                        href="{% url 'payments:eliminar' medio.pk %}"
+                    >
+                        Eliminar
+                    </a>
+                </div>
+            </article>
+        {% endfor %}
+    </section>
+{% else %}
+    <section class="empty-state">
+        <div class="empty-icon">💳</div>
+
+        <h2>No hay medios de pago registrados</h2>
+
+        <p>
+            Agregá el primer medio de pago del cliente.
+        </p>
+
+        <a
+            class="lila-button"
+            href="{% url 'payments:crear' %}"
+        >
+            ＋ Registrar medio de pago
+        </a>
+    </section>
+{% endif %}
+{% endblock %}
