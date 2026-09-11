@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>
+        {% block title %}Global Exchange{% endblock %}
+    </title>
+
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            background: #f7f8fa;
+            color: #101828;
+            font-family: "Segoe UI", Arial, sans-serif;
+        }
+
+        .topbar {
+            background: #ffffff;
+            border-bottom: 1px solid #e1e5eb;
+        }
+
+        .topbar-content {
+            width: min(1120px, calc(100% - 32px));
+            min-height: 70px;
+            margin: auto;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .brand {
+            color: #8954f6;
+            font-size: 21px;
+            font-weight: 750;
+            text-decoration: none;
+        }
+
+        .navigation {
+            display: flex;
+            align-items: center;
+            gap: 22px;
+        }
+
+        .navigation a {
+            color: #344054;
+            font-size: 14px;
+            text-decoration: none;
+        }
+
+        .navigation a:hover {
+            color: #8954f6;
+        }
+
+        .container {
+            width: min(1120px, calc(100% - 32px));
+            margin: 42px auto;
+        }
+
+        .button {
+            min-height: 43px;
+            padding: 10px 18px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            border: 1px solid transparent;
+            border-radius: 9px;
+            font-size: 14px;
+            font-weight: 700;
+            cursor: pointer;
+            text-decoration: none;
+        }
+
+        .button-primary {
+            background: #8954f6;
+            color: #ffffff;
+            box-shadow: 0 4px 10px rgba(137, 84, 246, 0.2);
+        }
+
+        .button-primary:hover {
+            background: #7040dc;
+        }
+
+        .button-secondary {
+            background: #ffffff;
+            border-color: #d0d5dd;
+            color: #344054;
+        }
+
+        .messages {
+            margin: 0 0 24px;
+            padding: 0;
+            list-style: none;
+        }
+
+        .message {
+            padding: 14px 17px;
+            background: #f1eaff;
+            border: 1px solid #d9c7ff;
+            border-radius: 9px;
+            color: #7040dc;
+        }
+
+        @media (max-width: 650px) {
+            .navigation {
+                gap: 12px;
+            }
+
+            .container {
+                margin-top: 28px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <header class="topbar">
+        <div class="topbar-content">
+            <a class="brand" href="{% url 'home' %}">
+                Global Exchange
+            </a>
+
+            <nav class="navigation">
+                <a href="{% url 'payments:lista' %}">
+                    Medios de pago
+                </a>
+
+                <a href="{% url 'logout' %}">
+                    Cerrar sesión
+                </a>
+            </nav>
+        </div>
+    </header>
+
+    <main class="container">
+        {% if messages %}
+            <ul class="messages">
+                {% for message in messages %}
+                    <li class="message">
+                        {{ message }}
+                    </li>
+                {% endfor %}
+            </ul>
+        {% endif %}
+
+        {% block content %}
+        {% endblock %}
+    </main>
+</body>
+</html>
