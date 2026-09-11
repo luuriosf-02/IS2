@@ -35,7 +35,7 @@
         <div style="margin-top: 1.2rem; display: flex; gap: 1rem; align-items: center;">
             {% if user.is_authenticated and es_analista %}
                 <a href="{% url 'gestion_divisas' %}" style="background-color: #7c5dfa; color: white; padding: 0.6rem 1.2rem; border-radius: 8px; text-decoration: none; font-weight: 600; display: inline-block;">
-                    Gestionar Tasas y Divisas
+                    Ver Cotizaciones
                 </a>
             {% else %}
                 {% include 'components/button.html' with text="Ver Cotizaciones" %}

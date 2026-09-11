@@ -1,60 +1,105 @@
 {% extends 'layouts/base.html' %}
 
 {% block content %}
-<div class="container my-4">
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <div>
-            <h2 class="text-primary font-weight-bold">Gestión de Tasas y Divisas</h2>
-            <p class="text-muted">Panel de administración exclusivo para Analistas Cambiarios.</p>
-        </div>
-        <a href="{% url 'home' %}" class="btn btn-outline-secondary">Volver al Inicio</a>
+<div class="main-container links-page">
+    <div class="page-back">
+        <a href="{% url 'home' %}" class="btn btn-neutral">Volver al Inicio</a>
     </div>
 
-    <!-- Formulario para Registrar / Actualizar Cotizaciones -->
-    <div class="card p-4 mb-4 shadow-sm">
-        <h4 class="text-secondary mb-3">Actualizar Cotización</h4>
-        <form method="POST" action="{% url 'gestion_divisas' %}">
-            {% csrf_token %}
-            
-            <div class="row g-3">
-                <div class="col-md-4">
-                    <label for="moneda" class="form-label font-weight-bold">Divisa</label>
-                    <select name="moneda" id="moneda" class="form-select" required>
-                        <option value="USD">USD - Dólar Estadounidense</option>
-                        <option value="EUR">EUR - Euro</option>
-                        <option value="BRL">BRL - Real Brasileño</option>
-                        <option value="ARS">ARS - Peso Argentino</option>
-                        <option value="PYG">PYG - Guaraní</option>
-                    </select>
-                </div>
-                <div class="col-md-4">
-                    <label for="compra" class="form-label font-weight-bold">Precio Compra</label>
-                    <input type="number" step="0.0001" name="compra" id="compra" class="form-control" placeholder="Ej: 7300" required>
-                </div>
-                <div class="col-md-4">
-                    <label for="venta" class="form-label font-weight-bold">Precio Venta</label>
-                    <input type="number" step="0.0001" name="venta" id="venta" class="form-control" placeholder="Ej: 7400" required>
-                </div>
+    {% include 'components/section-title.html' with title='Gestión de Tasas y Divisas' description='Panel de administración exclusivo para Analistas Cambiarios.' %}
+
+    {% if messages %}
+        {% for message in messages %}
+            <div class="alert-message" role="alert">
+                {{ message }}
             </div>
+        {% endfor %}
+    {% endif %}
 
-            <button type="submit" class="btn btn-primary mt-4" style="background-color: #7c5dfa; border: none;">
-                Guardar Cotización
-            </button>
-        </form>
+    <div class="management-grid">
+        <div class="management-column">
+            <div class="card">
+                <h3 class="card-title">Crear moneda</h3>
+                <form method="POST" action="{% url 'gestion_divisas' %}">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="crear_moneda">
+
+                    <div class="form-grid">
+                        <div class="form-field">
+                            <label for="id_codigo">Código</label>
+                            {{ moneda_form.codigo }}
+                        </div>
+                        <div class="form-field">
+                            <label for="id_simbolo">Símbolo</label>
+                            {{ moneda_form.simbolo }}
+                        </div>
+                        <div class="form-field full-width">
+                            <label for="id_nombre">Nombre</label>
+                            {{ moneda_form.nombre }}
+                        </div>
+                        <div class="checkbox-row full-width">
+                            {{ moneda_form.activa }}
+                            <label for="id_activa">Moneda activa</label>
+                        </div>
+                    </div>
+
+                    <div class="inline-actions">
+                        <button type="submit" class="btn btn-primary">Guardar Moneda</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <div class="management-column">
+            <div class="card">
+                <h3 class="card-title">{% if tasa_en_edicion %}Editar cotización{% else %}Registrar cotización{% endif %}</h3>
+                <form method="POST" action="{% url 'gestion_divisas' %}">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="{% if tasa_en_edicion %}editar_tasa{% else %}crear_tasa{% endif %}">
+                    {% if tasa_en_edicion %}
+                        <input type="hidden" name="tasa_id" value="{{ tasa_en_edicion.id }}">
+                    {% endif %}
+
+                    <div class="form-grid">
+                        <div class="form-field">
+                            <label for="id_moneda">Divisa</label>
+                            {{ tasa_form.moneda }}
+                        </div>
+                        <div class="form-field">
+                            <label for="id_tasa_compra">Precio Compra</label>
+                            {{ tasa_form.tasa_compra }}
+                        </div>
+                        <div class="form-field">
+                            <label for="id_tasa_venta">Precio Venta</label>
+                            {{ tasa_form.tasa_venta }}
+                        </div>
+                    </div>
+
+                    <div class="inline-actions">
+                        <button type="submit" class="btn btn-primary">
+                            {% if tasa_en_edicion %}Actualizar Cotización{% else %}Guardar Cotización{% endif %}
+                        </button>
+                        {% if tasa_en_edicion %}
+                            <a href="{% url 'gestion_divisas' %}" class="btn btn-neutral">Cancelar</a>
+                        {% endif %}
+                    </div>
+                </form>
+            </div>
+        </div>
     </div>
 
-    <!-- Tabla de Cotizaciones Cargadas -->
-    <div class="card p-4 shadow-sm">
-        <h4 class="text-secondary mb-3">Cotizaciones Vigentes del Día</h4>
-        <div class="table-responsive">
-            <table class="table table-hover align-middle">
-                <thead class="table-light">
+    <div class="card" style="margin-top: 2rem;">
+        <h3 class="card-title">Cotizaciones Vigentes del Día</h3>
+        <div class="table-wrapper">
+            <table class="links-table">
+                <thead>
                     <tr>
                         <th>Moneda</th>
                         <th>Compra</th>
                         <th>Venta</th>
                         <th>Última Actualización</th>
                         <th>Modificado Por</th>
+                        <th>Acciones</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -62,17 +107,26 @@
                         {% for t in tasas %}
                         <tr>
                             <td><strong>{{ t.moneda.codigo|default:t.moneda }}</strong></td>
-                            <td class="text-success font-weight-bold">{{ t.tasa_compra|floatformat:"-2" }}</td>
-                            <td class="text-danger font-weight-bold">{{ t.tasa_venta|floatformat:"-2" }}</td>
+                            <td class="price-positive">{{ t.tasa_compra|floatformat:"-2" }}</td>
+                            <td class="price-negative">{{ t.tasa_venta|floatformat:"-2" }}</td>
                             <td>{{ t.fecha_actualizacion|date:"H:i - d/m/Y" }}</td>
                             <td>{{ t.usuario_modificador|default:"Sistema" }}</td>
+                            <td>
+                                <div class="inline-actions compact-actions">
+                                    <a href="?edit_tasa_id={{ t.id }}" class="btn btn-neutral btn-sm">Editar</a>
+                                    <form method="POST" action="{% url 'gestion_divisas' %}">
+                                        {% csrf_token %}
+                                        <input type="hidden" name="action" value="eliminar_tasa">
+                                        <input type="hidden" name="tasa_id" value="{{ t.id }}">
+                                        <button type="submit" class="btn btn-danger btn-sm">Eliminar</button>
+                                    </form>
+                                </div>
+                            </td>
                         </tr>
                         {% endfor %}
                     {% else %}
                         <tr>
-                            <td colspan="5" class="text-center text-muted py-3">
-                                No hay cotizaciones cargadas aún. Usa el formulario de arriba para agregar una.
-                            </td>
+                            <td colspan="6" class="links-empty">No hay cotizaciones cargadas aún. Usa el formulario de arriba para agregar una.</td>
                         </tr>
                     {% endif %}
                 </tbody>
