@@ -3,6 +3,7 @@ from django import forms
 from apps.clientes.models import Cliente
 
 from .models import UserClientLink
+from .models import TasaCambio
 
 
 class ClientLinkRequestForm(forms.Form):
@@ -76,3 +77,9 @@ class ReviewClientLinkForm(forms.Form):
             )
 
         return cleaned_data
+
+
+class TasaCambioForm(forms.ModelForm):
+    class Meta:
+        model = TasaCambio
+        fields = ['moneda_origen', 'moneda_destino', 'tasa_compra', 'tasa_venta']

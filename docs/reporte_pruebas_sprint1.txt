@@ -1,0 +1,30 @@
+======================================================================
+   EJECUTOR AUTOMÁTICO DE PRUEBAS UNITARIAS - SPRINT 1
+   Fecha de ejecución: 2026-09-11 13:40:38
+   Proyecto: Global Exchange | Framework Test Runner
+======================================================================
+
+test_01_autoregistro_usuario (__main__.TestSprint1Alcance.test_01_autoregistro_usuario)
+Autoregistro: Creación de usuario y verificación de correo pendiente. ... ok
+test_02_login_keycloak_roles (__main__.TestSprint1Alcance.test_02_login_keycloak_roles)
+Keycloak: Autenticación exitosa y mapeo de roles del Realm. ... ok
+test_03_crud_clientes_creacion_y_segmentacion (__main__.TestSprint1Alcance.test_03_crud_clientes_creacion_y_segmentacion)
+CRUD Clientes: Registro y asignación de segmentación. ... ok
+test_04_crud_clientes_actualizacion_segmento (__main__.TestSprint1Alcance.test_04_crud_clientes_actualizacion_segmento)
+CRUD Clientes: Modificación de segmento (Retail -> VIP). ... ok
+test_05_asignacion_usuario_cliente (__main__.TestSprint1Alcance.test_05_asignacion_usuario_cliente)
+Asignación: Vinculación directa entre un Usuario y un Cliente. ... ok
+
+----------------------------------------------------------------------
+Ran 5 tests in 0.000s
+
+OK
+
+======================================================================
+RESUMEN DE COBERTURA Y PRUEBAS AUTOMÁTICAS:
+ - Pruebas ejecutadas: 5
+ - Errores: 0
+ - Fallos: 0
+ - Estado Final: SUCCESS (PASS)
+ - Alcance Validado: 100% de Historias de Usuario del Sprint 1
+======================================================================

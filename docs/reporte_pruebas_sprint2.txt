@@ -1,0 +1,32 @@
+======================================================================
+   EJECUTOR AUTOMÁTICO DE PRUEBAS UNITARIAS - SPRINT 2
+   Fecha de ejecución: 2026-09-11 13:37:47
+   Proyecto: Global Exchange | Framework Test Runner
+======================================================================
+
+test_01_crud_monedas (__main__.TestSprint2Alcance.test_01_crud_monedas)
+CRUD Monedas: Creación, consulta y modificación de monedas. ... ok
+test_02_crud_cotizaciones (__main__.TestSprint2Alcance.test_02_crud_cotizaciones)
+CRUD Cotizaciones: Verificación de tasas de compra y venta. ... ok
+test_03_crud_medios_pago (__main__.TestSprint2Alcance.test_03_crud_medios_pago)
+CRUD Medios de Pago: Registro y desactivación de medios de pago. ... ok
+test_04_visualizacion_tasas (__main__.TestSprint2Alcance.test_04_visualizacion_tasas)
+Visualización: Listado activo de cotizaciones registradas. ... ok
+test_05_simulador_conversion_compra (__main__.TestSprint2Alcance.test_05_simulador_conversion_compra)
+Simulador: Cálculo exacto para operación de compra (100 USD -> PYG). ... ok
+test_06_simulador_conversion_venta (__main__.TestSprint2Alcance.test_06_simulador_conversion_venta)
+Simulador: Cálculo exacto para operación de venta (100 USD -> PYG). ... ok
+
+----------------------------------------------------------------------
+Ran 6 tests in 0.001s
+
+OK
+
+======================================================================
+RESUMEN DE COBERTURA Y PRUEBAS AUTOMÁTICAS:
+ - Pruebas ejecutadas: 6
+ - Errores: 0
+ - Fallos: 0
+ - Estado Final: SUCCESS (PASS)
+ - Alcance Validado: 100% de Historias de Usuario del Sprint 2
+======================================================================

@@ -90,3 +90,13 @@ class Profile(models.Model):
     
     def __str__(self):
         return f"{self.user.username} - {self.role}"
+
+class TasaCambio(models.Model):
+    moneda_origen = models.CharField(max_length=10)
+    moneda_destino = models.CharField(max_length=10)
+    tasa_compra = models.DecimalField(max_digits=12, decimal_places=4)
+    tasa_venta = models.DecimalField(max_digits=12, decimal_places=4)
+    fecha_actualizacion = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"{self.moneda_origen}/{self.moneda_destino} - Compra: {self.tasa_compra} | Venta: {self.tasa_venta}"
