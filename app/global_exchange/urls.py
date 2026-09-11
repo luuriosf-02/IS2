@@ -12,6 +12,7 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('', home, name='home'),
     path('logout/', custom_logout, name='logout'),
+    path('simulador/', include('apps.dashboard.urls')),
     path('oidc/', include('mozilla_django_oidc.urls')),
     path('users/', include('apps.users.urls')),
     path('oidc/', include('mozilla_django_oidc.urls')), # URLs automáticas para login/logout

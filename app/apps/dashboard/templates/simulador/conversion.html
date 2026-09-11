@@ -1,0 +1,94 @@
+{% extends 'layouts/base.html' %}
+
+{% block title %}Simulador de conversión{% endblock %}
+
+{% block content %}
+    {% include 'components/navbar.html' %}
+
+    <div class="main-container simulator-page">
+        <div class="simulator-shell">
+            <div class="card">
+                <div style="margin-bottom: 1.5rem;">
+                    <h1 style="margin: 0 0 0.5rem; font-size: clamp(2rem, 3vw, 2.6rem); color: var(--color-neutral-900);">Simulador de conversión</h1>
+                    <p class="text-body" style="margin: 0;">Consulta tus tasas de compra y venta en tiempo real, con cálculo en memoria principal y sin persistencia en base de datos.</p>
+                </div>
+
+                <div class="rate-list">
+                    {% for item in currencies %}
+                        <div class="rate-badge">
+                            <strong>{{ item.code }}</strong>
+                            <span>{{ item.name }}</span>
+                            <span class="rate-value">Compra: {{ item.compra }} · Venta: {{ item.venta }}</span>
+                        </div>
+                    {% endfor %}
+                </div>
+
+                <form method="post" class="currency-form">
+                    {% csrf_token %}
+                    <div class="converter-grid">
+                        <div class="field-stack">
+                            <label for="amount">Monto a convertir</label>
+                            <input class="form-control" id="amount" name="amount" type="number" step="0.01" min="0" value="{{ amount|default:'100' }}" placeholder="Ej: 2500" />
+                        </div>
+
+                        <div class="field-stack">
+                            <label for="from_currency">Moneda origen</label>
+                            <select class="form-control" id="from_currency" name="from_currency">
+                                {% for item in currencies %}
+                                    <option value="{{ item.code }}" {% if item.code == from_currency %}selected{% endif %}>{{ item.code }} - {{ item.name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <div class="field-stack">
+                            <label for="to_currency">Moneda destino</label>
+                            <select class="form-control" id="to_currency" name="to_currency">
+                                {% for item in currencies %}
+                                    <option value="{{ item.code }}" {% if item.code == to_currency %}selected{% endif %}>{{ item.code }} - {{ item.name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="converter-actions">
+                        <button type="submit" class="btn btn-primary">Calcular conversión</button>
+                        <a href="{% url 'home' %}" class="btn btn-outline">Volver al dashboard</a>
+                    </div>
+                </form>
+
+                {% if error %}
+                    <div class="system-message">{{ error }}</div>
+                {% endif %}
+
+                {% if conversion %}
+                    <div class="result-panel" style="margin-top: 1.5rem;">
+                        <div class="result-header">
+                            <div>
+                                <div class="badge badge-primary">Tasa aplicada</div>
+                                <div style="margin-top: 0.75rem; color: var(--color-neutral-700); font-size: 0.9rem;">
+                                    {{ conversion.from_currency }} → {{ conversion.to_currency }}
+                                </div>
+                            </div>
+                            <div class="result-amount">{{ conversion.result|floatformat:2 }} {{ conversion.to_currency }}</div>
+                        </div>
+
+                        <div class="result-grid">
+                            <div class="result-metric">
+                                <span>Importe original</span>
+                                <strong>{{ conversion.amount|floatformat:2 }} {{ conversion.from_currency }}</strong>
+                            </div>
+                            <div class="result-metric">
+                                <span>Tasa de compra</span>
+                                <strong>{{ conversion.source_buy }} / {{ conversion.target_buy }}</strong>
+                            </div>
+                            <div class="result-metric">
+                                <span>Tasa de venta</span>
+                                <strong>{{ conversion.source_sell }} / {{ conversion.target_sell }}</strong>
+                            </div>
+                        </div>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+{% endblock %}
