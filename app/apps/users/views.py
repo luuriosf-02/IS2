@@ -5,12 +5,15 @@ from django.shortcuts import get_object_or_404
 from django.shortcuts import redirect
 from django.shortcuts import render
 from django.utils import timezone
+from django.db import transaction
 
+from apps.clientes.models import Cliente
 from .forms import ClientLinkRequestForm
 from .forms import ReviewClientLinkForm
 from .forms import TasaCambioForm
 from .models import UserClientLink
 from .models import TasaCambio
+from .client_selection import get_available_clients, set_selected_client
 from .services.keycloak_service import (
     assign_role_to_user,
     get_roles,
@@ -114,6 +117,54 @@ def request_client_link(request):
             "form": form,
         },
     )
+
+
+@login_required
+def activate_client(request):
+    if request.method == "POST":
+        client_id = request.POST.get("client_id")
+        client = get_available_clients(request.user).filter(pk=client_id).first()
+
+        if client is not None:
+            if (
+                client.creado_por_id == request.user.id
+                and not client.activo
+                and not client.activacion_permitida
+            ):
+                messages.error(
+                    request,
+                    "La activación de ese cliente todavía no está permitida.",
+                )
+                return redirect(request.META.get("HTTP_REFERER") or "home")
+
+            if client.creado_por_id == request.user.id:
+                with transaction.atomic():
+                    Cliente.objects.filter(
+                        creado_por=request.user,
+                        activo=True,
+                    ).exclude(pk=client.pk).update(activo=False)
+                    client.activo = True
+                    client.save(update_fields=["activo"])
+            elif not client.activo:
+                messages.error(
+                    request,
+                    "Ese cliente todavía no está activo.",
+                )
+                return redirect(request.META.get("HTTP_REFERER") or "home")
+
+            set_selected_client(request, client.pk)
+
+            messages.success(
+                request,
+                f'Cliente activo: "{client.nombre_razon_social}".',
+            )
+        else:
+            messages.error(
+                request,
+                "No puedes activar ese cliente.",
+            )
+
+    return redirect(request.META.get("HTTP_REFERER") or "home")
 
 
 @login_required

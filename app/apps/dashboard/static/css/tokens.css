@@ -51,7 +51,7 @@ body {
     background-color: var(--color-neutral-50, #f9fafb);
     color: var(--color-neutral-900, #111827);
     margin: 0;
-    padding: 0;
+  padding: 70px 0 0;
     min-height: 100vh;
     display: flex;
     flex-direction: column;

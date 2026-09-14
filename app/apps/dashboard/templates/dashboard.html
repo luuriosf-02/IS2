@@ -67,6 +67,9 @@
                         <a href="{% url 'clientes:lista' %}" class="btn btn-primary">Mis clientes registrados</a>
                         <a href="{% url 'my_client_links' %}" class="btn btn-primary">Mis vinculaciones</a>
                         <a href="{% url 'request_client_link' %}" class="btn btn-outline">Solicitar vinculación</a>
+                        {% if cliente_activo %}
+                            <a href="{% url 'payments:lista' %}" class="btn btn-primary">Medios de pago</a>
+                        {% endif %}
                     </div>
                 </div>
             {% endif %}

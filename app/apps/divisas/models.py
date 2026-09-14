@@ -1,5 +1,22 @@
 from django.db import models
 from django.conf import settings
+from django.db.models.deletion import ProtectedError
+
+
+class MonedaQuerySet(models.QuerySet):
+    def delete(self):
+        if self.filter(codigo='PYG').exists():
+            raise ProtectedError(
+                'La moneda guaraní (PYG) es obligatoria y no se puede eliminar.',
+                self.model,
+            )
+        return super().delete()
+
+
+class MonedaManager(models.Manager):
+    def get_queryset(self):
+        return MonedaQuerySet(self.model, using=self._db)
+
 
 class Moneda(models.Model):
     """SCRUM-33: Gestionar monedas admitidas"""
@@ -8,9 +25,18 @@ class Moneda(models.Model):
     simbolo = models.CharField(max_length=5, help_text="Ej: $, ₲, R$")
     activa = models.BooleanField(default=True, help_text="Habilitada en el sistema")
     fecha_creacion = models.DateTimeField(auto_now_add=True)
+    objects = MonedaManager()
 
     def __str__(self):
         return f"{self.nombre} ({self.codigo})"
+
+    def delete(self, *args, **kwargs):
+        if self.codigo == 'PYG':
+            raise ProtectedError(
+                'La moneda guaraní (PYG) es obligatoria y no se puede eliminar.',
+                self,
+            )
+        return super().delete(*args, **kwargs)
 
 class TasaCambio(models.Model):
     """SCRUM-34 & SCRUM-35: Configurar y actualizar tasas de compra y venta"""
