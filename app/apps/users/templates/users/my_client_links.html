@@ -22,6 +22,7 @@
                     <th>Estado</th>
                     <th>Fecha de solicitud</th>
                     <th>Observación</th>
+                    <th>Acciones</th>
                 </tr>
             </thead>
             <tbody>
@@ -40,10 +41,27 @@
                         </td>
                         <td>{{ link.requested_at|date:'d/m/Y H:i' }}</td>
                         <td>{{ link.rejection_reason|default:'Sin observaciones' }}</td>
+                        <td>
+                            {% if link.client.creado_por_id == request.user.id and link.client.activacion_permitida %}
+                                <form method="post" action="{% url 'activate_client' %}">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="client_id" value="{{ link.client.pk }}">
+                                    {% if link.client.activo %}
+                                        <input type="hidden" name="action" value="deactivate">
+                                        <button type="submit" class="btn btn-outline">Desactivar</button>
+                                    {% else %}
+                                        <input type="hidden" name="action" value="activate">
+                                        <button type="submit" class="btn btn-primary">Activar</button>
+                                    {% endif %}
+                                </form>
+                            {% else %}
+                                <span>Sin acciones</span>
+                            {% endif %}
+                        </td>
                     </tr>
                 {% empty %}
                     <tr>
-                        <td colspan="5" class="links-empty">Todavía no tenés solicitudes de vinculación.</td>
+                        <td colspan="6" class="links-empty">Todavía no tenés solicitudes de vinculación.</td>
                     </tr>
                 {% endfor %}
             </tbody>

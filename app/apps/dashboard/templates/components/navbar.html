@@ -7,7 +7,7 @@
             {% if available_clients %}
                 <form method="post" action="{% url 'activate_client' %}" class="navbar-client-selector">
                     {% csrf_token %}
-                    <label for="navbar-client">Cliente activo</label>
+                    <label for="navbar-client">Cliente actual</label>
                     <select id="navbar-client" name="client_id" onchange="this.form.submit()">
                         {% for client in available_clients %}
                             <option value="{{ client.pk }}" {% if selected_client.pk == client.pk %}selected{% endif %}>

@@ -72,20 +72,6 @@
                         </p>
                     </div>
 
-                    <!-- Estado -->
-                    <div>
-                        <p style="font-size: var(--font-size-sm); text-transform: uppercase; letter-spacing: 0.05em; font-weight: var(--font-weight-semibold); color: var(--color-neutral-600); margin-bottom: 0.5rem;">
-                            Estado
-                        </p>
-                        <div>
-                            {% if cliente.activo %}
-                                {% include 'components/badge.html' with text='✓ Activo' variant='success' %}
-                            {% else %}
-                                {% include 'components/badge.html' with text='✗ Inactivo' variant='neutral' %}
-                            {% endif %}
-                        </div>
-                    </div>
-
                     <!-- Fecha de Registro -->
                     <div>
                         <p style="font-size: var(--font-size-sm); text-transform: uppercase; letter-spacing: 0.05em; font-weight: var(--font-weight-semibold); color: var(--color-neutral-600); margin-bottom: 0.5rem;">

@@ -123,46 +123,47 @@ def request_client_link(request):
 def activate_client(request):
     if request.method == "POST":
         client_id = request.POST.get("client_id")
+        action = request.POST.get("action", "activate")
         client = get_available_clients(request.user).filter(pk=client_id).first()
 
-        if client is not None:
-            if (
-                client.creado_por_id == request.user.id
-                and not client.activo
-                and not client.activacion_permitida
-            ):
-                messages.error(
-                    request,
-                    "La activación de ese cliente todavía no está permitida.",
-                )
-                return redirect(request.META.get("HTTP_REFERER") or "home")
-
-            if client.creado_por_id == request.user.id:
-                with transaction.atomic():
-                    Cliente.objects.filter(
-                        creado_por=request.user,
-                        activo=True,
-                    ).exclude(pk=client.pk).update(activo=False)
-                    client.activo = True
-                    client.save(update_fields=["activo"])
-            elif not client.activo:
-                messages.error(
-                    request,
-                    "Ese cliente todavía no está activo.",
-                )
-                return redirect(request.META.get("HTTP_REFERER") or "home")
-
-            set_selected_client(request, client.pk)
-
-            messages.success(
-                request,
-                f'Cliente activo: "{client.nombre_razon_social}".',
-            )
-        else:
+        if client is None:
             messages.error(
                 request,
-                "No puedes activar ese cliente.",
+                "No puedes modificar ese cliente.",
             )
+        elif action not in ("activate", "deactivate"):
+            messages.error(request, "La acción solicitada no es válida.")
+        elif action == "deactivate" and client.creado_por_id != request.user.id:
+            messages.error(
+                request,
+                "Solo puedes modificar el estado de tus propios clientes.",
+            )
+        elif action == "deactivate":
+            client.activo = False
+            client.save(update_fields=["activo"])
+            if request.session.get("active_client_id") == client.pk:
+                request.session.pop("active_client_id", None)
+            messages.success(request, f'Cliente desactivado: "{client.nombre_razon_social}".')
+        elif client.creado_por_id == request.user.id and not client.activo and not client.activacion_permitida:
+            messages.error(
+                request,
+                "La activación de ese cliente todavía no está permitida.",
+            )
+        elif client.creado_por_id == request.user.id:
+            with transaction.atomic():
+                Cliente.objects.filter(
+                    creado_por=request.user,
+                    activo=True,
+                ).exclude(pk=client.pk).update(activo=False)
+                client.activo = True
+                client.save(update_fields=["activo"])
+            set_selected_client(request, client.pk)
+            messages.success(request, f'Cliente activo: "{client.nombre_razon_social}".')
+        elif not client.activo:
+            messages.error(request, "Ese cliente todavía no está activo.")
+        else:
+            set_selected_client(request, client.pk)
+            messages.success(request, f'Cliente seleccionado: "{client.nombre_razon_social}".')
 
     return redirect(request.META.get("HTTP_REFERER") or "home")
 
@@ -242,8 +243,15 @@ def review_client_link(request, link_id):
                 link.rejection_reason = ""
                 link.client.activacion_permitida = True
                 link.client.activo = False
+                link.client.categoria = form.cleaned_data["categoria"]
+                link.client.limite_credito = form.cleaned_data["limite_credito"]
                 link.client.save(
-                    update_fields=["activacion_permitida", "activo"]
+                    update_fields=[
+                        "activacion_permitida",
+                        "activo",
+                        "categoria",
+                        "limite_credito",
+                    ]
                 )
 
                 success_message = (

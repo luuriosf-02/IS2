@@ -33,6 +33,18 @@
                 <textarea class="form-control" name="rejection_reason" rows="4" placeholder="Indique el motivo del rechazo">{{ form.rejection_reason.value|default:'' }}</textarea>
             </div>
 
+            <div class="form-field">
+                {{ form.categoria.errors }}
+                {{ form.categoria.label_tag }}
+                {{ form.categoria }}
+            </div>
+
+            <div class="form-field">
+                {{ form.limite_credito.errors }}
+                {{ form.limite_credito.label_tag }}
+                {{ form.limite_credito }}
+            </div>
+
             <button type="submit" class="btn btn-primary">Guardar decisión</button>
         </form>
     </section>
