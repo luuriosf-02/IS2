@@ -46,7 +46,7 @@ class ReviewClientLinkForm(forms.Form):
             ("approve", "Aprobar"),
             ("reject", "Rechazar"),
         ],
-        widget=forms.RadioSelect,
+        widget=forms.RadioSelect(attrs={"class": "form-radio-group"}),
         label="Decisión",
     )
 
@@ -59,6 +59,29 @@ class ReviewClientLinkForm(forms.Form):
             }
         ),
         label="Motivo del rechazo",
+    )
+
+    categoria = forms.ChoiceField(
+        choices=Cliente.CATEGORIA_CHOICES,
+        required=False,
+        widget=forms.Select(attrs={"class": "form-select"}),
+        label="Categoría del cliente",
+    )
+
+    limite_credito = forms.DecimalField(
+        required=False,
+        min_value=0,
+        max_digits=12,
+        decimal_places=2,
+        widget=forms.NumberInput(
+            attrs={
+                "class": "form-control",
+                "step": "0.01",
+                "min": "0",
+                "placeholder": "0.00",
+            }
+        ),
+        label="Límite de crédito",
     )
 
     def clean(self):
@@ -75,6 +98,12 @@ class ReviewClientLinkForm(forms.Form):
                 "rejection_reason",
                 "Debe indicar el motivo del rechazo.",
             )
+
+        if action == "approve":
+            if not cleaned_data.get("categoria"):
+                self.add_error("categoria", "Debe asignar una categoría para aprobar.")
+            if cleaned_data.get("limite_credito") is None:
+                self.add_error("limite_credito", "Debe asignar un límite de crédito para aprobar.")
 
         return cleaned_data
 

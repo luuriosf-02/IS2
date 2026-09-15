@@ -1,36 +1,33 @@
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
-from django.core.exceptions import PermissionDenied
 from django.db import transaction
 from django.shortcuts import get_object_or_404, redirect, render
 
-from apps.users.models import UserClientLink
+from apps.users.client_selection import get_selected_client
 
 from .forms import MedioPagoForm
 from .models import MedioPago
 
 
-def obtener_cliente_del_usuario(user):
+def obtener_cliente_del_usuario(request):
     """
-    Obtiene el cliente vinculado y aprobado del usuario autenticado.
+    Obtiene el cliente activo asociado al usuario autenticado.
+
+    La gestión de clientes marca como activo el cliente propio del usuario.
+    También se conservan las asociaciones aprobadas para usuarios vinculados
+    a un cliente activo.
     """
 
-    vinculacion = (
-        UserClientLink.objects
-        .select_related("client")
-        .filter(
-            user=user,
-            status=UserClientLink.STATUS_APPROVED,
-        )
-        .first()
+    cliente = get_selected_client(request)
+    return cliente if cliente and cliente.activo else None
+
+
+def render_sin_cliente_activo(request):
+    return render(
+        request,
+        "payments/sin_cliente_activo.html",
+        status=403,
     )
-
-    if vinculacion is None:
-        raise PermissionDenied(
-            "No tiene una vinculación aprobada con un cliente."
-        )
-
-    return vinculacion.client
 
 
 @login_required
@@ -48,7 +45,9 @@ def lista_medios_pago(request):
         PermissionDenied: Si el usuario no posee una vinculación
         aprobada con un cliente.
     """
-    cliente = obtener_cliente_del_usuario(request.user)
+    cliente = obtener_cliente_del_usuario(request)
+    if cliente is None:
+        return render_sin_cliente_activo(request)
 
     medios_pago = MedioPago.objects.filter(
         cliente=cliente
@@ -66,7 +65,9 @@ def lista_medios_pago(request):
 
 @login_required
 def crear_medio_pago(request):
-    cliente = obtener_cliente_del_usuario(request.user)
+    cliente = obtener_cliente_del_usuario(request)
+    if cliente is None:
+        return render_sin_cliente_activo(request)
 
     if request.method == "POST":
         form = MedioPagoForm(request.POST)
@@ -109,7 +110,9 @@ def crear_medio_pago(request):
 
 @login_required
 def editar_medio_pago(request, pk):
-    cliente = obtener_cliente_del_usuario(request.user)
+    cliente = obtener_cliente_del_usuario(request)
+    if cliente is None:
+        return render_sin_cliente_activo(request)
 
     medio_pago = get_object_or_404(
         MedioPago,
@@ -160,7 +163,9 @@ def editar_medio_pago(request, pk):
 
 @login_required
 def eliminar_medio_pago(request, pk):
-    cliente = obtener_cliente_del_usuario(request.user)
+    cliente = obtener_cliente_del_usuario(request)
+    if cliente is None:
+        return render_sin_cliente_activo(request)
 
     medio_pago = get_object_or_404(
         MedioPago,

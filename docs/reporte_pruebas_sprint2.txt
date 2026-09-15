@@ -13,9 +13,9 @@ CRUD Medios de Pago: Registro y desactivación de medios de pago. ... ok
 test_04_visualizacion_tasas (__main__.TestSprint2Alcance.test_04_visualizacion_tasas)
 Visualización: Listado activo de cotizaciones registradas. ... ok
 test_05_simulador_conversion_compra (__main__.TestSprint2Alcance.test_05_simulador_conversion_compra)
-Simulador: Cálculo exacto para operación de compra (100 USD -> PYG). ... ok
+Simulador: Compra de 100 USD usando la tasa de venta. ... ok
 test_06_simulador_conversion_venta (__main__.TestSprint2Alcance.test_06_simulador_conversion_venta)
-Simulador: Cálculo exacto para operación de venta (100 USD -> PYG). ... ok
+Simulador: Venta de 100 USD usando la tasa de compra. ... ok
 
 ----------------------------------------------------------------------
 Ran 6 tests in 0.001s

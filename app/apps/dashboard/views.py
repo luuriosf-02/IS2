@@ -2,83 +2,63 @@
 from decimal import Decimal, InvalidOperation
 from django.shortcuts import render, redirect
 from django.contrib.auth import logout as django_logout
+from django.db.models import OuterRef, Subquery
 
-CURRENCIES = [
-    {"code": "USD", "name": "Dólar estadounidense", "compra": Decimal("0.96"), "venta": Decimal("1.00")},
-    {"code": "EUR", "name": "Euro", "compra": Decimal("0.90"), "venta": Decimal("0.94")},
-    {"code": "GBP", "name": "Libra esterlina", "compra": Decimal("0.81"), "venta": Decimal("0.85")},
-    {"code": "CLP", "name": "Peso chileno", "compra": Decimal("930.00"), "venta": Decimal("970.00")},
-    {"code": "ARS", "name": "Peso argentino", "compra": Decimal("920.00"), "venta": Decimal("980.00")},
-]
+from apps.divisas.models import Moneda, TasaCambio
+from apps.users.client_selection import get_selected_client
+
+PYG_CODE = 'PYG'
 
 
-def get_currency(code):
-    for currency in CURRENCIES:
-        if currency["code"] == code:
-            return currency
-    return CURRENCIES[0]
+def get_currencies():
+    latest_rate = TasaCambio.objects.filter(
+        moneda=OuterRef('pk'),
+    ).order_by('-fecha_actualizacion')
+    return list(
+        Moneda.objects.filter(activa=True)
+        .annotate(
+            compra=Subquery(latest_rate.values('tasa_compra')[:1]),
+            venta=Subquery(latest_rate.values('tasa_venta')[:1]),
+        )
+        .filter(compra__isnull=False, venta__isnull=False)
+        .order_by('codigo')
+        .values('codigo', 'nombre', 'simbolo', 'compra', 'venta')
+    )
+
+
+def get_currency(code, currencies):
+    return next((currency for currency in currencies if currency['codigo'] == code), None)
 
 
 def format_money(value):
     return f"{value.quantize(Decimal('0.01')):,.2f}"
 
 
-def calculate_conversion(amount, from_currency, to_currency):
+def calculate_conversion(amount, operation, currency):
     amount = Decimal(str(amount))
-    source = get_currency(from_currency)
-    target = get_currency(to_currency)
-
-    if source["code"] == target["code"]:
-        return {
-            "amount": amount,
-            "result": amount,
-            "from_currency": source["code"],
-            "to_currency": target["code"],
-            "source_sell": source["venta"],
-            "target_buy": target["compra"],
-            "source_buy": source["compra"],
-            "target_sell": target["venta"],
-        }
-
-    usd_value = amount / source["venta"]
-    converted = usd_value * target["compra"]
+    rate = currency['venta'] if operation == 'compra' else currency['compra']
 
     return {
-        "amount": amount,
-        "result": converted,
-        "from_currency": source["code"],
-        "to_currency": target["code"],
-        "source_sell": source["venta"],
-        "target_buy": target["compra"],
-        "source_buy": source["compra"],
-        "target_sell": target["venta"],
+        'amount': amount,
+        'operation': operation,
+        'rate': rate,
+        'foreign_currency': currency['codigo'],
+        'from_currency': currency['codigo'],
+        'to_currency': PYG_CODE,
+        'result': amount * rate,
+        'source_buy': currency['compra'],
+        'source_sell': currency['venta'],
     }
 
 
-def home(request):
-    es_analista = False
-
-    if request.user.is_authenticated:
-        profile = getattr(request.user, 'profile', None)
-        es_grupo_analista = request.user.groups.filter(name__icontains='analista').exists()
-        es_usuario_analista = request.user.username.lower() in ['analista', 'analista cambiario']
-        es_analista = (
-            bool(profile and profile.role == 'Analista Cambiario')
-            or es_grupo_analista
-            or es_usuario_analista
-            or request.user.is_superuser
-        )
-
-    return render(request, 'dashboard.html', {
-        'user': request.user,
-        'es_analista': es_analista,
-    })
-
-
-
-def currency_converter(request):
-    from_currency = request.POST.get('from_currency', 'USD')
-    to_currency = request.POST.get('to_currency', 'EUR')
+def get_conversion_context(request):
+    currencies = get_currencies()
+    foreign_currencies = [currency for currency in currencies if currency['codigo'] != PYG_CODE]
+    operation = request.POST.get('operation', 'compra')
+    currency_code = request.POST.get(
+        'currency',
+        foreign_currencies[0]['codigo'] if foreign_currencies else '',
+    )
     amount_value = request.POST.get('amount', '100')
     conversion = None
     error = None
@@ -88,23 +68,61 @@ def currency_converter(request):
             amount = Decimal(amount_value)
             if amount <= 0:
                 error = 'El importe debe ser mayor a cero.'
+            elif operation not in ('compra', 'venta'):
+                error = 'Selecciona una operación válida.'
             else:
-                conversion = calculate_conversion(amount, from_currency, to_currency)
+                currency = get_currency(currency_code, foreign_currencies)
+                if currency is None:
+                    error = 'Selecciona una divisa extranjera válida.'
+                else:
+                    conversion = calculate_conversion(amount, operation, currency)
         except (InvalidOperation, ValueError):
             error = 'Ingresa un importe válido para continuar.'
 
+    return {
+        'currencies': foreign_currencies,
+        'foreign_currencies': foreign_currencies,
+        'operation': operation,
+        'currency': currency_code,
+        'amount': amount_value,
+        'conversion': conversion,
+        'error': error,
+    }
+
+
+def home(request):
+    es_analista = False
+    cliente_activo = None
+
+    if request.user.is_authenticated:
+        profile = getattr(request.user, 'profile', None)
+        cliente_activo = get_selected_client(request)
+        if cliente_activo and not cliente_activo.activo:
+            cliente_activo = None
+        es_grupo_analista = request.user.groups.filter(name__icontains='analista').exists()
+        es_usuario_analista = request.user.username.lower() in ['analista', 'analista cambiario']
+        es_analista = (
+            bool(profile and profile.role == 'Analista Cambiario')
+            or es_grupo_analista
+            or es_usuario_analista
+            or request.user.is_superuser
+        )
+
+    context = {
+        'user': request.user,
+        'es_analista': es_analista,
+        'cliente_activo': cliente_activo,
+    }
+    context.update(get_conversion_context(request))
+    return render(request, 'dashboard.html', context)
+
+
+
+def currency_converter(request):
     return render(
         request,
         'simulador/conversion.html',
-        {
-            'user': request.user,
-            'currencies': CURRENCIES,
-            'from_currency': from_currency,
-            'to_currency': to_currency,
-            'amount': amount_value,
-            'conversion': conversion,
-            'error': error,
-        },
+        {'user': request.user, **get_conversion_context(request)},
     )
 
 

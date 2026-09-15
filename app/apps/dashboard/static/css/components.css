@@ -1,3 +1,8 @@
+/* --- Separación del contenido y el footer --- */
+.container {
+  padding-bottom: 5rem;
+}
+
 /* --- Botón --- */
 .btn {
   display: inline-flex;
@@ -18,11 +23,6 @@
 .currency-form,
 .simulator-shell {
   width: 100%;
-}
-
-.simulator-page {
-  padding-top: 2rem;
-  padding-bottom: 3rem;
 }
 
 .simulator-shell {
@@ -231,6 +231,10 @@
 
 /* --- Navbar --- */
 .navbar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 1000;
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -238,8 +242,8 @@
     border-bottom: 1px solid var(--color-neutral-200, #e5e7eb);
     
     /* --- Padding lateral más amplio que el main-container --- */
-    padding-left: clamp(1rem, 4vw, 4rem);
-    padding-right: clamp(1rem, 4vw, 4rem);
+    padding-left: clamp(1rem, 6vw, 8rem);
+    padding-right: clamp(1rem, 6vw, 8rem);
     
     /* Altura consistente para el navbar */
     height: 70px;
@@ -285,6 +289,53 @@
     font-size: var(--font-size-sm);
     color: var(--color-neutral-900);
     line-height: 1.2;
+}
+
+.navbar-client-selector {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  min-width: 12rem;
+}
+
+.navbar-client-selector label {
+  color: var(--color-neutral-700);
+  font-size: 0.68rem;
+  font-weight: var(--font-weight-semibold);
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+
+.navbar-client-selector select {
+  max-width: 15rem;
+  padding: 0.28rem 1.8rem 0.28rem 0.55rem;
+  border: 1px solid var(--color-primary-100);
+  border-radius: var(--radius-md);
+  background-color: var(--color-primary-50);
+  color: var(--color-primary-700);
+  font: inherit;
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-semibold);
+}
+
+.navbar-client-selector select:focus {
+  outline: 2px solid var(--color-primary-100);
+  border-color: var(--color-primary-500);
+}
+
+@media (max-width: 900px) {
+  .navbar {
+    padding-left: 1rem;
+    padding-right: 1rem;
+  }
+
+  .navbar-client-selector {
+    min-width: 9rem;
+  }
+
+  .navbar-client-selector select {
+    max-width: 11rem;
+  }
 }
 
 /* --- Tarjeta (Card) --- */
@@ -374,8 +425,138 @@
     box-sizing: border-box;
     padding-left: clamp(1rem, 3vw, 2.5rem);
     padding-right: clamp(1rem, 3vw, 2.5rem);
+    padding-top: 3rem;
     flex: 1; /* Hace que el contenedor crezca si es necesario para empujar el footer abajo si lo hubiera */
 }
+
+  .dashboard-layout {
+    display: grid;
+    grid-template-columns: minmax(13rem, 16rem) minmax(0, 1fr);
+    gap: 2rem;
+    align-items: start;
+  }
+
+  .dashboard-content {
+    min-width: 0;
+  }
+
+  .dashboard-sidebar {
+    position: sticky;
+    top: 90px;
+    padding: 1.25rem;
+    background-color: var(--color-neutral-0);
+    border: 1px solid var(--color-neutral-200);
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-card);
+  }
+
+  .dashboard-sidebar-title {
+    margin: 0 0 1.25rem;
+    color: var(--color-neutral-900);
+    font-size: var(--font-size-lg);
+  }
+
+  .dashboard-sidebar-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+    margin-top: 1.25rem;
+  }
+
+  .dashboard-sidebar-group:first-of-type {
+    margin-top: 0;
+  }
+
+  .dashboard-sidebar-label {
+    margin-bottom: 0.25rem;
+    color: var(--color-neutral-700);
+    font-size: 0.72rem;
+    font-weight: var(--font-weight-semibold);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+
+  .dashboard-sidebar-link {
+    padding: 0.55rem 0.65rem;
+    border-radius: var(--radius-sm);
+    color: var(--color-primary-700);
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-medium);
+    text-decoration: none;
+  }
+
+  .dashboard-sidebar-link:hover {
+    background-color: var(--color-primary-50);
+  }
+
+  .dashboard-sidebar-note {
+    margin: 0;
+    color: var(--color-neutral-700);
+    font-size: var(--font-size-sm);
+    line-height: 1.5;
+  }
+
+  @media (min-width: 1400px) {
+    .dashboard-layout {
+      display: block;
+      position: relative;
+    }
+
+    .dashboard-content {
+      width: min(100%, 54rem);
+      margin: 0 auto;
+    }
+
+    .dashboard-sidebar {
+      position: fixed;
+      top: 90px;
+      left: clamp(1rem, calc((100vw - 1400px) / 2 + 1rem), 8rem);
+      width: 16rem;
+      box-sizing: border-box;
+      z-index: 900;
+    }
+  }
+
+  .site-footer {
+    margin-top: auto;
+    padding: 2rem clamp(1rem, 6vw, 8rem);
+    background-color: var(--color-neutral-900);
+    color: var(--color-neutral-0);
+  }
+
+  .site-footer-inner {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 1.5rem;
+    max-width: 1400px;
+    margin: 0 auto;
+    font-size: var(--font-size-sm);
+  }
+
+  .site-footer-inner > div {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+  }
+
+  .site-footer strong {
+    font-size: var(--font-size-lg);
+  }
+
+  .site-footer small {
+    color: var(--color-neutral-200);
+  }
+
+  @media (max-width: 800px) {
+    .dashboard-layout,
+    .site-footer-inner {
+      grid-template-columns: 1fr;
+    }
+
+    .dashboard-sidebar {
+      position: static;
+    }
+  }
 
   .dashboard-actions-card {
     margin-top: 2rem;
@@ -472,10 +653,6 @@
 }
 
 /* --- Pantallas de vinculaciones --- */
-.links-page {
-  padding-top: 2rem;
-  padding-bottom: 3rem;
-}
 
 .management-grid {
   display: grid;
@@ -576,6 +753,129 @@
   margin-bottom: 1.5rem;
 }
 
+/* --- Medios de pago --- */
+
+.payments-header,
+.payment-card-header,
+.payment-data {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.payments-header {
+  align-items: flex-start;
+  margin-bottom: 1.5rem;
+}
+
+.payments-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 1.5rem;
+}
+
+.payment-card {
+  display: flex;
+  flex-direction: column;
+}
+
+.payment-card-header {
+  align-items: flex-start;
+}
+
+.payment-card .card-title {
+  margin-top: 0;
+  margin-bottom: 0.25rem;
+}
+
+.payment-type,
+.payment-data {
+  margin: 0;
+}
+
+.payment-number {
+  margin: 1.5rem 0;
+  color: var(--color-neutral-900);
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-semibold);
+  letter-spacing: 0.12em;
+}
+
+.payment-data {
+  align-items: center;
+  padding: 0.45rem 0;
+  font-size: var(--font-size-sm);
+}
+
+.payment-data strong {
+  color: var(--color-neutral-900);
+}
+
+.payment-actions {
+  margin-top: auto;
+  padding-top: 1.25rem;
+}
+
+.empty-state {
+  text-align: center;
+}
+
+.form-card {
+  max-width: 760px;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+}
+
+.form-label {
+  color: var(--color-neutral-900);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-semibold);
+}
+
+.form-group input:not([type='checkbox']),
+.form-group select,
+.form-group textarea {
+  width: calc(100% - 4rem);
+  padding: 0.7rem 0.85rem;
+  border: 1px solid var(--color-neutral-200);
+  border-radius: var(--radius-md);
+  background: var(--color-neutral-0);
+  color: var(--color-neutral-900);
+  font: inherit;
+}
+
+.form-group input:focus,
+.form-group select:focus,
+.form-group textarea:focus {
+  outline: 2px solid var(--color-primary-100);
+  border-color: var(--color-primary-500);
+}
+
+.required,
+.field-error {
+  color: var(--color-danger);
+}
+
+.help-text,
+.field-error {
+  margin: 0;
+  font-size: var(--font-size-sm);
+}
+
+@media (max-width: 700px) {
+  .payments-header {
+    flex-direction: column;
+  }
+
+  .payments-header .btn {
+    width: 100%;
+  }
+}
+
 .links-card {
   overflow-x: auto;
 }
@@ -652,6 +952,54 @@
   color: var(--color-neutral-900);
   font-size: var(--font-size-sm);
   font-weight: var(--font-weight-semibold);
+}
+
+.form-radio-group {
+  display: flex;
+  gap: 0.75rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.form-radio-group li {
+  flex: 1;
+}
+
+.form-radio-group label {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 0;
+  padding: 0.75rem 1rem;
+  border: 1px solid var(--color-neutral-200);
+  border-radius: var(--radius-md);
+  background-color: var(--color-neutral-0);
+  color: var(--color-neutral-900);
+  cursor: pointer;
+  font-weight: var(--font-weight-medium);
+  transition: border-color 0.2s ease, background-color 0.2s ease;
+}
+
+.form-radio-group label:hover {
+  border-color: var(--color-primary-500);
+  background-color: var(--color-primary-50);
+}
+
+.form-radio-group input[type="radio"] {
+  accent-color: var(--color-primary-500);
+  margin: 0;
+}
+
+.form-radio-group label:has(input[type="radio"]:checked) {
+  border-color: var(--color-primary-500);
+  background-color: var(--color-primary-50);
+}
+
+@media (max-width: 640px) {
+  .form-radio-group {
+    flex-direction: column;
+  }
 }
 
 .form-control {

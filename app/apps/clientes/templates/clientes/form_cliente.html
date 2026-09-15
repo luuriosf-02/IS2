@@ -4,7 +4,7 @@
     <!-- Navbar -->
     {% include 'components/navbar.html' %}
 
-    <div class="main-container" style="padding-top: 2.5rem; padding-bottom: 2.5rem;">
+    <div class="main-container" style="padding-bottom: 2.5rem;">
         
         <!-- Botón de retorno -->
         <div style="margin-bottom: 1.5rem;">
@@ -80,8 +80,8 @@
                         {% endif %}
                     </div>
 
-                    <!-- Tipo de Persona y Categoría -->
-                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 1.5rem;">
+                    <!-- Tipo de Persona -->
+                    <div>
                         <!-- Tipo de Persona -->
                         <div class="form-group">
                             <label for="{{ form.tipo_persona.id_for_label }}" class="form-label">
@@ -104,76 +104,7 @@
                                 </div>
                             {% endif %}
                         </div>
-
-                        <!-- Categoría -->
-                        <div class="form-group">
-                            <label for="{{ form.categoria.id_for_label }}" class="form-label">
-                                {{ form.categoria.label }} <span class="required">*</span>
-                            </label>
-                            <select id="{{ form.categoria.id_for_label }}" 
-                                    name="{{ form.categoria.name }}">
-                                <option value="">-- Seleccionar --</option>
-                                {% for value, label in form.categoria.field.choices %}
-                                    <option value="{{ value }}" {% if form.categoria.value == value %}selected{% endif %}>
-                                        {{ label }}
-                                    </option>
-                                {% endfor %}
-                            </select>
-                            {% if form.categoria.errors %}
-                                <div class="form-error">
-                                    {% for error in form.categoria.errors %}
-                                        <p>{{ error }}</p>
-                                    {% endfor %}
-                                </div>
-                            {% endif %}
-                        </div>
                     </div>
-
-                    <!-- Límite de Crédito -->
-                    <div class="form-group">
-                        <label for="{{ form.limite_credito.id_for_label }}" class="form-label">
-                            {{ form.limite_credito.label }} <span class="required">*</span>
-                        </label>
-                        <input type="number" 
-                               id="{{ form.limite_credito.id_for_label }}" 
-                               name="{{ form.limite_credito.name }}" 
-                               placeholder="0.00"
-                               value="{{ form.limite_credito.value|default:'' }}"
-                               step="0.01"
-                               min="0">
-                        {% if form.limite_credito.errors %}
-                            <div class="form-error">
-                                {% for error in form.limite_credito.errors %}
-                                    <p>{{ error }}</p>
-                                {% endfor %}
-                            </div>
-                        {% endif %}
-                        {% if form.limite_credito.help_text %}
-                            <p class="form-help">ℹ️ {{ form.limite_credito.help_text|safe }}</p>
-                        {% endif %}
-                    </div>
-
-                    {% if cliente and cliente.activacion_permitida %}
-                        <div class="form-checkbox-wrapper">
-                            <input type="checkbox"
-                                   id="{{ form.activo.id_for_label }}"
-                                name="{{ form.activo.name }}"
-                                   {% if form.activo.value %}checked{% endif %}>
-                            <label for="{{ form.activo.id_for_label }}" class="form-checkbox-label">
-                                {{ form.activo.label }}
-                            </label>
-                        </div>
-                    {% elif cliente %}
-                        <div class="form-checkbox-wrapper">
-                            <input type="checkbox"
-                                   id="{{ form.activo.id_for_label }}"
-                                   disabled
-                                   {% if form.activo.value %}checked{% endif %}>
-                            <label for="{{ form.activo.id_for_label }}" class="form-checkbox-label">
-                                {{ form.activo.label }} (pendiente de aprobación)
-                            </label>
-                        </div>
-                    {% endif %}
 
                     <!-- Botones de Acción -->
                     <div class="action-buttons" style="margin-top: 2rem; border-top: 1px solid var(--color-neutral-200); padding-top: 2rem;">

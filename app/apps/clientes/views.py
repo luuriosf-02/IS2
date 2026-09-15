@@ -13,6 +13,7 @@ def lista_clientes(request):
     ).order_by('-fecha_creacion')
     context = {
         'clientes': clientes,
+        'hide_client_selector': True,
     }
     return render(request, 'clientes/lista_clientes.html', context)
 

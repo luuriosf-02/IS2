@@ -1,9 +1,10 @@
 {% extends 'layouts/base.html' %}
 
 {% block content %}
-<div class="main-container links-page">
+{% include 'components/navbar.html' %}
+<div class="main-container">
     <div class="page-back">
-        <a href="{% url 'home' %}" class="btn btn-neutral">Volver al Inicio</a>
+        <a href="{% url 'home' %}" class="btn btn-outline">Volver al Inicio</a>
     </div>
 
     {% include 'components/section-title.html' with title='Gestión de Tasas y Divisas' description='Panel de administración exclusivo para Analistas Cambiarios.' %}

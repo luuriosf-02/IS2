@@ -4,6 +4,19 @@
     <!-- Contenedor alineado centralmente para evitar saltos de altura -->
     <div style="display: flex; align-items: center; gap: 1rem;">
         {% if user.is_authenticated %}
+            {% if available_clients %}
+                <form method="post" action="{% url 'activate_client' %}" class="navbar-client-selector">
+                    {% csrf_token %}
+                    <label for="navbar-client">Cliente actual</label>
+                    <select id="navbar-client" name="client_id" onchange="this.form.submit()">
+                        {% for client in available_clients %}
+                            <option value="{{ client.pk }}" {% if selected_client.pk == client.pk %}selected{% endif %}>
+                                {{ client.nombre_razon_social }}{% if not client.activo %} (inactivo){% endif %}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </form>
+            {% endif %}
             <!-- Bloque cuando está logueado -->
             <div class="user-avatar">
                 {{ user.first_name|slice:":1" }}{{ user.last_name|slice:":1" }}
@@ -11,8 +24,11 @@
             
             <div class="navbar-user-info">
                 <span class="user-name">{{ user.first_name }} {{ user.last_name }}</span>
-                
-                {% include 'components/pill.html' with text=user.profile.role%}
+                {% if user.profile.role != "Cliente" %}
+                    {% include 'components/pill.html' with text=user.profile.role %}
+                {% else %}
+                    {% include 'components/pill.html' with text="Usuario" %}
+                {% endif %}
             </div>
 
             <a href="{% url 'logout' %}" class="navbar-action-btn navbar-btn-logout">

@@ -78,18 +78,18 @@ class TestSprint2Alcance(unittest.TestCase):
         self.assertIn("BRL_PYG", tasas)
 
     def test_05_simulador_conversion_compra(self):
-        """Simulador: Cálculo exacto para operación de compra (100 USD -> PYG)."""
-        cotiz = BD_COTIZACIONES["USD_PYG"]
-        monto_origen = Decimal("100.00")
-        resultado = monto_origen * cotiz.compra
-        self.assertEqual(resultado, Decimal("725000.00"))
-
-    def test_06_simulador_conversion_venta(self):
-        """Simulador: Cálculo exacto para operación de venta (100 USD -> PYG)."""
+        """Simulador: Compra de 100 USD usando la tasa de venta."""
         cotiz = BD_COTIZACIONES["USD_PYG"]
         monto_origen = Decimal("100.00")
         resultado = monto_origen * cotiz.venta
         self.assertEqual(resultado, Decimal("735000.00"))
+
+    def test_06_simulador_conversion_venta(self):
+        """Simulador: Venta de 100 USD usando la tasa de compra."""
+        cotiz = BD_COTIZACIONES["USD_PYG"]
+        monto_origen = Decimal("100.00")
+        resultado = monto_origen * cotiz.compra
+        self.assertEqual(resultado, Decimal("725000.00"))
 
 def run_tests_and_generate_report():
     timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")

@@ -7,7 +7,42 @@
     {% include 'components/navbar.html' %}
 
     <div class="main-container" style="padding-top: 2.5rem; padding-bottom: 2.5rem;">
-        
+        <div class="dashboard-layout">
+            <aside class="dashboard-sidebar" aria-label="Navegación por usuario">
+                <h2 class="dashboard-sidebar-title">Mis accesos</h2>
+                {% if user.is_authenticated %}
+                    {% if es_analista %}
+                        <div class="dashboard-sidebar-group">
+                            <span class="dashboard-sidebar-label">Analista cambiario</span>
+                            <a href="{% url 'gestion_divisas' %}" class="dashboard-sidebar-link">Modificar tasas</a>
+                        </div>
+                    {% endif %}
+
+                    {% if user.profile.role == 'Administrador' %}
+                        <div class="dashboard-sidebar-group">
+                            <span class="dashboard-sidebar-label">Administración</span>
+                            <a href="{% url 'pending_client_links' %}" class="dashboard-sidebar-link">Solicitudes pendientes</a>
+                            <a href="{% url 'assign_role' %}" class="dashboard-sidebar-link">Asignar roles</a>
+                        </div>
+                    {% endif %}
+
+                    {% if user.profile.role == 'Cliente' or user.profile.role == 'No registrado' %}
+                        <div class="dashboard-sidebar-group">
+                            <span class="dashboard-sidebar-label">Mi cuenta</span>
+                            <a href="{% url 'clientes:lista' %}" class="dashboard-sidebar-link">Mis clientes registrados</a>
+                            <a href="{% url 'my_client_links' %}" class="dashboard-sidebar-link">Mis vinculaciones</a>
+                            <a href="{% url 'request_client_link' %}" class="dashboard-sidebar-link">Solicitar vinculación</a>
+                            {% if cliente_activo %}
+                                <a href="{% url 'payments:lista' %}" class="dashboard-sidebar-link">Medios de pago</a>
+                            {% endif %}
+                        </div>
+                    {% endif %}
+                {% else %}
+                    <p class="dashboard-sidebar-note">Inicia sesión para ver los accesos disponibles para tu usuario.</p>
+                {% endif %}
+            </aside>
+
+            <section class="dashboard-content">
         <!-- 2. Saludo condicional: Solo si tiene sesión iniciada -->
         {% if user.is_authenticated %}
             <div style="margin-bottom: 2rem;">
@@ -32,56 +67,89 @@
     <div class="card-body">
         {% include 'components/paragraph.html' with text="Somos una casa de cambio líder comprometida con ofrecerte las mejores tasas del mercado para tus operaciones en moneda extranjera, garantizando rapidez, transparencia y seguridad en cada transacción." %}
         
-        <div style="margin-top: 1.2rem; display: flex; gap: 1rem; align-items: center; flex-wrap: wrap;">
-            {% if user.is_authenticated and es_analista %}
-                <a href="{% url 'gestion_divisas' %}" style="background-color: #7c5dfa; color: white; padding: 0.6rem 1.2rem; border-radius: 8px; text-decoration: none; font-weight: 600; display: inline-block;">
-                    Ver Cotizaciones
-                </a>
-            {% else %}
-                <a href="{% url 'simulador' %}" class="btn btn-primary">Ver simulador</a>
-            {% endif %}
-
-            <a href="{% url 'simulador' %}" class="link-text">Conocer tasas</a>
-        </div>
     </div>
 </div>
 
-        <!-- 4. Acciones según el rol del usuario -->
-        {% if user.is_authenticated and user.profile.role == 'Administrador' %}
-                <div class="card dashboard-actions-card">
-                    <h3 class="card-title">Administración</h3>
-                    {% include 'components/paragraph.html' with text="Gestiona las solicitudes de vinculación y los roles de los usuarios." %}
-                    <div class="action-buttons">
-                        <a href="{% url 'pending_client_links' %}" class="btn btn-primary">Solicitudes pendientes</a>
-                        <a href="{% url 'assign_role' %}" class="btn btn-outline">Asignar roles</a>
+        <div class="card dashboard-currency-card" style="margin-top: 2rem;">
+            <h2 class="card-title">Tasas actuales</h2>
+            <p class="text-body">Consulta las tasas vigentes y calcula una conversión.</p>
+
+            <div class="table-wrapper rates-table-wrapper">
+                <table class="links-table rates-table">
+                    <thead>
+                        <tr>
+                            <th>Moneda</th>
+                            <th>Nombre</th>
+                            <th>Compra</th>
+                            <th>Venta</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for item in currencies %}
+                            <tr>
+                                <td><strong>{{ item.codigo }}</strong></td>
+                                <td>{{ item.nombre }}</td>
+                                <td class="price-positive">{{ item.compra|floatformat:-2 }} PYG</td>
+                                <td class="price-negative">{{ item.venta|floatformat:-2 }} PYG</td>
+                            </tr>
+                        {% empty %}
+                            <tr>
+                                <td colspan="4" class="links-empty">No hay tasas disponibles en este momento.</td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            <br><br>
+            <form method="post" class="currency-form">
+                {% csrf_token %}
+                <div class="converter-grid">
+                    <div class="field-stack">
+                        <label for="operation">Operación</label>
+                        <select class="form-control" id="operation" name="operation">
+                            <option value="compra" {% if operation == 'compra' %}selected{% endif %}>Compra</option>
+                            <option value="venta" {% if operation == 'venta' %}selected{% endif %}>Venta</option>
+                        </select>
+                    </div>
+                    <div class="field-stack">
+                        <label for="amount">Monto</label>
+                        <input class="form-control" id="amount" name="amount" type="number" step="0.01" min="0" value="{{ amount|default:'100' }}" placeholder="Ej: 2500" />
+                    </div>
+                    <div class="field-stack">
+                        <label for="currency">Divisa extranjera</label>
+                        <select class="form-control" id="currency" name="currency">
+                            {% for item in foreign_currencies %}
+                                <option value="{{ item.codigo }}" {% if item.codigo == currency %}selected{% endif %}>{{ item.codigo }} - {{ item.nombre }}</option>
+                            {% endfor %}
+                        </select>
                     </div>
                 </div>
-        {% endif %}
+                <div class="converter-actions">
+                    <button type="submit" class="btn btn-primary">Calcular conversión</button>
+                </div>
+            </form>
 
-        {% if user.is_authenticated %}
-            {% if user.profile.role == 'Cliente' or user.profile.role == 'No registrado' %}
-                <div class="card dashboard-actions-card">
-                    <h3 class="card-title">Mis vinculaciones</h3>
-                    {% include 'components/paragraph.html' with text="Solicita acceso a tus clientes y consulta el estado de tus vinculaciones." %}
-                    <div class="action-buttons">
-                        <a href="{% url 'clientes:lista' %}" class="btn btn-primary">Mis clientes registrados</a>
-                        <a href="{% url 'my_client_links' %}" class="btn btn-primary">Mis vinculaciones</a>
-                        <a href="{% url 'request_client_link' %}" class="btn btn-outline">Solicitar vinculación</a>
+            {% if error %}<div class="system-message">{{ error }}</div>{% endif %}
+            {% if conversion %}
+                <div class="result-panel" style="margin-top: 1.5rem;">
+                    <div class="result-header">
+                        <div>
+                            <div class="badge badge-primary">Tasa aplicada</div>
+                            <div style="margin-top: 0.75rem; color: var(--color-neutral-700); font-size: 0.9rem;">{{ conversion.from_currency }} → {{ conversion.to_currency }}</div>
+                        </div>
+                        <div class="result-amount">{{ conversion.result|floatformat:2 }} {{ conversion.to_currency }}</div>
+                    </div>
+                    <div class="result-grid">
+                        <div class="result-metric"><span>Dólares {% if conversion.operation == 'compra' %}comprados{% else %}vendidos{% endif %}</span><strong>{{ conversion.amount|floatformat:2 }} {{ conversion.from_currency }}</strong></div>
+                        <div class="result-metric"><span>Tasa aplicada</span><strong>{{ conversion.rate }} PYG</strong></div>
+                        <div class="result-metric"><span>Tipo de operación</span><strong>{% if conversion.operation == 'compra' %}Compra{% else %}Venta{% endif %}</strong></div>
                     </div>
                 </div>
             {% endif %}
-        {% endif %}
+        </div>
 
+            </section>
+        </div>
     </div>
 {% endblock %}
 
-{% if user.is_authenticated and es_analista %}
-    <div class="my-4 p-4 border rounded bg-light">
-        <h4 class="text-primary">Acciones de Analista Cambiario</h4>
-        <p class="text-muted">Gestiona las cotizaciones y divisas del día desde aquí:</p>
-        
-        <a href="{% url 'gestion_divisas' %}" class="btn btn-primary btn-lg">
-            <i class="bi bi-currency-exchange"></i> Ir a Gestión de Tasas
-        </a>
-    </div>
-{% endif %}
