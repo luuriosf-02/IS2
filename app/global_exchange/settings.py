@@ -35,6 +35,7 @@ INSTALLED_APPS = [
     'apps.clientes',
     "apps.divisas",
     "apps.payments",
+    "apps.transacciones",
 ]
 
 AUTHENTICATION_BACKENDS= (

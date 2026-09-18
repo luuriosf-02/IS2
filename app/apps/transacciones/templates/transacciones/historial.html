@@ -1,0 +1,82 @@
+{% extends "layouts/base.html" %}
+
+{% block title %}Historial de transacciones | Global Exchange{% endblock %}
+
+{% block content %}
+    {% include 'components/navbar.html' %}
+
+    <main class="main-container transaction-history-page">
+        <div class="page-back">
+            <a href="{% url 'home' %}" class="btn btn-outline">Volver al inicio</a>
+        </div>
+
+        <section class="transaction-history-header">
+            <div>
+                <span class="badge badge-primary">Cliente activo</span>
+                <h1>Historial de transacciones</h1>
+                <p class="text-body">{{ cliente.nombre_razon_social }} · {{ cliente.documento }}</p>
+            </div>
+            <a class="btn btn-primary" href="{% url 'home' %}#conversor">Nueva operación</a>
+        </section>
+
+        {% if transacciones %}
+            <div class="table-wrapper transaction-history-table-wrapper">
+                <table class="links-table transaction-history-table">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Inicio</th>
+                            <th>Finalización</th>
+                            <th>Medio de pago</th>
+                            <th>Estado</th>
+                            <th>Tipo</th>
+                            <th>Cantidad operada</th>
+                            <th>Total en guaraníes</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for transaccion in transacciones %}
+                            <tr>
+                                <td><strong>{{ transaccion.referencia }}</strong></td>
+                                <td>{{ transaccion.fecha_creacion|date:"d/m/Y H:i" }}</td>
+                                <td>
+                                    {% if transaccion.fecha_finalizacion %}
+                                        {{ transaccion.fecha_finalizacion|date:"d/m/Y H:i" }}
+                                    {% else %}
+                                        Pendiente
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {{ transaccion.medio_pago.get_marca_display }}<br>
+                                    <small>•••• {{ transaccion.medio_pago.ultimos_cuatro }}</small>
+                                </td>
+                                <td><span class="transaction-status transaction-status-{{ transaccion.estado }}">{{ transaccion.get_estado_display }}</span></td>
+                                <td>
+                                    {% if transaccion.tipo_operacion %}
+                                        {{ transaccion.get_tipo_operacion_display }}
+                                    {% else %}
+                                        No disponible
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if transaccion.cantidad_divisa and transaccion.divisa %}
+                                        {{ transaccion.cantidad_divisa|floatformat:2 }} {{ transaccion.divisa.codigo }}
+                                    {% else %}
+                                        No disponible
+                                    {% endif %}
+                                </td>
+                                <td>{{ transaccion.monto|floatformat:2 }} PYG</td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <section class="card empty-state">
+                <h2 class="card-title">Aún no hay transacciones</h2>
+                <p class="text-body">Las operaciones efectuadas desde el conversor aparecerán aquí.</p>
+                <a class="btn btn-primary" href="{% url 'home' %}#conversor">Ir al conversor</a>
+            </section>
+        {% endif %}
+    </main>
+{% endblock %}

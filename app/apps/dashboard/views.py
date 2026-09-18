@@ -5,6 +5,7 @@ from django.contrib.auth import logout as django_logout
 from django.db.models import OuterRef, Subquery
 
 from apps.divisas.models import Moneda, TasaCambio
+from apps.payments.models import MedioPago
 from apps.users.client_selection import get_selected_client
 
 PYG_CODE = 'PYG'
@@ -112,18 +113,14 @@ def home(request):
         'user': request.user,
         'es_analista': es_analista,
         'cliente_activo': cliente_activo,
+        'medios_pago': MedioPago.objects.filter(
+            cliente=cliente_activo,
+            activo=True,
+        ) if cliente_activo else MedioPago.objects.none(),
     }
     context.update(get_conversion_context(request))
     return render(request, 'dashboard.html', context)
 
-
-
-def currency_converter(request):
-    return render(
-        request,
-        'simulador/conversion.html',
-        {'user': request.user, **get_conversion_context(request)},
-    )
 
 
 def custom_logout(request):

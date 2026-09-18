@@ -34,6 +34,7 @@
                             <a href="{% url 'request_client_link' %}" class="dashboard-sidebar-link">Solicitar vinculación</a>
                             {% if cliente_activo %}
                                 <a href="{% url 'payments:lista' %}" class="dashboard-sidebar-link">Medios de pago</a>
+                                <a href="{% url 'transacciones:historial' %}" class="dashboard-sidebar-link">Historial de transacciones</a>
                             {% endif %}
                         </div>
                     {% endif %}
@@ -70,7 +71,7 @@
     </div>
 </div>
 
-        <div class="card dashboard-currency-card" style="margin-top: 2rem;">
+        <div id="conversor" class="card dashboard-currency-card" style="margin-top: 2rem;">
             <h2 class="card-title">Tasas actuales</h2>
             <p class="text-body">Consulta las tasas vigentes y calcula una conversión.</p>
 
@@ -100,7 +101,8 @@
                     </tbody>
                 </table>
             </div>
-            <br><br>
+            <br>
+            <h2>Simulador de conversion</h2>
             <form method="post" class="currency-form">
                 {% csrf_token %}
                 <div class="converter-grid">
@@ -130,6 +132,11 @@
             </form>
 
             {% if error %}<div class="system-message">{{ error }}</div>{% endif %}
+            {% if messages %}
+                {% for message in messages %}
+                    <div class="system-message{% if message.tags == 'success' %} system-message-success{% endif %}">{{ message }}</div>
+                {% endfor %}
+            {% endif %}
             {% if conversion %}
                 <div class="result-panel" style="margin-top: 1.5rem;">
                     <div class="result-header">
@@ -144,6 +151,9 @@
                         <div class="result-metric"><span>Tasa aplicada</span><strong>{{ conversion.rate }} PYG</strong></div>
                         <div class="result-metric"><span>Tipo de operación</span><strong>{% if conversion.operation == 'compra' %}Compra{% else %}Venta{% endif %}</strong></div>
                     </div>
+                </div>
+                <div class="converter-actions" style="margin-top: 1rem;">
+                    {% include 'components/transaction_modal.html' %}
                 </div>
             {% endif %}
         </div>
