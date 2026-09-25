@@ -3,7 +3,8 @@ from decimal import Decimal, InvalidOperation
 
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
-from django.shortcuts import redirect, render
+from django.shortcuts import get_object_or_404, redirect, render  
+from django.utils import timezone  
 
 from apps.dashboard.views import (
     PYG_CODE,
@@ -16,6 +17,22 @@ from apps.payments.models import MedioPago
 from apps.users.client_selection import get_selected_client
 
 from .models import Transaccion
+
+
+
+
+@login_required
+def cancelar_transaccion(request, transaccion_id):
+   
+    transaccion = get_object_or_404(Transaccion, id=transaccion_id)
+    
+    
+    if transaccion.estado == 'Pendiente' or transaccion.estado == 'pendiente':
+        transaccion.estado = 'Cancelada'  
+        transaccion.fecha_finalizacion = timezone.now() 
+        transaccion.save()
+        
+    return redirect('historial_transacciones') 
 
 
 @login_required

@@ -5,7 +5,7 @@
 {% block content %}
     {% include 'components/navbar.html' %}
 
-    <main class="main-container transaction-history-page">
+<main class="main-container transaction-history-page">
         <div class="page-back">
             <a href="{% url 'home' %}" class="btn btn-outline">Volver al inicio</a>
         </div>
@@ -15,7 +15,7 @@
                 <span class="badge badge-primary">Cliente activo</span>
                 <h1>Historial de transacciones</h1>
                 <p class="text-body">{{ cliente.nombre_razon_social }} · {{ cliente.documento }}</p>
-            </div>
+            </div> 
             <a class="btn btn-primary" href="{% url 'home' %}#conversor">Nueva operación</a>
         </section>
 
@@ -32,6 +32,7 @@
                             <th>Tipo</th>
                             <th>Cantidad operada</th>
                             <th>Total en guaraníes</th>
+                            <th>Acciones</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -50,7 +51,11 @@
                                     {{ transaccion.medio_pago.get_marca_display }}<br>
                                     <small>•••• {{ transaccion.medio_pago.ultimos_cuatro }}</small>
                                 </td>
-                                <td><span class="transaction-status transaction-status-{{ transaccion.estado }}">{{ transaccion.get_estado_display }}</span></td>
+                                <td>
+                                    <span class="transaction-status transaction-status-{{ transaccion.estado }}">
+                                        {{ transaccion.get_estado_display }}
+                                    </span>
+                                </td>
                                 <td>
                                     {% if transaccion.tipo_operacion %}
                                         {{ transaccion.get_tipo_operacion_display }}
@@ -66,6 +71,17 @@
                                     {% endif %}
                                 </td>
                                 <td>{{ transaccion.monto|floatformat:2 }} PYG</td>
+                                
+                                <!-- Columna de acciones con el botón de cancelar condicional -->
+                                <td>
+                                    {% if transaccion.estado == 'Pendiente' or transaccion.estado == 'pendiente' %}
+                                        <a href="{% url 'cancelar_transaccion' transaccion.id %}" class="btn btn-danger btn-sm">
+                                            Cancelar
+                                        </a>
+                                    {% else %}
+                                        <span class="text-muted">-</span>
+                                    {% endif %}
+                                </td>
                             </tr>
                         {% endfor %}
                     </tbody>
