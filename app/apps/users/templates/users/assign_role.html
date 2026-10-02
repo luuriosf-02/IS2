@@ -4,12 +4,7 @@
 
 {% block content %}
 <style>
-    .role-page {
-        padding-top: 2rem;
-        padding-bottom: 3rem;
-    }
-
-    .role-page .section-header {
+    .section-header {
         max-width: 48rem;
         margin-right: auto;
         margin-left: auto;
@@ -75,16 +70,11 @@
         color: var(--color-neutral-700);
     }
 
-    @media (max-width: 700px) {
-        .role-page {
-            padding-top: 1rem;
-        }
-    }
 </style>
 
 {% include 'components/navbar.html' %}
 
-<div class="main-container role-page">
+<div class="main-container">
     {% include 'components/back-button.html' with href='/' text='Volver al inicio' %}
     {% include 'components/section-title.html' with title='Gestión de roles y permisos' description='Asigná un rol a un usuario para definir las funcionalidades a las que tendrá acceso.' %}
 

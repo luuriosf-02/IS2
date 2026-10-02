@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>apps.payments.tests module &#8212; documentación de Global Exchange - v2.0</title>
+    <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=6625fa76" />
+    <link rel="stylesheet" type="text/css" href="_static/alabaster.css?v=039e1c02" />
+    <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js?v=b04d0a2f"></script>
+    <script src="_static/doctools.js?v=888ff710"></script>
+    <script src="_static/sphinx_highlight.js?v=4825356b"></script>
+    <script src="_static/translations.js?v=efdbd0b9"></script>
+    <link rel="index" title="Índice" href="genindex.html" />
+    <link rel="search" title="Búsqueda" href="search.html" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <section id="module-apps.payments.tests">
+<span id="apps-payments-tests-module"></span><h1>apps.payments.tests module<a class="headerlink" href="#module-apps.payments.tests" title="Enlace permanente a este encabezado">¶</a></h1>
+<dl class="py class">
+<dt class="sig sig-object py" id="apps.payments.tests.MedioPagoModelTest">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">apps.payments.tests.</span></span><span class="sig-name descname"><span class="pre">MedioPagoModelTest</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">methodName</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'runTest'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/apps/payments/tests.html#MedioPagoModelTest"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.payments.tests.MedioPagoModelTest" title="Enlazar permanentemente con esta definición">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">TestCase</span></code></p>
+<p>Pruebas unitarias del modelo MedioPago.</p>
+<p>Create an instance of the class that will use the named test
+method when executed. Raises a ValueError if the instance does
+not have a method with the specified name.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="apps.payments.tests.MedioPagoModelTest.setUp">
+<span class="sig-name descname"><span class="pre">setUp</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/apps/payments/tests.html#MedioPagoModelTest.setUp"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.payments.tests.MedioPagoModelTest.setUp" title="Enlazar permanentemente con esta definición">¶</a></dt>
+<dd><p>Hook method for setting up the test fixture before exercising it.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="apps.payments.tests.MedioPagoModelTest.test_crear_medio_pago">
+<span class="sig-name descname"><span class="pre">test_crear_medio_pago</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/apps/payments/tests.html#MedioPagoModelTest.test_crear_medio_pago"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.payments.tests.MedioPagoModelTest.test_crear_medio_pago" title="Enlazar permanentemente con esta definición">¶</a></dt>
+<dd><p>Comprueba que un medio de pago se almacena correctamente.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="apps.payments.tests.MedioPagoModelTest.test_representacion_del_medio_pago">
+<span class="sig-name descname"><span class="pre">test_representacion_del_medio_pago</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/apps/payments/tests.html#MedioPagoModelTest.test_representacion_del_medio_pago"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.payments.tests.MedioPagoModelTest.test_representacion_del_medio_pago" title="Enlazar permanentemente con esta definición">¶</a></dt>
+<dd><p>Comprueba el texto generado por el método __str__.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="apps.payments.tests.MedioPagoFormTest">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">apps.payments.tests.</span></span><span class="sig-name descname"><span class="pre">MedioPagoFormTest</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">methodName</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'runTest'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/apps/payments/tests.html#MedioPagoFormTest"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.payments.tests.MedioPagoFormTest" title="Enlazar permanentemente con esta definición">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">TestCase</span></code></p>
+<p>Pruebas de validación del formulario de medios de pago.</p>
+<p>Create an instance of the class that will use the named test
+method when executed. Raises a ValueError if the instance does
+not have a method with the specified name.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="apps.payments.tests.MedioPagoFormTest.datos_validos">
+<span class="sig-name descname"><span class="pre">datos_validos</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/apps/payments/tests.html#MedioPagoFormTest.datos_validos"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.payments.tests.MedioPagoFormTest.datos_validos" title="Enlazar permanentemente con esta definición">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="apps.payments.tests.MedioPagoFormTest.test_formulario_valido">
+<span class="sig-name descname"><span class="pre">test_formulario_valido</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/apps/payments/tests.html#MedioPagoFormTest.test_formulario_valido"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.payments.tests.MedioPagoFormTest.test_formulario_valido" title="Enlazar permanentemente con esta definición">¶</a></dt>
+<dd><p>Comprueba que el formulario acepta información válida.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="apps.payments.tests.MedioPagoFormTest.test_rechaza_ultimos_cuatro_con_letras">
+<span class="sig-name descname"><span class="pre">test_rechaza_ultimos_cuatro_con_letras</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/apps/payments/tests.html#MedioPagoFormTest.test_rechaza_ultimos_cuatro_con_letras"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.payments.tests.MedioPagoFormTest.test_rechaza_ultimos_cuatro_con_letras" title="Enlazar permanentemente con esta definición">¶</a></dt>
+<dd><p>Comprueba que los últimos cuatro dígitos sean numéricos.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="apps.payments.tests.MedioPagoFormTest.test_rechaza_ultimos_cuatro_incompletos">
+<span class="sig-name descname"><span class="pre">test_rechaza_ultimos_cuatro_incompletos</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/apps/payments/tests.html#MedioPagoFormTest.test_rechaza_ultimos_cuatro_incompletos"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.payments.tests.MedioPagoFormTest.test_rechaza_ultimos_cuatro_incompletos" title="Enlazar permanentemente con esta definición">¶</a></dt>
+<dd><p>Comprueba que se ingresen exactamente cuatro dígitos.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="apps.payments.tests.MedioPagoFormTest.test_rechaza_fecha_vencida">
+<span class="sig-name descname"><span class="pre">test_rechaza_fecha_vencida</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/apps/payments/tests.html#MedioPagoFormTest.test_rechaza_fecha_vencida"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.payments.tests.MedioPagoFormTest.test_rechaza_fecha_vencida" title="Enlazar permanentemente con esta definición">¶</a></dt>
+<dd><p>Comprueba que no se acepten medios de pago vencidos.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="apps.payments.tests.MedioPagoViewsTest">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">apps.payments.tests.</span></span><span class="sig-name descname"><span class="pre">MedioPagoViewsTest</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">methodName</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'runTest'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/apps/payments/tests.html#MedioPagoViewsTest"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.payments.tests.MedioPagoViewsTest" title="Enlazar permanentemente con esta definición">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">TestCase</span></code></p>
+<p>Pruebas de las vistas del CRUD de medios de pago.</p>
+<p>Create an instance of the class that will use the named test
+method when executed. Raises a ValueError if the instance does
+not have a method with the specified name.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="apps.payments.tests.MedioPagoViewsTest.setUp">
+<span class="sig-name descname"><span class="pre">setUp</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/apps/payments/tests.html#MedioPagoViewsTest.setUp"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.payments.tests.MedioPagoViewsTest.setUp" title="Enlazar permanentemente con esta definición">¶</a></dt>
+<dd><p>Hook method for setting up the test fixture before exercising it.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="apps.payments.tests.MedioPagoViewsTest.datos_medio_pago">
+<span class="sig-name descname"><span class="pre">datos_medio_pago</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/apps/payments/tests.html#MedioPagoViewsTest.datos_medio_pago"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.payments.tests.MedioPagoViewsTest.datos_medio_pago" title="Enlazar permanentemente con esta definición">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="apps.payments.tests.MedioPagoViewsTest.test_listar_medios_pago">
+<span class="sig-name descname"><span class="pre">test_listar_medios_pago</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/apps/payments/tests.html#MedioPagoViewsTest.test_listar_medios_pago"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.payments.tests.MedioPagoViewsTest.test_listar_medios_pago" title="Enlazar permanentemente con esta definición">¶</a></dt>
+<dd><p>Comprueba que el usuario visualice sus medios de pago.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="apps.payments.tests.MedioPagoViewsTest.test_crear_medio_pago">
+<span class="sig-name descname"><span class="pre">test_crear_medio_pago</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/apps/payments/tests.html#MedioPagoViewsTest.test_crear_medio_pago"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.payments.tests.MedioPagoViewsTest.test_crear_medio_pago" title="Enlazar permanentemente con esta definición">¶</a></dt>
+<dd><p>Comprueba la creación mediante la vista.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="apps.payments.tests.MedioPagoViewsTest.test_editar_medio_pago">
+<span class="sig-name descname"><span class="pre">test_editar_medio_pago</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/apps/payments/tests.html#MedioPagoViewsTest.test_editar_medio_pago"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.payments.tests.MedioPagoViewsTest.test_editar_medio_pago" title="Enlazar permanentemente con esta definición">¶</a></dt>
+<dd><p>Comprueba la modificación mediante la vista.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="apps.payments.tests.MedioPagoViewsTest.test_eliminar_medio_pago">
+<span class="sig-name descname"><span class="pre">test_eliminar_medio_pago</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/apps/payments/tests.html#MedioPagoViewsTest.test_eliminar_medio_pago"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.payments.tests.MedioPagoViewsTest.test_eliminar_medio_pago" title="Enlazar permanentemente con esta definición">¶</a></dt>
+<dd><p>Comprueba la eliminación mediante la vista.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="apps.payments.tests.MedioPagoViewsTest.test_un_solo_medio_predeterminado">
+<span class="sig-name descname"><span class="pre">test_un_solo_medio_predeterminado</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/apps/payments/tests.html#MedioPagoViewsTest.test_un_solo_medio_predeterminado"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.payments.tests.MedioPagoViewsTest.test_un_solo_medio_predeterminado" title="Enlazar permanentemente con esta definición">¶</a></dt>
+<dd><p>Comprueba que solamente exista un medio predeterminado.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="apps.payments.tests.MedioPagoPermissionsTest">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">apps.payments.tests.</span></span><span class="sig-name descname"><span class="pre">MedioPagoPermissionsTest</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">methodName</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'runTest'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/apps/payments/tests.html#MedioPagoPermissionsTest"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.payments.tests.MedioPagoPermissionsTest" title="Enlazar permanentemente con esta definición">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">TestCase</span></code></p>
+<p>Pruebas de autenticación y permisos.</p>
+<p>Create an instance of the class that will use the named test
+method when executed. Raises a ValueError if the instance does
+not have a method with the specified name.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="apps.payments.tests.MedioPagoPermissionsTest.setUp">
+<span class="sig-name descname"><span class="pre">setUp</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/apps/payments/tests.html#MedioPagoPermissionsTest.setUp"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.payments.tests.MedioPagoPermissionsTest.setUp" title="Enlazar permanentemente con esta definición">¶</a></dt>
+<dd><p>Hook method for setting up the test fixture before exercising it.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="apps.payments.tests.MedioPagoPermissionsTest.test_redirige_usuario_no_autenticado">
+<span class="sig-name descname"><span class="pre">test_redirige_usuario_no_autenticado</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/apps/payments/tests.html#MedioPagoPermissionsTest.test_redirige_usuario_no_autenticado"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.payments.tests.MedioPagoPermissionsTest.test_redirige_usuario_no_autenticado" title="Enlazar permanentemente con esta definición">¶</a></dt>
+<dd><p>Comprueba que un visitante no pueda acceder al CRUD.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="apps.payments.tests.MedioPagoPermissionsTest.test_rechaza_usuario_sin_vinculacion">
+<span class="sig-name descname"><span class="pre">test_rechaza_usuario_sin_vinculacion</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/apps/payments/tests.html#MedioPagoPermissionsTest.test_rechaza_usuario_sin_vinculacion"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.payments.tests.MedioPagoPermissionsTest.test_rechaza_usuario_sin_vinculacion" title="Enlazar permanentemente con esta definición">¶</a></dt>
+<dd><p>Comprueba que se rechace un usuario sin vínculo aprobado.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="apps.payments.tests.MedioPagoPermissionsTest.test_rechaza_cliente_inactivo">
+<span class="sig-name descname"><span class="pre">test_rechaza_cliente_inactivo</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/apps/payments/tests.html#MedioPagoPermissionsTest.test_rechaza_cliente_inactivo"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#apps.payments.tests.MedioPagoPermissionsTest.test_rechaza_cliente_inactivo" title="Enlazar permanentemente con esta definición">¶</a></dt>
+<dd><p>Comprueba que un usuario con un cliente inactivo vea la indicación correspondiente.</p>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="index.html">Global Exchange</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navegación</h3>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Búsqueda rápida</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Ir a" />
+    </form>
+    </div>
+</div>
+<script>document.getElementById('searchbox').style.display = "block"</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2026, Grupo 9.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 7.1.2</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.13</a>
+      
+      |
+      <a href="_sources/apps.payments.tests.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

@@ -1,0 +1,88 @@
+{% if conversion and cliente_activo %}
+    <button type="button" class="btn transaction-action" data-open-transaction-modal>
+        <span class="transaction-action-mark" aria-hidden="true">&#8594;</span>
+        <span class="transaction-action-copy">
+            <strong>Efectuar operación</strong>
+            <small>Continuar con esta cotización</small>
+        </span>
+    </button>
+
+    <div class="modal-backdrop" data-transaction-modal hidden>
+        <section class="transaction-modal" role="dialog" aria-modal="true" aria-labelledby="transaction-modal-title">
+            <div class="transaction-modal-header">
+                <div>
+                    <span class="badge badge-primary">Confirmar operación</span>
+                    <h2 id="transaction-modal-title">Resumen de la operación</h2>
+                </div>
+                <button type="button" class="modal-close" data-close-transaction-modal aria-label="Cerrar">&times;</button>
+            </div>
+
+            <div class="transaction-summary">
+                <div><span>Cliente</span><strong>{{ cliente_activo.nombre_razon_social }}</strong></div>
+                <div><span>Documento</span><strong>{{ cliente_activo.documento }}</strong></div>
+                <div><span>Operación</span><strong>{% if conversion.operation == 'compra' %}Compra{% else %}Venta{% endif %}</strong></div>
+                <div><span>Monto</span><strong>{{ conversion.amount|floatformat:2 }} {{ conversion.from_currency }}</strong></div>
+                <div><span>Total estimado</span><strong>{{ conversion.result|floatformat:2 }} {{ conversion.to_currency }}</strong></div>
+                <div><span>Tasa aplicada</span><strong>{{ conversion.rate }} PYG</strong></div>
+            </div>
+
+            {% if medios_pago %}
+                <form method="post" action="{% url 'transacciones:crear' %}">
+                    {% csrf_token %}
+                    <input type="hidden" name="operation" value="{{ conversion.operation }}">
+                    <input type="hidden" name="amount" value="{{ conversion.amount }}">
+                    <input type="hidden" name="currency" value="{{ conversion.foreign_currency }}">
+                    <div class="field-stack">
+                        <label for="medio-pago">Medio de pago <span aria-hidden="true">*</span></label>
+                        <select class="form-control" id="medio-pago" name="medio_pago" required>
+                            <option value="">Selecciona un medio de pago</option>
+                            {% for medio in medios_pago %}
+                                <option value="{{ medio.pk }}">{{ medio.get_marca_display }} terminada en {{ medio.ultimos_cuatro }}{% if medio.alias %} · {{ medio.alias }}{% endif %}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="transaction-modal-actions">
+                        <button type="button" class="btn btn-outline" data-close-transaction-modal>Volver</button>
+                        <button type="submit" class="btn btn-primary">Confirmar operación</button>
+                    </div>
+                </form>
+            {% else %}
+                <div class="system-message transaction-payment-warning">
+                    No cuentas con un medio de pago activo. Registra uno para poder continuar.
+                </div>
+                <div class="transaction-modal-actions">
+                    <button type="button" class="btn btn-outline" data-close-transaction-modal>Volver</button>
+                    <a class="btn btn-primary" href="{% url 'payments:lista' %}">Gestionar medios de pago</a>
+                </div>
+            {% endif %}
+        </section>
+    </div>
+
+    <script>
+        (() => {
+            const backdrop = document.querySelector('[data-transaction-modal]');
+            const openButton = document.querySelector('[data-open-transaction-modal]');
+            const closeButtons = document.querySelectorAll('[data-close-transaction-modal]');
+
+            if (!backdrop || !openButton) return;
+
+            const closeModal = () => {
+                backdrop.hidden = true;
+                document.body.classList.remove('modal-open');
+            };
+
+            openButton.addEventListener('click', () => {
+                backdrop.hidden = false;
+                document.body.classList.add('modal-open');
+                backdrop.querySelector('select, button')?.focus();
+            });
+            closeButtons.forEach((button) => button.addEventListener('click', closeModal));
+            backdrop.addEventListener('click', (event) => {
+                if (event.target === backdrop) closeModal();
+            });
+            document.addEventListener('keydown', (event) => {
+                if (event.key === 'Escape' && !backdrop.hidden) closeModal();
+            });
+        })();
+    </script>
+{% endif %}

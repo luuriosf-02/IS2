@@ -175,6 +175,7 @@ class MedioPagoViewsTest(TestCase):
             documento="7654321",
             tipo_persona="FISICA",
             categoria="B",
+            activo=True,
             creado_por=self.usuario,
         )
 
@@ -358,3 +359,28 @@ class MedioPagoPermissionsTest(TestCase):
         )
 
         self.assertEqual(response.status_code, 403)
+
+    def test_rechaza_cliente_inactivo(self):
+        """
+        Comprueba que un usuario con un cliente inactivo vea la indicación correspondiente.
+        """
+
+        cliente = Cliente.objects.create(
+            nombre_razon_social="Cliente inactivo",
+            documento="9999999",
+            tipo_persona="FISICA",
+            categoria="B",
+            creado_por=self.usuario,
+            activo=False,
+        )
+        UserClientLink.objects.create(
+            user=self.usuario,
+            client=cliente,
+            status=UserClientLink.STATUS_APPROVED,
+        )
+
+        self.client.force_login(self.usuario)
+        response = self.client.get(reverse("payments:lista"))
+
+        self.assertEqual(response.status_code, 403)
+        self.assertContains(response, "Necesitas un cliente activo")

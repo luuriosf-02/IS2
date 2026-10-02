@@ -1,6 +1,11 @@
 from django.test import TestCase, RequestFactory
 from django.contrib.auth import get_user_model
+from django.contrib.messages.storage.fallback import FallbackStorage
+from django.urls import reverse
+from apps.clientes.models import Cliente
 from apps.divisas.models import Moneda, TasaCambio, Notificacion
+from apps.payments.models import MedioPago
+from apps.transacciones.models import Transaccion
 from apps.divisas.views import gestion_divisas_view
 from apps.users.models import Profile
 
@@ -116,6 +121,46 @@ class DivisasTestCase(TestCase):
             tasa_venta=7100.00,
             usuario_modificador=user,
         )
+        cliente = Cliente.objects.create(
+            nombre_razon_social='Cliente de prueba',
+            documento='divisas-transaccion-123',
+            creado_por=user,
+        )
+        medio_pago = MedioPago.objects.create(
+            cliente=cliente,
+            tipo='DEBITO',
+            alias='Tarjeta principal',
+            titular='Cliente Test',
+            marca='VISA',
+            ultimos_cuatro='4242',
+            mes_vencimiento=12,
+            anio_vencimiento=2099,
+        )
+        transaccion_pendiente = Transaccion.objects.create(
+            cliente=cliente,
+            medio_pago=medio_pago,
+            monto=100,
+            moneda=moneda,
+            divisa=moneda,
+            referencia='DIVISAS-PENDIENTE',
+        )
+        transaccion_otra_divisa = Transaccion.objects.create(
+            cliente=cliente,
+            medio_pago=medio_pago,
+            monto=100,
+            moneda=moneda,
+            divisa=self.moneda,
+            referencia='DIVISAS-OTRA',
+        )
+        transaccion_no_pendiente = Transaccion.objects.create(
+            cliente=cliente,
+            medio_pago=medio_pago,
+            monto=100,
+            moneda=moneda,
+            divisa=moneda,
+            referencia='DIVISAS-PAGADA',
+            estado=Transaccion.ESTADO_PAGADA,
+        )
 
         editar_request = factory.post(
             '/divisas/gestion-tasas/',
@@ -128,19 +173,124 @@ class DivisasTestCase(TestCase):
             }
         )
         editar_request.user = user
+        editar_request.session = {}
+        editar_request._messages = FallbackStorage(editar_request)
         response_editar = gestion_divisas_view(editar_request)
 
         self.assertEqual(response_editar.status_code, 302)
         tasa.refresh_from_db()
         self.assertEqual(float(tasa.tasa_compra), 7600.5)
         self.assertEqual(float(tasa.tasa_venta), 7700.75)
+        transaccion_pendiente.refresh_from_db()
+        transaccion_otra_divisa.refresh_from_db()
+        transaccion_no_pendiente.refresh_from_db()
+        self.assertEqual(transaccion_pendiente.estado, Transaccion.ESTADO_CANCELADA)
+        self.assertIsNotNone(transaccion_pendiente.fecha_finalizacion)
+        self.assertEqual(transaccion_otra_divisa.estado, Transaccion.ESTADO_PENDIENTE)
+        self.assertEqual(transaccion_no_pendiente.estado, Transaccion.ESTADO_PAGADA)
+
+        transaccion_sin_cambio = Transaccion.objects.create(
+            cliente=cliente,
+            medio_pago=medio_pago,
+            monto=100,
+            moneda=moneda,
+            divisa=moneda,
+            referencia='DIVISAS-SIN-CAMBIO',
+        )
+        sin_cambios_request = factory.post(
+            '/divisas/gestion-tasas/',
+            {
+                'action': 'editar_tasa',
+                'tasa_id': str(tasa.pk),
+                'moneda': str(moneda.pk),
+                'tasa_compra': '7600.5',
+                'tasa_venta': '7700.75',
+            }
+        )
+        sin_cambios_request.user = user
+        sin_cambios_request.session = {}
+        sin_cambios_request._messages = FallbackStorage(sin_cambios_request)
+        response_sin_cambios = gestion_divisas_view(sin_cambios_request)
+
+        self.assertEqual(response_sin_cambios.status_code, 302)
+        transaccion_sin_cambio.refresh_from_db()
+        self.assertEqual(
+            transaccion_sin_cambio.estado,
+            Transaccion.ESTADO_PENDIENTE,
+        )
 
         delete_request = factory.post(
             '/divisas/gestion-tasas/',
             {'action': 'eliminar_tasa', 'tasa_id': str(tasa.pk)}
         )
         delete_request.user = user
+        delete_request.session = {}
+        delete_request._messages = FallbackStorage(delete_request)
         response_delete = gestion_divisas_view(delete_request)
 
         self.assertEqual(response_delete.status_code, 302)
         self.assertFalse(TasaCambio.objects.filter(pk=tasa.pk).exists())
+
+    def test_nueva_cotizacion_cancela_y_se_visualiza_en_historial(self):
+        user = User.objects.create_user(
+            username='analista_nueva_cotizacion',
+            email='analista.nueva@example.com',
+            password='password123',
+        )
+        Profile.objects.create(user=user, role='Analista Cambiario')
+        TasaCambio.objects.create(
+            moneda=self.moneda,
+            tasa_compra=7000,
+            tasa_venta=7100,
+            usuario_modificador=user,
+        )
+        cliente = Cliente.objects.create(
+            nombre_razon_social='Cliente historial',
+            documento='divisas-historial-123',
+            creado_por=user,
+            activo=True,
+        )
+        medio_pago = MedioPago.objects.create(
+            cliente=cliente,
+            tipo='DEBITO',
+            alias='Tarjeta principal',
+            titular='Cliente Test',
+            marca='VISA',
+            ultimos_cuatro='4242',
+            mes_vencimiento=12,
+            anio_vencimiento=2099,
+        )
+        transaccion = Transaccion.objects.create(
+            cliente=cliente,
+            medio_pago=medio_pago,
+            monto=100,
+            moneda=self.moneda,
+            divisa=self.moneda,
+            referencia='DIVISAS-HISTORIAL-CANCELADA',
+        )
+
+        self.client.force_login(
+            user,
+            backend='django.contrib.auth.backends.ModelBackend',
+        )
+        respuesta_tasa = self.client.post(
+            reverse('gestion_divisas'),
+            {
+                'action': 'crear_tasa',
+                'moneda': str(self.moneda.pk),
+                'tasa_compra': '7200',
+                'tasa_venta': '7300',
+            },
+        )
+
+        self.assertEqual(respuesta_tasa.status_code, 302)
+        transaccion.refresh_from_db()
+        self.assertEqual(transaccion.estado, Transaccion.ESTADO_CANCELADA)
+        self.assertIsNotNone(transaccion.fecha_finalizacion)
+
+        respuesta_historial = self.client.get(reverse('transacciones:historial'))
+
+        self.assertEqual(respuesta_historial.status_code, 200)
+        self.assertContains(respuesta_historial, 'DIVISAS-HISTORIAL-CANCELADA')
+        self.assertContains(respuesta_historial, 'transaction-status-cancelada')
+        self.assertContains(respuesta_historial, 'Cancelada')

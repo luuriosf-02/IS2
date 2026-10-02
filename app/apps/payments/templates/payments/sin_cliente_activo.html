@@ -1,0 +1,20 @@
+{% extends "payments/base.html" %}
+
+{% block title %}Cliente activo requerido | Global Exchange{% endblock %}
+
+{% block payments_content %}
+    <section class="card empty-state">
+        <h1 class="card-title">Necesitas un cliente activo</h1>
+        <p class="text-body">
+            Para crear y gestionar medios de pago necesitas tener un cliente asociado y marcado como activo.
+        </p>
+        <div class="inline-actions" style="justify-content: center;">
+            <a class="btn btn-primary" href="{% url 'clientes:lista' %}">
+                Gestionar clientes
+            </a>
+            <a class="btn btn-neutral" href="{% url 'home' %}">
+                Volver al inicio
+            </a>
+        </div>
+    </section>
+{% endblock %}

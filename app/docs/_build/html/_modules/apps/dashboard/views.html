@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>apps.dashboard.views &#8212; documentación de Global Exchange - v2.0</title>
+    <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=6625fa76" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/alabaster.css?v=039e1c02" />
+    <script data-url_root="../../../" id="documentation_options" src="../../../_static/documentation_options.js?v=b04d0a2f"></script>
+    <script src="../../../_static/doctools.js?v=888ff710"></script>
+    <script src="../../../_static/sphinx_highlight.js?v=4825356b"></script>
+    <script src="../../../_static/translations.js?v=efdbd0b9"></script>
+    <link rel="index" title="Índice" href="../../../genindex.html" />
+    <link rel="search" title="Búsqueda" href="../../../search.html" />
+   
+  <link rel="stylesheet" href="../../../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <h1>Código fuente para apps.dashboard.views</h1><div class="highlight"><pre>
+<span></span><span class="c1"># apps/dashboard/views.py</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">decimal</span><span class="w"> </span><span class="kn">import</span> <span class="n">Decimal</span><span class="p">,</span> <span class="n">InvalidOperation</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">django.shortcuts</span><span class="w"> </span><span class="kn">import</span> <span class="n">render</span><span class="p">,</span> <span class="n">redirect</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">django.contrib.auth</span><span class="w"> </span><span class="kn">import</span> <span class="n">logout</span> <span class="k">as</span> <span class="n">django_logout</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">django.db.models</span><span class="w"> </span><span class="kn">import</span> <span class="n">OuterRef</span><span class="p">,</span> <span class="n">Subquery</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">apps.divisas.models</span><span class="w"> </span><span class="kn">import</span> <span class="n">Moneda</span><span class="p">,</span> <span class="n">TasaCambio</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">apps.payments.models</span><span class="w"> </span><span class="kn">import</span> <span class="n">MedioPago</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">apps.users.client_selection</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_selected_client</span>
+
+<span class="n">PYG_CODE</span> <span class="o">=</span> <span class="s1">&#39;PYG&#39;</span>
+
+
+<div class="viewcode-block" id="get_currencies"><a class="viewcode-back" href="../../../apps.dashboard.views.html#apps.dashboard.views.get_currencies">[documentos]</a><span class="k">def</span><span class="w"> </span><span class="nf">get_currencies</span><span class="p">():</span>
+    <span class="n">latest_rate</span> <span class="o">=</span> <span class="n">TasaCambio</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span>
+        <span class="n">moneda</span><span class="o">=</span><span class="n">OuterRef</span><span class="p">(</span><span class="s1">&#39;pk&#39;</span><span class="p">),</span>
+    <span class="p">)</span><span class="o">.</span><span class="n">order_by</span><span class="p">(</span><span class="s1">&#39;-fecha_actualizacion&#39;</span><span class="p">)</span>
+    <span class="k">return</span> <span class="nb">list</span><span class="p">(</span>
+        <span class="n">Moneda</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">activa</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="o">.</span><span class="n">annotate</span><span class="p">(</span>
+            <span class="n">compra</span><span class="o">=</span><span class="n">Subquery</span><span class="p">(</span><span class="n">latest_rate</span><span class="o">.</span><span class="n">values</span><span class="p">(</span><span class="s1">&#39;tasa_compra&#39;</span><span class="p">)[:</span><span class="mi">1</span><span class="p">]),</span>
+            <span class="n">venta</span><span class="o">=</span><span class="n">Subquery</span><span class="p">(</span><span class="n">latest_rate</span><span class="o">.</span><span class="n">values</span><span class="p">(</span><span class="s1">&#39;tasa_venta&#39;</span><span class="p">)[:</span><span class="mi">1</span><span class="p">]),</span>
+        <span class="p">)</span>
+        <span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">compra__isnull</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">venta__isnull</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+        <span class="o">.</span><span class="n">order_by</span><span class="p">(</span><span class="s1">&#39;codigo&#39;</span><span class="p">)</span>
+        <span class="o">.</span><span class="n">values</span><span class="p">(</span><span class="s1">&#39;codigo&#39;</span><span class="p">,</span> <span class="s1">&#39;nombre&#39;</span><span class="p">,</span> <span class="s1">&#39;simbolo&#39;</span><span class="p">,</span> <span class="s1">&#39;compra&#39;</span><span class="p">,</span> <span class="s1">&#39;venta&#39;</span><span class="p">)</span>
+    <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="get_currency"><a class="viewcode-back" href="../../../apps.dashboard.views.html#apps.dashboard.views.get_currency">[documentos]</a><span class="k">def</span><span class="w"> </span><span class="nf">get_currency</span><span class="p">(</span><span class="n">code</span><span class="p">,</span> <span class="n">currencies</span><span class="p">):</span>
+    <span class="k">return</span> <span class="nb">next</span><span class="p">((</span><span class="n">currency</span> <span class="k">for</span> <span class="n">currency</span> <span class="ow">in</span> <span class="n">currencies</span> <span class="k">if</span> <span class="n">currency</span><span class="p">[</span><span class="s1">&#39;codigo&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="n">code</span><span class="p">),</span> <span class="kc">None</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="format_money"><a class="viewcode-back" href="../../../apps.dashboard.views.html#apps.dashboard.views.format_money">[documentos]</a><span class="k">def</span><span class="w"> </span><span class="nf">format_money</span><span class="p">(</span><span class="n">value</span><span class="p">):</span>
+    <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">value</span><span class="o">.</span><span class="n">quantize</span><span class="p">(</span><span class="n">Decimal</span><span class="p">(</span><span class="s1">&#39;0.01&#39;</span><span class="p">))</span><span class="si">:</span><span class="s2">,.2f</span><span class="si">}</span><span class="s2">&quot;</span></div>
+
+
+<div class="viewcode-block" id="calculate_conversion"><a class="viewcode-back" href="../../../apps.dashboard.views.html#apps.dashboard.views.calculate_conversion">[documentos]</a><span class="k">def</span><span class="w"> </span><span class="nf">calculate_conversion</span><span class="p">(</span><span class="n">amount</span><span class="p">,</span> <span class="n">operation</span><span class="p">,</span> <span class="n">currency</span><span class="p">):</span>
+    <span class="n">amount</span> <span class="o">=</span> <span class="n">Decimal</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">amount</span><span class="p">))</span>
+    <span class="n">rate</span> <span class="o">=</span> <span class="n">currency</span><span class="p">[</span><span class="s1">&#39;venta&#39;</span><span class="p">]</span> <span class="k">if</span> <span class="n">operation</span> <span class="o">==</span> <span class="s1">&#39;compra&#39;</span> <span class="k">else</span> <span class="n">currency</span><span class="p">[</span><span class="s1">&#39;compra&#39;</span><span class="p">]</span>
+
+    <span class="k">return</span> <span class="p">{</span>
+        <span class="s1">&#39;amount&#39;</span><span class="p">:</span> <span class="n">amount</span><span class="p">,</span>
+        <span class="s1">&#39;operation&#39;</span><span class="p">:</span> <span class="n">operation</span><span class="p">,</span>
+        <span class="s1">&#39;rate&#39;</span><span class="p">:</span> <span class="n">rate</span><span class="p">,</span>
+        <span class="s1">&#39;foreign_currency&#39;</span><span class="p">:</span> <span class="n">currency</span><span class="p">[</span><span class="s1">&#39;codigo&#39;</span><span class="p">],</span>
+        <span class="s1">&#39;from_currency&#39;</span><span class="p">:</span> <span class="n">currency</span><span class="p">[</span><span class="s1">&#39;codigo&#39;</span><span class="p">],</span>
+        <span class="s1">&#39;to_currency&#39;</span><span class="p">:</span> <span class="n">PYG_CODE</span><span class="p">,</span>
+        <span class="s1">&#39;result&#39;</span><span class="p">:</span> <span class="n">amount</span> <span class="o">*</span> <span class="n">rate</span><span class="p">,</span>
+        <span class="s1">&#39;source_buy&#39;</span><span class="p">:</span> <span class="n">currency</span><span class="p">[</span><span class="s1">&#39;compra&#39;</span><span class="p">],</span>
+        <span class="s1">&#39;source_sell&#39;</span><span class="p">:</span> <span class="n">currency</span><span class="p">[</span><span class="s1">&#39;venta&#39;</span><span class="p">],</span>
+    <span class="p">}</span></div>
+
+
+<div class="viewcode-block" id="get_conversion_context"><a class="viewcode-back" href="../../../apps.dashboard.views.html#apps.dashboard.views.get_conversion_context">[documentos]</a><span class="k">def</span><span class="w"> </span><span class="nf">get_conversion_context</span><span class="p">(</span><span class="n">request</span><span class="p">):</span>
+    <span class="n">currencies</span> <span class="o">=</span> <span class="n">get_currencies</span><span class="p">()</span>
+    <span class="n">foreign_currencies</span> <span class="o">=</span> <span class="p">[</span><span class="n">currency</span> <span class="k">for</span> <span class="n">currency</span> <span class="ow">in</span> <span class="n">currencies</span> <span class="k">if</span> <span class="n">currency</span><span class="p">[</span><span class="s1">&#39;codigo&#39;</span><span class="p">]</span> <span class="o">!=</span> <span class="n">PYG_CODE</span><span class="p">]</span>
+    <span class="n">operation</span> <span class="o">=</span> <span class="n">request</span><span class="o">.</span><span class="n">POST</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;operation&#39;</span><span class="p">,</span> <span class="s1">&#39;compra&#39;</span><span class="p">)</span>
+    <span class="n">currency_code</span> <span class="o">=</span> <span class="n">request</span><span class="o">.</span><span class="n">POST</span><span class="o">.</span><span class="n">get</span><span class="p">(</span>
+        <span class="s1">&#39;currency&#39;</span><span class="p">,</span>
+        <span class="n">foreign_currencies</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="s1">&#39;codigo&#39;</span><span class="p">]</span> <span class="k">if</span> <span class="n">foreign_currencies</span> <span class="k">else</span> <span class="s1">&#39;&#39;</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">amount_value</span> <span class="o">=</span> <span class="n">request</span><span class="o">.</span><span class="n">POST</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;amount&#39;</span><span class="p">,</span> <span class="s1">&#39;100&#39;</span><span class="p">)</span>
+    <span class="n">conversion</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">error</span> <span class="o">=</span> <span class="kc">None</span>
+
+    <span class="k">if</span> <span class="n">request</span><span class="o">.</span><span class="n">method</span> <span class="o">==</span> <span class="s1">&#39;POST&#39;</span><span class="p">:</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">amount</span> <span class="o">=</span> <span class="n">Decimal</span><span class="p">(</span><span class="n">amount_value</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">amount</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="n">error</span> <span class="o">=</span> <span class="s1">&#39;El importe debe ser mayor a cero.&#39;</span>
+            <span class="k">elif</span> <span class="n">operation</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">(</span><span class="s1">&#39;compra&#39;</span><span class="p">,</span> <span class="s1">&#39;venta&#39;</span><span class="p">):</span>
+                <span class="n">error</span> <span class="o">=</span> <span class="s1">&#39;Selecciona una operación válida.&#39;</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">currency</span> <span class="o">=</span> <span class="n">get_currency</span><span class="p">(</span><span class="n">currency_code</span><span class="p">,</span> <span class="n">foreign_currencies</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">currency</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                    <span class="n">error</span> <span class="o">=</span> <span class="s1">&#39;Selecciona una divisa extranjera válida.&#39;</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">conversion</span> <span class="o">=</span> <span class="n">calculate_conversion</span><span class="p">(</span><span class="n">amount</span><span class="p">,</span> <span class="n">operation</span><span class="p">,</span> <span class="n">currency</span><span class="p">)</span>
+        <span class="k">except</span> <span class="p">(</span><span class="n">InvalidOperation</span><span class="p">,</span> <span class="ne">ValueError</span><span class="p">):</span>
+            <span class="n">error</span> <span class="o">=</span> <span class="s1">&#39;Ingresa un importe válido para continuar.&#39;</span>
+
+    <span class="k">return</span> <span class="p">{</span>
+        <span class="s1">&#39;currencies&#39;</span><span class="p">:</span> <span class="n">foreign_currencies</span><span class="p">,</span>
+        <span class="s1">&#39;foreign_currencies&#39;</span><span class="p">:</span> <span class="n">foreign_currencies</span><span class="p">,</span>
+        <span class="s1">&#39;operation&#39;</span><span class="p">:</span> <span class="n">operation</span><span class="p">,</span>
+        <span class="s1">&#39;currency&#39;</span><span class="p">:</span> <span class="n">currency_code</span><span class="p">,</span>
+        <span class="s1">&#39;amount&#39;</span><span class="p">:</span> <span class="n">amount_value</span><span class="p">,</span>
+        <span class="s1">&#39;conversion&#39;</span><span class="p">:</span> <span class="n">conversion</span><span class="p">,</span>
+        <span class="s1">&#39;error&#39;</span><span class="p">:</span> <span class="n">error</span><span class="p">,</span>
+    <span class="p">}</span></div>
+
+
+<div class="viewcode-block" id="home"><a class="viewcode-back" href="../../../apps.dashboard.views.html#apps.dashboard.views.home">[documentos]</a><span class="k">def</span><span class="w"> </span><span class="nf">home</span><span class="p">(</span><span class="n">request</span><span class="p">):</span>
+    <span class="n">es_analista</span> <span class="o">=</span> <span class="kc">False</span>
+    <span class="n">cliente_activo</span> <span class="o">=</span> <span class="kc">None</span>
+
+    <span class="k">if</span> <span class="n">request</span><span class="o">.</span><span class="n">user</span><span class="o">.</span><span class="n">is_authenticated</span><span class="p">:</span>
+        <span class="n">profile</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">request</span><span class="o">.</span><span class="n">user</span><span class="p">,</span> <span class="s1">&#39;profile&#39;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="n">cliente_activo</span> <span class="o">=</span> <span class="n">get_selected_client</span><span class="p">(</span><span class="n">request</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">cliente_activo</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">cliente_activo</span><span class="o">.</span><span class="n">activo</span><span class="p">:</span>
+            <span class="n">cliente_activo</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="n">es_grupo_analista</span> <span class="o">=</span> <span class="n">request</span><span class="o">.</span><span class="n">user</span><span class="o">.</span><span class="n">groups</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">name__icontains</span><span class="o">=</span><span class="s1">&#39;analista&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">exists</span><span class="p">()</span>
+        <span class="n">es_usuario_analista</span> <span class="o">=</span> <span class="n">request</span><span class="o">.</span><span class="n">user</span><span class="o">.</span><span class="n">username</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="ow">in</span> <span class="p">[</span><span class="s1">&#39;analista&#39;</span><span class="p">,</span> <span class="s1">&#39;analista cambiario&#39;</span><span class="p">]</span>
+        <span class="n">es_analista</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="nb">bool</span><span class="p">(</span><span class="n">profile</span> <span class="ow">and</span> <span class="n">profile</span><span class="o">.</span><span class="n">role</span> <span class="o">==</span> <span class="s1">&#39;Analista Cambiario&#39;</span><span class="p">)</span>
+            <span class="ow">or</span> <span class="n">es_grupo_analista</span>
+            <span class="ow">or</span> <span class="n">es_usuario_analista</span>
+            <span class="ow">or</span> <span class="n">request</span><span class="o">.</span><span class="n">user</span><span class="o">.</span><span class="n">is_superuser</span>
+        <span class="p">)</span>
+
+    <span class="n">context</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="s1">&#39;user&#39;</span><span class="p">:</span> <span class="n">request</span><span class="o">.</span><span class="n">user</span><span class="p">,</span>
+        <span class="s1">&#39;es_analista&#39;</span><span class="p">:</span> <span class="n">es_analista</span><span class="p">,</span>
+        <span class="s1">&#39;cliente_activo&#39;</span><span class="p">:</span> <span class="n">cliente_activo</span><span class="p">,</span>
+        <span class="s1">&#39;medios_pago&#39;</span><span class="p">:</span> <span class="n">MedioPago</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span>
+            <span class="n">cliente</span><span class="o">=</span><span class="n">cliente_activo</span><span class="p">,</span>
+            <span class="n">activo</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="p">)</span> <span class="k">if</span> <span class="n">cliente_activo</span> <span class="k">else</span> <span class="n">MedioPago</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">none</span><span class="p">(),</span>
+    <span class="p">}</span>
+    <span class="n">context</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">get_conversion_context</span><span class="p">(</span><span class="n">request</span><span class="p">))</span>
+    <span class="k">return</span> <span class="n">render</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="s1">&#39;dashboard.html&#39;</span><span class="p">,</span> <span class="n">context</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="custom_logout"><a class="viewcode-back" href="../../../apps.dashboard.views.html#apps.dashboard.views.custom_logout">[documentos]</a><span class="k">def</span><span class="w"> </span><span class="nf">custom_logout</span><span class="p">(</span><span class="n">request</span><span class="p">):</span>
+    <span class="n">django_logout</span><span class="p">(</span><span class="n">request</span><span class="p">)</span>
+
+
+    <span class="n">KEYCLOAK_URL</span> <span class="o">=</span> <span class="s2">&quot;http://localhost:8080/realms/global_exchange/protocol/openid-connect/logout&quot;</span>
+    <span class="n">CLIENT_ID</span> <span class="o">=</span> <span class="s2">&quot;django_client&quot;</span>
+    <span class="n">redirect_uri</span> <span class="o">=</span> <span class="n">request</span><span class="o">.</span><span class="n">build_absolute_uri</span><span class="p">(</span><span class="s1">&#39;/&#39;</span><span class="p">)</span>
+
+
+    <span class="n">keycloak_logout_url</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">KEYCLOAK_URL</span><span class="si">}</span><span class="s2">&quot;</span>
+        <span class="sa">f</span><span class="s2">&quot;?client_id=</span><span class="si">{</span><span class="n">CLIENT_ID</span><span class="si">}</span><span class="s2">&quot;</span>
+        <span class="sa">f</span><span class="s2">&quot;&amp;post_logout_redirect_uri=</span><span class="si">{</span><span class="n">redirect_uri</span><span class="si">}</span><span class="s2">&quot;</span>
+    <span class="p">)</span>
+
+
+    <span class="k">return</span> <span class="n">redirect</span><span class="p">(</span><span class="n">keycloak_logout_url</span><span class="p">)</span></div>
+</pre></div>
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../../../index.html">Global Exchange</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navegación</h3>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../../index.html">Documentation overview</a><ul>
+  <li><a href="../../index.html">Código de módulo</a><ul>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Búsqueda rápida</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Ir a" />
+    </form>
+    </div>
+</div>
+<script>document.getElementById('searchbox').style.display = "block"</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2026, Grupo 9.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 7.1.2</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.13</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

@@ -1,8 +1,12 @@
 from django.urls import path
-from .views import gestion_divisas_view
+from . import views
 
 urlpatterns = [
     path('gestion-tasas/', 
-         gestion_divisas_view, 
+         views.gestion_divisas_view, 
          name='gestion_divisas'),
+         
+    path('transaccion/<str:transaccion_id>/cancelar/', 
+         views.cancelar_transaccion, 
+         name='cancelar_transaccion'),
 ]
