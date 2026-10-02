@@ -4,7 +4,7 @@
     <!-- Navbar -->
     {% include 'components/navbar.html' %}
 
-    <div class="main-container" style="padding-top: 2.5rem; padding-bottom: 2.5rem;">
+    <div class="main-container" style="padding-bottom: 2.5rem;">
         {% include 'components/back-button.html' with href='/' text='Volver al inicio' %}
         <!-- Encabezado con botón de crear -->
         <div class="section-header">
@@ -46,7 +46,6 @@
                                 <th style="padding: 1rem; text-align: left; font-weight: var(--font-weight-semibold); color: var(--color-neutral-900);">Tipo</th>
                                 <th style="padding: 1rem; text-align: left; font-weight: var(--font-weight-semibold); color: var(--color-neutral-900);">Categoría</th>
                                 <th style="padding: 1rem; text-align: left; font-weight: var(--font-weight-semibold); color: var(--color-neutral-900);">Límite</th>
-                                <th style="padding: 1rem; text-align: left; font-weight: var(--font-weight-semibold); color: var(--color-neutral-900);">Estado</th>
                                 <th style="padding: 1rem; text-align: left; font-weight: var(--font-weight-semibold); color: var(--color-neutral-900);">Acciones</th>
                             </tr>
                         </thead>
@@ -71,13 +70,6 @@
                                     </td>
                                     <td style="padding: 1rem; color: var(--color-neutral-900); font-weight: var(--font-weight-semibold);">
                                         ${{ cliente.limite_credito|floatformat:2 }}
-                                    </td>
-                                    <td style="padding: 1rem;">
-                                        {% if cliente.activo %}
-                                            {% include 'components/badge.html' with text='✓ Activo' variant='success' %}
-                                        {% else %}
-                                            {% include 'components/badge.html' with text='✗ Inactivo' variant='neutral' %}
-                                        {% endif %}
                                     </td>
                                     <td style="padding: 1rem;">
                                         <div style="display: flex; gap: 0.5rem;">

@@ -4,7 +4,7 @@
     <!-- Navbar -->
     {% include 'components/navbar.html' %}
 
-    <div class="main-container" style="padding-top: 2.5rem; padding-bottom: 2.5rem;">
+    <div class="main-container" style="padding-bottom: 2.5rem;">
         
         <!-- Botón de retorno -->
         <div style="margin-bottom: 1.5rem;">
@@ -70,20 +70,6 @@
                         <p style="font-size: var(--font-size-xl); font-weight: var(--font-weight-bold); color: var(--color-success); margin: 0;">
                             ${{ cliente.limite_credito|floatformat:2 }}
                         </p>
-                    </div>
-
-                    <!-- Estado -->
-                    <div>
-                        <p style="font-size: var(--font-size-sm); text-transform: uppercase; letter-spacing: 0.05em; font-weight: var(--font-weight-semibold); color: var(--color-neutral-600); margin-bottom: 0.5rem;">
-                            Estado
-                        </p>
-                        <div>
-                            {% if cliente.activo %}
-                                {% include 'components/badge.html' with text='✓ Activo' variant='success' %}
-                            {% else %}
-                                {% include 'components/badge.html' with text='✗ Inactivo' variant='neutral' %}
-                            {% endif %}
-                        </div>
                     </div>
 
                     <!-- Fecha de Registro -->

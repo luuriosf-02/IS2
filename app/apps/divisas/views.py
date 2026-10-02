@@ -1,8 +1,28 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
+from django.utils import timezone
+
 from .forms import MonedaForm, TasaCambioForm
-from .models import TasaCambio, Moneda
+from .models import TasaCambio, Moneda, Notificacion
+from apps.transacciones.models import Transaccion
+
+
+def _notificar_cotizacion(usuario, moneda):
+    Notificacion.objects.create(
+        usuario=usuario,
+        mensaje=f"Se ha registrado una nueva cotización para {moneda.nombre}"
+    )
+
+
+def _cancelar_transacciones_pendientes(moneda):
+    Transaccion.objects.filter(
+        divisa=moneda,
+        estado=Transaccion.ESTADO_PENDIENTE,
+    ).update(
+        estado=Transaccion.ESTADO_CANCELADA,
+        fecha_finalizacion=timezone.now(),
+    )
 
 
 @login_required
@@ -34,18 +54,35 @@ def gestion_divisas_view(request):
             form = TasaCambioForm(request.POST)
             if form.is_valid():
                 tasa = form.save(commit=False)
+                tasa_anterior = TasaCambio.objects.filter(
+                    moneda=tasa.moneda
+                ).first()
                 tasa.usuario_modificador = request.user
                 tasa.save()
+                if tasa_anterior and (
+                    tasa.tasa_compra != tasa_anterior.tasa_compra
+                    or tasa.tasa_venta != tasa_anterior.tasa_venta
+                ):
+                    _cancelar_transacciones_pendientes(tasa.moneda)
+                _notificar_cotizacion(request.user, tasa.moneda)
                 messages.success(request, 'Tasa de cambio creada correctamente.')
                 return redirect('gestion_divisas')
         elif action == 'editar_tasa':
             tasa_id = request.POST.get('tasa_id')
             tasa = get_object_or_404(TasaCambio, pk=tasa_id)
+            tasas_anteriores = (tasa.tasa_compra, tasa.tasa_venta)
             form = TasaCambioForm(request.POST, instance=tasa)
             if form.is_valid():
                 tasa_actualizada = form.save(commit=False)
                 tasa_actualizada.usuario_modificador = request.user
                 tasa_actualizada.save()
+                tasas_actuales = (
+                    tasa_actualizada.tasa_compra,
+                    tasa_actualizada.tasa_venta,
+                )
+                if tasas_actuales != tasas_anteriores:
+                    _cancelar_transacciones_pendientes(tasa_actualizada.moneda)
+                _notificar_cotizacion(request.user, tasa_actualizada.moneda)
                 messages.success(request, 'Tasa de cambio actualizada correctamente.')
                 return redirect('gestion_divisas')
             tasa_en_edicion = tasa
@@ -55,6 +92,33 @@ def gestion_divisas_view(request):
             tasa.delete()
             messages.success(request, 'Tasa de cambio eliminada correctamente.')
             return redirect('gestion_divisas')
+        else:
+            # Registro rápido de cotización (flujo nuevo, sin "action")
+            codigo_moneda = request.POST.get('moneda')
+            compra = request.POST.get('compra')
+            venta = request.POST.get('venta')
+
+            if codigo_moneda and compra and venta:
+                instancia_moneda, _ = Moneda.objects.get_or_create(
+                    codigo=codigo_moneda,
+                    defaults={'nombre': codigo_moneda}
+                )
+                tasa_anterior = TasaCambio.objects.filter(
+                    moneda=instancia_moneda
+                ).first()
+                tasa_nueva = TasaCambio.objects.create(
+                    moneda=instancia_moneda,
+                    tasa_compra=compra,
+                    tasa_venta=venta,
+                    usuario_modificador=request.user,
+                )
+                if tasa_anterior and (
+                    tasa_nueva.tasa_compra != tasa_anterior.tasa_compra
+                    or tasa_nueva.tasa_venta != tasa_anterior.tasa_venta
+                ):
+                    _cancelar_transacciones_pendientes(instancia_moneda)
+                _notificar_cotizacion(request.user, instancia_moneda)
+                return redirect('gestion_divisas')
 
     edit_tasa_id = request.GET.get('edit_tasa_id')
     if edit_tasa_id:
@@ -74,3 +138,39 @@ def gestion_divisas_view(request):
             'tasa_en_edicion': tasa_en_edicion,
         },
     )
+
+
+
+def dashboard_cliente(request):
+    tasas_vigentes = TasaCambio.objects.select_related('moneda').order_by('moneda')
+
+    notificaciones_usuario = Notificacion.objects.filter(
+        usuario=request.user
+    ).order_by('-fecha_creacion')[:10]
+    notificaciones_no_leidas_count = Notificacion.objects.filter(
+        usuario=request.user, leida=False
+    ).count()
+
+    context = {
+        'tasas_vigentes': tasas_vigentes,
+        'tasas': tasas_vigentes,
+        'notificaciones_usuario': notificaciones_usuario,
+        'notificaciones_no_leidas_count': notificaciones_no_leidas_count,
+    }
+    return render(request, 'clientes/dashboard_cliente.html', context)
+
+
+@login_required
+def cancelar_transaccion(request, transaccion_id):
+    transaccion = get_object_or_404(Transaccion, id=transaccion_id)
+
+    # Solo permitimos cancelar si está pendiente
+    if transaccion.estado.lower() == 'pendiente':
+        transaccion.estado = 'Cancelada'
+        transaccion.fecha_finalizacion = timezone.now()
+        transaccion.save()
+
+    referer = request.META.get('HTTP_REFERER')
+    if referer:
+        return redirect(referer)
+    return redirect('gestion_divisas')

@@ -2,6 +2,7 @@ from django.urls import path
 
 from .views import (
     assign_role,
+    activate_client,
     gestion_divisas_view,
     my_client_links,
     pending_client_links,
@@ -10,6 +11,11 @@ from .views import (
 )
 
 urlpatterns = [
+    path(
+        "client-links/activate/",
+        activate_client,
+        name="activate_client",
+    ),
     path(
         "assign-role/",
         assign_role,
