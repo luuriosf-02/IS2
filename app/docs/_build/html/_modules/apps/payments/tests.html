@@ -1,0 +1,482 @@
+<!DOCTYPE html>
+
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>apps.payments.tests &#8212; documentación de Global Exchange - v2.0</title>
+    <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=6625fa76" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/alabaster.css?v=039e1c02" />
+    <script data-url_root="../../../" id="documentation_options" src="../../../_static/documentation_options.js?v=b04d0a2f"></script>
+    <script src="../../../_static/doctools.js?v=888ff710"></script>
+    <script src="../../../_static/sphinx_highlight.js?v=4825356b"></script>
+    <script src="../../../_static/translations.js?v=efdbd0b9"></script>
+    <link rel="index" title="Índice" href="../../../genindex.html" />
+    <link rel="search" title="Búsqueda" href="../../../search.html" />
+   
+  <link rel="stylesheet" href="../../../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <h1>Código fuente para apps.payments.tests</h1><div class="highlight"><pre>
+<span></span><span class="kn">from</span><span class="w"> </span><span class="nn">datetime</span><span class="w"> </span><span class="kn">import</span> <span class="n">date</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">django.contrib.auth</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_user_model</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">django.test</span><span class="w"> </span><span class="kn">import</span> <span class="n">TestCase</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">django.urls</span><span class="w"> </span><span class="kn">import</span> <span class="n">reverse</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">apps.clientes.models</span><span class="w"> </span><span class="kn">import</span> <span class="n">Cliente</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">apps.users.models</span><span class="w"> </span><span class="kn">import</span> <span class="n">UserClientLink</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">.forms</span><span class="w"> </span><span class="kn">import</span> <span class="n">MedioPagoForm</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.models</span><span class="w"> </span><span class="kn">import</span> <span class="n">MedioPago</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">django.conf</span><span class="w"> </span><span class="kn">import</span> <span class="n">settings</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">django.test</span><span class="w"> </span><span class="kn">import</span> <span class="n">TestCase</span><span class="p">,</span> <span class="n">override_settings</span>
+
+<span class="n">User</span> <span class="o">=</span> <span class="n">get_user_model</span><span class="p">()</span>
+
+<span class="n">TEST_MIDDLEWARE</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="n">middleware</span>
+    <span class="k">for</span> <span class="n">middleware</span> <span class="ow">in</span> <span class="n">settings</span><span class="o">.</span><span class="n">MIDDLEWARE</span>
+    <span class="k">if</span> <span class="n">middleware</span>
+    <span class="o">!=</span> <span class="s2">&quot;mozilla_django_oidc.middleware.SessionRefresh&quot;</span>
+<span class="p">]</span>
+
+
+<div class="viewcode-block" id="MedioPagoModelTest"><a class="viewcode-back" href="../../../apps.payments.tests.html#apps.payments.tests.MedioPagoModelTest">[documentos]</a><span class="k">class</span><span class="w"> </span><span class="nc">MedioPagoModelTest</span><span class="p">(</span><span class="n">TestCase</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Pruebas unitarias del modelo MedioPago.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="MedioPagoModelTest.setUp"><a class="viewcode-back" href="../../../apps.payments.tests.html#apps.payments.tests.MedioPagoModelTest.setUp">[documentos]</a>    <span class="k">def</span><span class="w"> </span><span class="nf">setUp</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">usuario</span> <span class="o">=</span> <span class="n">User</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">create_user</span><span class="p">(</span>
+            <span class="n">username</span><span class="o">=</span><span class="s2">&quot;cliente_test&quot;</span><span class="p">,</span>
+            <span class="n">password</span><span class="o">=</span><span class="s2">&quot;password123&quot;</span><span class="p">,</span>
+        <span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">cliente</span> <span class="o">=</span> <span class="n">Cliente</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">create</span><span class="p">(</span>
+            <span class="n">nombre_razon_social</span><span class="o">=</span><span class="s2">&quot;Cliente de prueba&quot;</span><span class="p">,</span>
+            <span class="n">documento</span><span class="o">=</span><span class="s2">&quot;1234567&quot;</span><span class="p">,</span>
+            <span class="n">tipo_persona</span><span class="o">=</span><span class="s2">&quot;FISICA&quot;</span><span class="p">,</span>
+            <span class="n">categoria</span><span class="o">=</span><span class="s2">&quot;B&quot;</span><span class="p">,</span>
+            <span class="n">creado_por</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">usuario</span><span class="p">,</span>
+        <span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">medio_pago</span> <span class="o">=</span> <span class="n">MedioPago</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">create</span><span class="p">(</span>
+            <span class="n">cliente</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">cliente</span><span class="p">,</span>
+            <span class="n">tipo</span><span class="o">=</span><span class="s2">&quot;DEBITO&quot;</span><span class="p">,</span>
+            <span class="n">alias</span><span class="o">=</span><span class="s2">&quot;Tarjeta principal&quot;</span><span class="p">,</span>
+            <span class="n">titular</span><span class="o">=</span><span class="s2">&quot;Cliente Test&quot;</span><span class="p">,</span>
+            <span class="n">marca</span><span class="o">=</span><span class="s2">&quot;VISA&quot;</span><span class="p">,</span>
+            <span class="n">ultimos_cuatro</span><span class="o">=</span><span class="s2">&quot;4242&quot;</span><span class="p">,</span>
+            <span class="n">mes_vencimiento</span><span class="o">=</span><span class="mi">12</span><span class="p">,</span>
+            <span class="n">anio_vencimiento</span><span class="o">=</span><span class="n">date</span><span class="o">.</span><span class="n">today</span><span class="p">()</span><span class="o">.</span><span class="n">year</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span>
+            <span class="n">predeterminado</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+            <span class="n">activo</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="p">)</span></div>
+
+<div class="viewcode-block" id="MedioPagoModelTest.test_crear_medio_pago"><a class="viewcode-back" href="../../../apps.payments.tests.html#apps.payments.tests.MedioPagoModelTest.test_crear_medio_pago">[documentos]</a>    <span class="k">def</span><span class="w"> </span><span class="nf">test_crear_medio_pago</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Comprueba que un medio de pago se almacena correctamente.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">assertEqual</span><span class="p">(</span><span class="n">MedioPago</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">count</span><span class="p">(),</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">assertEqual</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">medio_pago</span><span class="o">.</span><span class="n">cliente</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">cliente</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">assertEqual</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">medio_pago</span><span class="o">.</span><span class="n">ultimos_cuatro</span><span class="p">,</span>
+            <span class="s2">&quot;4242&quot;</span><span class="p">,</span>
+        <span class="p">)</span></div>
+
+<div class="viewcode-block" id="MedioPagoModelTest.test_representacion_del_medio_pago"><a class="viewcode-back" href="../../../apps.payments.tests.html#apps.payments.tests.MedioPagoModelTest.test_representacion_del_medio_pago">[documentos]</a>    <span class="k">def</span><span class="w"> </span><span class="nf">test_representacion_del_medio_pago</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Comprueba el texto generado por el método __str__.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">assertEqual</span><span class="p">(</span>
+            <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">medio_pago</span><span class="p">),</span>
+            <span class="s2">&quot;Visa terminada en 4242&quot;</span><span class="p">,</span>
+        <span class="p">)</span></div></div>
+
+
+<div class="viewcode-block" id="MedioPagoFormTest"><a class="viewcode-back" href="../../../apps.payments.tests.html#apps.payments.tests.MedioPagoFormTest">[documentos]</a><span class="k">class</span><span class="w"> </span><span class="nc">MedioPagoFormTest</span><span class="p">(</span><span class="n">TestCase</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Pruebas de validación del formulario de medios de pago.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="MedioPagoFormTest.datos_validos"><a class="viewcode-back" href="../../../apps.payments.tests.html#apps.payments.tests.MedioPagoFormTest.datos_validos">[documentos]</a>    <span class="k">def</span><span class="w"> </span><span class="nf">datos_validos</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="p">{</span>
+            <span class="s2">&quot;tipo&quot;</span><span class="p">:</span> <span class="s2">&quot;CREDITO&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;alias&quot;</span><span class="p">:</span> <span class="s2">&quot;Tarjeta personal&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;titular&quot;</span><span class="p">:</span> <span class="s2">&quot;Lujan Rios&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;marca&quot;</span><span class="p">:</span> <span class="s2">&quot;VISA&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;ultimos_cuatro&quot;</span><span class="p">:</span> <span class="s2">&quot;4785&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;mes_vencimiento&quot;</span><span class="p">:</span> <span class="mi">8</span><span class="p">,</span>
+            <span class="s2">&quot;anio_vencimiento&quot;</span><span class="p">:</span> <span class="n">date</span><span class="o">.</span><span class="n">today</span><span class="p">()</span><span class="o">.</span><span class="n">year</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span>
+            <span class="s2">&quot;predeterminado&quot;</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span>
+            <span class="s2">&quot;activo&quot;</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span>
+        <span class="p">}</span></div>
+
+<div class="viewcode-block" id="MedioPagoFormTest.test_formulario_valido"><a class="viewcode-back" href="../../../apps.payments.tests.html#apps.payments.tests.MedioPagoFormTest.test_formulario_valido">[documentos]</a>    <span class="k">def</span><span class="w"> </span><span class="nf">test_formulario_valido</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Comprueba que el formulario acepta información válida.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="n">form</span> <span class="o">=</span> <span class="n">MedioPagoForm</span><span class="p">(</span><span class="n">data</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">datos_validos</span><span class="p">())</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">assertTrue</span><span class="p">(</span><span class="n">form</span><span class="o">.</span><span class="n">is_valid</span><span class="p">())</span></div>
+
+<div class="viewcode-block" id="MedioPagoFormTest.test_rechaza_ultimos_cuatro_con_letras"><a class="viewcode-back" href="../../../apps.payments.tests.html#apps.payments.tests.MedioPagoFormTest.test_rechaza_ultimos_cuatro_con_letras">[documentos]</a>    <span class="k">def</span><span class="w"> </span><span class="nf">test_rechaza_ultimos_cuatro_con_letras</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Comprueba que los últimos cuatro dígitos sean numéricos.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="n">datos</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">datos_validos</span><span class="p">()</span>
+        <span class="n">datos</span><span class="p">[</span><span class="s2">&quot;ultimos_cuatro&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;12AB&quot;</span>
+
+        <span class="n">form</span> <span class="o">=</span> <span class="n">MedioPagoForm</span><span class="p">(</span><span class="n">data</span><span class="o">=</span><span class="n">datos</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">assertFalse</span><span class="p">(</span><span class="n">form</span><span class="o">.</span><span class="n">is_valid</span><span class="p">())</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">assertIn</span><span class="p">(</span>
+            <span class="s2">&quot;ultimos_cuatro&quot;</span><span class="p">,</span>
+            <span class="n">form</span><span class="o">.</span><span class="n">errors</span><span class="p">,</span>
+        <span class="p">)</span></div>
+
+<div class="viewcode-block" id="MedioPagoFormTest.test_rechaza_ultimos_cuatro_incompletos"><a class="viewcode-back" href="../../../apps.payments.tests.html#apps.payments.tests.MedioPagoFormTest.test_rechaza_ultimos_cuatro_incompletos">[documentos]</a>    <span class="k">def</span><span class="w"> </span><span class="nf">test_rechaza_ultimos_cuatro_incompletos</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Comprueba que se ingresen exactamente cuatro dígitos.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="n">datos</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">datos_validos</span><span class="p">()</span>
+        <span class="n">datos</span><span class="p">[</span><span class="s2">&quot;ultimos_cuatro&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;123&quot;</span>
+
+        <span class="n">form</span> <span class="o">=</span> <span class="n">MedioPagoForm</span><span class="p">(</span><span class="n">data</span><span class="o">=</span><span class="n">datos</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">assertFalse</span><span class="p">(</span><span class="n">form</span><span class="o">.</span><span class="n">is_valid</span><span class="p">())</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">assertIn</span><span class="p">(</span>
+            <span class="s2">&quot;ultimos_cuatro&quot;</span><span class="p">,</span>
+            <span class="n">form</span><span class="o">.</span><span class="n">errors</span><span class="p">,</span>
+        <span class="p">)</span></div>
+
+<div class="viewcode-block" id="MedioPagoFormTest.test_rechaza_fecha_vencida"><a class="viewcode-back" href="../../../apps.payments.tests.html#apps.payments.tests.MedioPagoFormTest.test_rechaza_fecha_vencida">[documentos]</a>    <span class="k">def</span><span class="w"> </span><span class="nf">test_rechaza_fecha_vencida</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Comprueba que no se acepten medios de pago vencidos.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="n">datos</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">datos_validos</span><span class="p">()</span>
+        <span class="n">datos</span><span class="p">[</span><span class="s2">&quot;mes_vencimiento&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1</span>
+        <span class="n">datos</span><span class="p">[</span><span class="s2">&quot;anio_vencimiento&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">date</span><span class="o">.</span><span class="n">today</span><span class="p">()</span><span class="o">.</span><span class="n">year</span> <span class="o">-</span> <span class="mi">1</span>
+
+        <span class="n">form</span> <span class="o">=</span> <span class="n">MedioPagoForm</span><span class="p">(</span><span class="n">data</span><span class="o">=</span><span class="n">datos</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">assertFalse</span><span class="p">(</span><span class="n">form</span><span class="o">.</span><span class="n">is_valid</span><span class="p">())</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">assertIn</span><span class="p">(</span>
+            <span class="s2">&quot;anio_vencimiento&quot;</span><span class="p">,</span>
+            <span class="n">form</span><span class="o">.</span><span class="n">errors</span><span class="p">,</span>
+        <span class="p">)</span></div></div>
+
+<div class="viewcode-block" id="MedioPagoViewsTest"><a class="viewcode-back" href="../../../apps.payments.tests.html#apps.payments.tests.MedioPagoViewsTest">[documentos]</a><span class="nd">@override_settings</span><span class="p">(</span><span class="n">MIDDLEWARE</span><span class="o">=</span><span class="n">TEST_MIDDLEWARE</span><span class="p">)</span>
+
+<span class="k">class</span><span class="w"> </span><span class="nc">MedioPagoViewsTest</span><span class="p">(</span><span class="n">TestCase</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Pruebas de las vistas del CRUD de medios de pago.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="MedioPagoViewsTest.setUp"><a class="viewcode-back" href="../../../apps.payments.tests.html#apps.payments.tests.MedioPagoViewsTest.setUp">[documentos]</a>    <span class="k">def</span><span class="w"> </span><span class="nf">setUp</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">usuario</span> <span class="o">=</span> <span class="n">User</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">create_user</span><span class="p">(</span>
+            <span class="n">username</span><span class="o">=</span><span class="s2">&quot;usuario_crud&quot;</span><span class="p">,</span>
+            <span class="n">password</span><span class="o">=</span><span class="s2">&quot;password123&quot;</span><span class="p">,</span>
+        <span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">cliente</span> <span class="o">=</span> <span class="n">Cliente</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">create</span><span class="p">(</span>
+            <span class="n">nombre_razon_social</span><span class="o">=</span><span class="s2">&quot;Juan Pérez&quot;</span><span class="p">,</span>
+            <span class="n">documento</span><span class="o">=</span><span class="s2">&quot;7654321&quot;</span><span class="p">,</span>
+            <span class="n">tipo_persona</span><span class="o">=</span><span class="s2">&quot;FISICA&quot;</span><span class="p">,</span>
+            <span class="n">categoria</span><span class="o">=</span><span class="s2">&quot;B&quot;</span><span class="p">,</span>
+            <span class="n">activo</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+            <span class="n">creado_por</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">usuario</span><span class="p">,</span>
+        <span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">vinculacion</span> <span class="o">=</span> <span class="n">UserClientLink</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">create</span><span class="p">(</span>
+            <span class="n">user</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">usuario</span><span class="p">,</span>
+            <span class="n">client</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">cliente</span><span class="p">,</span>
+            <span class="n">status</span><span class="o">=</span><span class="n">UserClientLink</span><span class="o">.</span><span class="n">STATUS_APPROVED</span><span class="p">,</span>
+        <span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">medio_pago</span> <span class="o">=</span> <span class="n">MedioPago</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">create</span><span class="p">(</span>
+            <span class="n">cliente</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">cliente</span><span class="p">,</span>
+            <span class="n">tipo</span><span class="o">=</span><span class="s2">&quot;DEBITO&quot;</span><span class="p">,</span>
+            <span class="n">alias</span><span class="o">=</span><span class="s2">&quot;Cédula&quot;</span><span class="p">,</span>
+            <span class="n">titular</span><span class="o">=</span><span class="s2">&quot;Juan Pérez&quot;</span><span class="p">,</span>
+            <span class="n">marca</span><span class="o">=</span><span class="s2">&quot;VISA&quot;</span><span class="p">,</span>
+            <span class="n">ultimos_cuatro</span><span class="o">=</span><span class="s2">&quot;4785&quot;</span><span class="p">,</span>
+            <span class="n">mes_vencimiento</span><span class="o">=</span><span class="mi">8</span><span class="p">,</span>
+            <span class="n">anio_vencimiento</span><span class="o">=</span><span class="n">date</span><span class="o">.</span><span class="n">today</span><span class="p">()</span><span class="o">.</span><span class="n">year</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span>
+            <span class="n">predeterminado</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+            <span class="n">activo</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">force_login</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">usuario</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="MedioPagoViewsTest.datos_medio_pago"><a class="viewcode-back" href="../../../apps.payments.tests.html#apps.payments.tests.MedioPagoViewsTest.datos_medio_pago">[documentos]</a>    <span class="k">def</span><span class="w"> </span><span class="nf">datos_medio_pago</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="p">{</span>
+            <span class="s2">&quot;tipo&quot;</span><span class="p">:</span> <span class="s2">&quot;CREDITO&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;alias&quot;</span><span class="p">:</span> <span class="s2">&quot;Nueva tarjeta&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;titular&quot;</span><span class="p">:</span> <span class="s2">&quot;Juan Pérez&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;marca&quot;</span><span class="p">:</span> <span class="s2">&quot;MASTERCARD&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;ultimos_cuatro&quot;</span><span class="p">:</span> <span class="s2">&quot;1234&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;mes_vencimiento&quot;</span><span class="p">:</span> <span class="mi">10</span><span class="p">,</span>
+            <span class="s2">&quot;anio_vencimiento&quot;</span><span class="p">:</span> <span class="n">date</span><span class="o">.</span><span class="n">today</span><span class="p">()</span><span class="o">.</span><span class="n">year</span> <span class="o">+</span> <span class="mi">2</span><span class="p">,</span>
+            <span class="s2">&quot;predeterminado&quot;</span><span class="p">:</span> <span class="s2">&quot;on&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;activo&quot;</span><span class="p">:</span> <span class="s2">&quot;on&quot;</span><span class="p">,</span>
+        <span class="p">}</span></div>
+
+<div class="viewcode-block" id="MedioPagoViewsTest.test_listar_medios_pago"><a class="viewcode-back" href="../../../apps.payments.tests.html#apps.payments.tests.MedioPagoViewsTest.test_listar_medios_pago">[documentos]</a>    <span class="k">def</span><span class="w"> </span><span class="nf">test_listar_medios_pago</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Comprueba que el usuario visualice sus medios de pago.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="n">response</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">get</span><span class="p">(</span>
+            <span class="n">reverse</span><span class="p">(</span><span class="s2">&quot;payments:lista&quot;</span><span class="p">)</span>
+        <span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">assertEqual</span><span class="p">(</span><span class="n">response</span><span class="o">.</span><span class="n">status_code</span><span class="p">,</span> <span class="mi">200</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">assertContains</span><span class="p">(</span><span class="n">response</span><span class="p">,</span> <span class="s2">&quot;Cédula&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">assertContains</span><span class="p">(</span><span class="n">response</span><span class="p">,</span> <span class="s2">&quot;4785&quot;</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="MedioPagoViewsTest.test_crear_medio_pago"><a class="viewcode-back" href="../../../apps.payments.tests.html#apps.payments.tests.MedioPagoViewsTest.test_crear_medio_pago">[documentos]</a>    <span class="k">def</span><span class="w"> </span><span class="nf">test_crear_medio_pago</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Comprueba la creación mediante la vista.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="n">response</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">post</span><span class="p">(</span>
+            <span class="n">reverse</span><span class="p">(</span><span class="s2">&quot;payments:crear&quot;</span><span class="p">),</span>
+            <span class="n">data</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">datos_medio_pago</span><span class="p">(),</span>
+        <span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">assertRedirects</span><span class="p">(</span>
+            <span class="n">response</span><span class="p">,</span>
+            <span class="n">reverse</span><span class="p">(</span><span class="s2">&quot;payments:lista&quot;</span><span class="p">),</span>
+        <span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">assertTrue</span><span class="p">(</span>
+            <span class="n">MedioPago</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span>
+                <span class="n">cliente</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">cliente</span><span class="p">,</span>
+                <span class="n">ultimos_cuatro</span><span class="o">=</span><span class="s2">&quot;1234&quot;</span><span class="p">,</span>
+            <span class="p">)</span><span class="o">.</span><span class="n">exists</span><span class="p">()</span>
+        <span class="p">)</span></div>
+
+<div class="viewcode-block" id="MedioPagoViewsTest.test_editar_medio_pago"><a class="viewcode-back" href="../../../apps.payments.tests.html#apps.payments.tests.MedioPagoViewsTest.test_editar_medio_pago">[documentos]</a>    <span class="k">def</span><span class="w"> </span><span class="nf">test_editar_medio_pago</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Comprueba la modificación mediante la vista.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="n">datos</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">datos_medio_pago</span><span class="p">()</span>
+        <span class="n">datos</span><span class="p">[</span><span class="s2">&quot;alias&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;Tarjeta actualizada&quot;</span>
+
+        <span class="n">response</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">post</span><span class="p">(</span>
+            <span class="n">reverse</span><span class="p">(</span>
+                <span class="s2">&quot;payments:editar&quot;</span><span class="p">,</span>
+                <span class="n">args</span><span class="o">=</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">medio_pago</span><span class="o">.</span><span class="n">pk</span><span class="p">],</span>
+            <span class="p">),</span>
+            <span class="n">data</span><span class="o">=</span><span class="n">datos</span><span class="p">,</span>
+        <span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">assertRedirects</span><span class="p">(</span>
+            <span class="n">response</span><span class="p">,</span>
+            <span class="n">reverse</span><span class="p">(</span><span class="s2">&quot;payments:lista&quot;</span><span class="p">),</span>
+        <span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">medio_pago</span><span class="o">.</span><span class="n">refresh_from_db</span><span class="p">()</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">assertEqual</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">medio_pago</span><span class="o">.</span><span class="n">alias</span><span class="p">,</span>
+            <span class="s2">&quot;Tarjeta actualizada&quot;</span><span class="p">,</span>
+        <span class="p">)</span></div>
+
+<div class="viewcode-block" id="MedioPagoViewsTest.test_eliminar_medio_pago"><a class="viewcode-back" href="../../../apps.payments.tests.html#apps.payments.tests.MedioPagoViewsTest.test_eliminar_medio_pago">[documentos]</a>    <span class="k">def</span><span class="w"> </span><span class="nf">test_eliminar_medio_pago</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Comprueba la eliminación mediante la vista.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="n">response</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">post</span><span class="p">(</span>
+            <span class="n">reverse</span><span class="p">(</span>
+                <span class="s2">&quot;payments:eliminar&quot;</span><span class="p">,</span>
+                <span class="n">args</span><span class="o">=</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">medio_pago</span><span class="o">.</span><span class="n">pk</span><span class="p">],</span>
+            <span class="p">)</span>
+        <span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">assertRedirects</span><span class="p">(</span>
+            <span class="n">response</span><span class="p">,</span>
+            <span class="n">reverse</span><span class="p">(</span><span class="s2">&quot;payments:lista&quot;</span><span class="p">),</span>
+        <span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">assertFalse</span><span class="p">(</span>
+            <span class="n">MedioPago</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span>
+                <span class="n">pk</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">medio_pago</span><span class="o">.</span><span class="n">pk</span>
+            <span class="p">)</span><span class="o">.</span><span class="n">exists</span><span class="p">()</span>
+        <span class="p">)</span></div>
+
+<div class="viewcode-block" id="MedioPagoViewsTest.test_un_solo_medio_predeterminado"><a class="viewcode-back" href="../../../apps.payments.tests.html#apps.payments.tests.MedioPagoViewsTest.test_un_solo_medio_predeterminado">[documentos]</a>    <span class="k">def</span><span class="w"> </span><span class="nf">test_un_solo_medio_predeterminado</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Comprueba que solamente exista un medio predeterminado.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">post</span><span class="p">(</span>
+            <span class="n">reverse</span><span class="p">(</span><span class="s2">&quot;payments:crear&quot;</span><span class="p">),</span>
+            <span class="n">data</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">datos_medio_pago</span><span class="p">(),</span>
+        <span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">medio_pago</span><span class="o">.</span><span class="n">refresh_from_db</span><span class="p">()</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">assertFalse</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">medio_pago</span><span class="o">.</span><span class="n">predeterminado</span>
+        <span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">assertEqual</span><span class="p">(</span>
+            <span class="n">MedioPago</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span>
+                <span class="n">cliente</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">cliente</span><span class="p">,</span>
+                <span class="n">predeterminado</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+            <span class="p">)</span><span class="o">.</span><span class="n">count</span><span class="p">(),</span>
+            <span class="mi">1</span><span class="p">,</span>
+        <span class="p">)</span></div></div>
+
+<div class="viewcode-block" id="MedioPagoPermissionsTest"><a class="viewcode-back" href="../../../apps.payments.tests.html#apps.payments.tests.MedioPagoPermissionsTest">[documentos]</a><span class="nd">@override_settings</span><span class="p">(</span><span class="n">MIDDLEWARE</span><span class="o">=</span><span class="n">TEST_MIDDLEWARE</span><span class="p">)</span>
+
+<span class="k">class</span><span class="w"> </span><span class="nc">MedioPagoPermissionsTest</span><span class="p">(</span><span class="n">TestCase</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Pruebas de autenticación y permisos.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="MedioPagoPermissionsTest.setUp"><a class="viewcode-back" href="../../../apps.payments.tests.html#apps.payments.tests.MedioPagoPermissionsTest.setUp">[documentos]</a>    <span class="k">def</span><span class="w"> </span><span class="nf">setUp</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">usuario</span> <span class="o">=</span> <span class="n">User</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">create_user</span><span class="p">(</span>
+            <span class="n">username</span><span class="o">=</span><span class="s2">&quot;usuario_sin_vinculacion&quot;</span><span class="p">,</span>
+            <span class="n">password</span><span class="o">=</span><span class="s2">&quot;password123&quot;</span><span class="p">,</span>
+        <span class="p">)</span></div>
+
+<div class="viewcode-block" id="MedioPagoPermissionsTest.test_redirige_usuario_no_autenticado"><a class="viewcode-back" href="../../../apps.payments.tests.html#apps.payments.tests.MedioPagoPermissionsTest.test_redirige_usuario_no_autenticado">[documentos]</a>    <span class="k">def</span><span class="w"> </span><span class="nf">test_redirige_usuario_no_autenticado</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Comprueba que un visitante no pueda acceder al CRUD.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="n">response</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">get</span><span class="p">(</span>
+            <span class="n">reverse</span><span class="p">(</span><span class="s2">&quot;payments:lista&quot;</span><span class="p">)</span>
+        <span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">assertEqual</span><span class="p">(</span><span class="n">response</span><span class="o">.</span><span class="n">status_code</span><span class="p">,</span> <span class="mi">302</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="MedioPagoPermissionsTest.test_rechaza_usuario_sin_vinculacion"><a class="viewcode-back" href="../../../apps.payments.tests.html#apps.payments.tests.MedioPagoPermissionsTest.test_rechaza_usuario_sin_vinculacion">[documentos]</a>    <span class="k">def</span><span class="w"> </span><span class="nf">test_rechaza_usuario_sin_vinculacion</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Comprueba que se rechace un usuario sin vínculo aprobado.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">force_login</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">usuario</span><span class="p">)</span>
+
+        <span class="n">response</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">get</span><span class="p">(</span>
+            <span class="n">reverse</span><span class="p">(</span><span class="s2">&quot;payments:lista&quot;</span><span class="p">)</span>
+        <span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">assertEqual</span><span class="p">(</span><span class="n">response</span><span class="o">.</span><span class="n">status_code</span><span class="p">,</span> <span class="mi">403</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="MedioPagoPermissionsTest.test_rechaza_cliente_inactivo"><a class="viewcode-back" href="../../../apps.payments.tests.html#apps.payments.tests.MedioPagoPermissionsTest.test_rechaza_cliente_inactivo">[documentos]</a>    <span class="k">def</span><span class="w"> </span><span class="nf">test_rechaza_cliente_inactivo</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Comprueba que un usuario con un cliente inactivo vea la indicación correspondiente.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="n">cliente</span> <span class="o">=</span> <span class="n">Cliente</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">create</span><span class="p">(</span>
+            <span class="n">nombre_razon_social</span><span class="o">=</span><span class="s2">&quot;Cliente inactivo&quot;</span><span class="p">,</span>
+            <span class="n">documento</span><span class="o">=</span><span class="s2">&quot;9999999&quot;</span><span class="p">,</span>
+            <span class="n">tipo_persona</span><span class="o">=</span><span class="s2">&quot;FISICA&quot;</span><span class="p">,</span>
+            <span class="n">categoria</span><span class="o">=</span><span class="s2">&quot;B&quot;</span><span class="p">,</span>
+            <span class="n">creado_por</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">usuario</span><span class="p">,</span>
+            <span class="n">activo</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="n">UserClientLink</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">create</span><span class="p">(</span>
+            <span class="n">user</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">usuario</span><span class="p">,</span>
+            <span class="n">client</span><span class="o">=</span><span class="n">cliente</span><span class="p">,</span>
+            <span class="n">status</span><span class="o">=</span><span class="n">UserClientLink</span><span class="o">.</span><span class="n">STATUS_APPROVED</span><span class="p">,</span>
+        <span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">force_login</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">usuario</span><span class="p">)</span>
+        <span class="n">response</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">reverse</span><span class="p">(</span><span class="s2">&quot;payments:lista&quot;</span><span class="p">))</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">assertEqual</span><span class="p">(</span><span class="n">response</span><span class="o">.</span><span class="n">status_code</span><span class="p">,</span> <span class="mi">403</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">assertContains</span><span class="p">(</span><span class="n">response</span><span class="p">,</span> <span class="s2">&quot;Necesitas un cliente activo&quot;</span><span class="p">)</span></div></div>
+</pre></div>
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../../../index.html">Global Exchange</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navegación</h3>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../../index.html">Documentation overview</a><ul>
+  <li><a href="../../index.html">Código de módulo</a><ul>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Búsqueda rápida</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Ir a" />
+    </form>
+    </div>
+</div>
+<script>document.getElementById('searchbox').style.display = "block"</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2026, Grupo 9.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 7.1.2</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.13</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>
