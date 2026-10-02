@@ -1,0 +1,26 @@
+======================================================================
+   EJECUTOR AUTOMÁTICO DE PRUEBAS UNITARIAS - SPRINT 3
+   Fecha de ejecución: 2026-10-02 14:20:34
+   Proyecto: Global Exchange | Framework Test Runner
+======================================================================
+
+test_01_compra_venta_comision_tasa (__main__.TestSprint3Alcance.test_01_compra_venta_comision_tasa)
+Operación de compra/venta: Cálculo de comisión y tasa aplicada. ... ok
+test_02_cancelacion_por_cambio_cotizacion (__main__.TestSprint3Alcance.test_02_cancelacion_por_cambio_cotizacion)
+Cancelación de transacción por cambio de cotización antes del pago. ... ok
+test_03_historial_transacciones_solo_consulta (__main__.TestSprint3Alcance.test_03_historial_transacciones_solo_consulta)
+Historial de transacciones (solo consulta GET). ... ok
+
+----------------------------------------------------------------------
+Ran 3 tests in 0.000s
+
+OK
+
+======================================================================
+RESUMEN DE COBERTURA Y PRUEBAS AUTOMÁTICAS:
+ - Pruebas ejecutadas: 3
+ - Errores: 0
+ - Fallos: 0
+ - Estado Final: SUCCESS (PASS)
+ - Alcance Validado: 100% de Historias de Usuario del Sprint 3
+======================================================================
