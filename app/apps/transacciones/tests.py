@@ -3,9 +3,10 @@ from decimal import Decimal
 from django.contrib.auth import get_user_model
 from django.db.models.deletion import ProtectedError
 from django.test import TestCase
+from django.urls import reverse
 
 from apps.clientes.models import Cliente
-from apps.divisas.models import Moneda
+from apps.divisas.models import Moneda, TasaCambio
 from apps.payments.models import MedioPago
 
 from .models import Transaccion
@@ -86,3 +87,151 @@ class TransaccionModelTest(TestCase):
             self.medio_pago.delete()
         with self.assertRaises(ProtectedError):
             self.moneda.delete()
+
+
+class TransaccionLifecycleTest(TestCase):
+    def setUp(self):
+        usuario = get_user_model().objects.create_user(
+            username="transaccion_flujo",
+            password="password123",
+        )
+        self.cliente = Cliente.objects.create(
+            nombre_razon_social="Cliente de flujo",
+            documento="transaccion-flujo-123",
+            creado_por=usuario,
+            activo=True,
+        )
+        self.medio_pago = MedioPago.objects.create(
+            cliente=self.cliente,
+            tipo="DEBITO",
+            alias="Tarjeta principal",
+            titular="Cliente Test",
+            marca="VISA",
+            ultimos_cuatro="4242",
+            mes_vencimiento=12,
+            anio_vencimiento=2099,
+        )
+        self.pyg = Moneda.objects.get(codigo="PYG")
+        self.usd = Moneda.objects.create(
+            codigo="USD",
+            nombre="Dólar estadounidense",
+            simbolo="$",
+        )
+        TasaCambio.objects.create(
+            moneda=self.usd,
+            tasa_compra=7000,
+            tasa_venta=7100,
+            usuario_modificador=usuario,
+        )
+        self.client.force_login(usuario)
+
+    def test_calculo_no_guarda_hasta_efectuar_y_se_guarda_como_pagada(self):
+        response_calculo = self.client.post(
+            reverse("home"),
+            {"operation": "compra", "currency": "USD", "amount": "10"},
+        )
+
+        self.assertEqual(response_calculo.status_code, 200)
+        self.assertFalse(Transaccion.objects.exists())
+        self.assertContains(response_calculo, 'value="efectuar"')
+        self.assertContains(response_calculo, 'value="guardar_pendiente"')
+
+        response_pago = self.client.post(
+            reverse("transacciones:crear"),
+            {
+                "operation": "compra",
+                "amount": "10",
+                "currency": "USD",
+                "quoted_rate": "7100",
+                "medio_pago": self.medio_pago.pk,
+                "accion": "efectuar",
+            },
+        )
+
+        self.assertEqual(response_pago.status_code, 302)
+        transaccion = Transaccion.objects.get()
+        transaccion.refresh_from_db()
+        self.assertEqual(transaccion.estado, Transaccion.ESTADO_PAGADA)
+        self.assertEqual(transaccion.medio_pago, self.medio_pago)
+        self.assertIsNotNone(transaccion.fecha_finalizacion)
+
+    def test_modal_guarda_como_pendiente_sin_medio_de_pago(self):
+        self.client.post(
+            reverse("home"),
+            {"operation": "venta", "currency": "USD", "amount": "12.5"},
+        )
+        self.assertFalse(Transaccion.objects.exists())
+
+        response_guardado = self.client.post(
+            reverse("transacciones:crear"),
+            {
+                "operation": "venta",
+                "amount": "12.5",
+                "currency": "USD",
+                "quoted_rate": "7000",
+                "accion": "guardar_pendiente",
+            },
+        )
+
+        self.assertEqual(response_guardado.status_code, 302)
+        transaccion = Transaccion.objects.get()
+        self.assertEqual(transaccion.estado, Transaccion.ESTADO_PENDIENTE)
+        self.assertIsNone(transaccion.medio_pago)
+        self.assertIsNone(transaccion.fecha_finalizacion)
+        self.assertEqual(transaccion.cantidad_divisa, Decimal("12.50"))
+
+    def test_historial_separa_operaciones_con_pago_y_sin_pago(self):
+        pendiente = self.crear_transaccion("HIST-PENDIENTE")
+        cancelada = self.crear_transaccion(
+            "HIST-CANCELADA",
+            estado=Transaccion.ESTADO_CANCELADA,
+        )
+        pagada = self.crear_transaccion(
+            "HIST-PAGADA",
+            estado=Transaccion.ESTADO_PAGADA,
+            medio_pago=self.medio_pago,
+        )
+
+        response = self.client.get(reverse("transacciones:historial"))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'name="csrfmiddlewaretoken"')
+        self.assertEqual(
+            set(response.context["transacciones_sin_pago"].values_list("pk", flat=True)),
+            {pendiente.pk, cancelada.pk},
+        )
+        self.assertEqual(
+            list(response.context["transacciones_finalizadas"].values_list("pk", flat=True)),
+            [pagada.pk],
+        )
+
+    def test_pendiente_se_completa_desde_historial(self):
+        pendiente = self.crear_transaccion("HIST-COMPLETAR", medio_pago=None)
+
+        response = self.client.post(
+            reverse("transacciones:crear"),
+            {
+                "transaccion_id": pendiente.pk,
+                "medio_pago": self.medio_pago.pk,
+                "return_to": "historial",
+            },
+        )
+
+        self.assertRedirects(response, reverse("transacciones:historial"))
+        pendiente.refresh_from_db()
+        self.assertEqual(pendiente.estado, Transaccion.ESTADO_PAGADA)
+        self.assertEqual(pendiente.medio_pago, self.medio_pago)
+        self.assertIsNotNone(pendiente.fecha_finalizacion)
+
+    def crear_transaccion(self, referencia, **kwargs):
+        datos = {
+            "cliente": self.cliente,
+            "monto": Decimal("125.50"),
+            "moneda": self.pyg,
+            "divisa": self.usd,
+            "cantidad_divisa": Decimal("10.00"),
+            "tipo_operacion": Transaccion.TIPO_COMPRA,
+            "referencia": referencia,
+        }
+        datos.update(kwargs)
+        return Transaccion.objects.create(**datos)

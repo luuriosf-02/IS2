@@ -82,6 +82,12 @@
   box-shadow: 0 8px 18px rgba(109, 40, 217, 0.28), 0 0 0 3px rgba(139, 92, 246, 0.12);
 }
 
+.transaction-save-form {
+  display: flex;
+  align-items: center;
+  margin: 0;
+}
+
 .transaction-action::after {
   position: absolute;
   top: 0.45rem;
@@ -194,6 +200,64 @@
   padding-bottom: 4rem;
 }
 
+.transaction-history-section {
+  margin-top: 2.5rem;
+}
+
+.transaction-history-section h2 {
+  margin: 0 0 1rem;
+  color: var(--color-neutral-900);
+  font-size: 1.25rem;
+}
+
+.transaction-history-section--completed {
+  margin-top: 0;
+}
+
+.transaction-history-section--pending {
+  margin-top: 3.5rem;
+  padding: 1.25rem;
+  border: 1px solid #f3d7a1;
+  border-radius: var(--radius-md);
+  background: #fffbf2;
+}
+
+.transaction-history-section--completed h2 {
+  padding-bottom: 0.7rem;
+  border-bottom: 2px solid #a7d9c4;
+}
+
+.transaction-history-section--pending h2 {
+  color: #80520c;
+}
+
+.pending-transactions-prompt {
+  margin-top: 1rem;
+}
+
+.pending-transactions-prompt .text-body {
+  margin: 0;
+}
+
+.pending-payment-form {
+  display: flex;
+  min-width: 0;
+  gap: 0.4rem;
+}
+
+.pending-payment-form .form-control {
+  min-width: 0;
+  width: 9.5rem;
+  padding: 0.45rem 0.55rem;
+  font-size: var(--font-size-sm);
+}
+
+.pending-payment-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
 .transaction-history-header {
   display: flex;
   align-items: flex-end;
@@ -217,6 +281,33 @@
 
 .transaction-history-table {
   min-width: 1050px;
+}
+
+.transaction-history-table--pending {
+  min-width: 700px;
+}
+
+.transaction-history-table--pending th {
+  background: #f8edd5;
+  color: #72500f;
+}
+
+.transaction-history-table.transaction-history-table--pending td {
+  border-color: #f3e5c7;
+  white-space: normal;
+}
+
+.transaction-history-table--pending tbody tr:hover {
+  background: #fff5df;
+}
+
+.transaction-history-table--completed tbody td:first-child,
+.transaction-history-table--completed .transaction-total {
+  font-weight: var(--font-weight-semibold);
+}
+
+.transaction-history-table--completed .transaction-total {
+  color: #08764f;
 }
 
 .transaction-history-table td,
@@ -358,6 +449,21 @@
   .transaction-history-header {
     align-items: stretch;
     flex-direction: column;
+  }
+
+  .transaction-history-section--pending {
+    margin-top: 2.5rem;
+    padding: 0.85rem;
+  }
+
+  .pending-payment-actions,
+  .pending-payment-form {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .pending-payment-form .form-control {
+    width: 100%;
   }
 
   .transaction-history-header .btn {

@@ -156,6 +156,17 @@
                     {% include 'components/transaction_modal.html' %}
                 </div>
             {% endif %}
+            {% if cliente_activo %}
+                <div class="pending-transactions-prompt" role="status">
+                    {% if transacciones_pendientes_count %}
+                        <a class="btn btn-outline" href="{% url 'transacciones:historial' %}#pendientes">
+                            Ver transacciones pendientes ({{ transacciones_pendientes_count }})
+                        </a>
+                    {% else %}
+                        <p class="text-body">No hay transacciones pendientes.</p>
+                    {% endif %}
+                </div>
+            {% endif %}
         </div>
 
             </section>

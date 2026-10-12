@@ -19,80 +19,26 @@
             <a class="btn btn-primary" href="{% url 'home' %}#conversor">Nueva operación</a>
         </section>
 
-        {% if transacciones %}
-            <div class="table-wrapper transaction-history-table-wrapper">
-                <table class="links-table transaction-history-table">
-                    <thead>
-                        <tr>
-                            <th>ID</th>
-                            <th>Inicio</th>
-                            <th>Finalización</th>
-                            <th>Medio de pago</th>
-                            <th>Estado</th>
-                            <th>Tipo</th>
-                            <th>Cantidad operada</th>
-                            <th>Total en guaraníes</th>
-                            <th>Acciones</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for transaccion in transacciones %}
-                            <tr>
-                                <td><strong>{{ transaccion.referencia }}</strong></td>
-                                <td>{{ transaccion.fecha_creacion|date:"d/m/Y H:i" }}</td>
-                                <td>
-                                    {% if transaccion.fecha_finalizacion %}
-                                        {{ transaccion.fecha_finalizacion|date:"d/m/Y H:i" }}
-                                    {% else %}
-                                        Pendiente
-                                    {% endif %}
-                                </td>
-                                <td>
-                                    {{ transaccion.medio_pago.get_marca_display }}<br>
-                                    <small>•••• {{ transaccion.medio_pago.ultimos_cuatro }}</small>
-                                </td>
-                                <td>
-                                    <span class="transaction-status transaction-status-{{ transaccion.estado }}">
-                                        {{ transaccion.get_estado_display }}
-                                    </span>
-                                </td>
-                                <td>
-                                    {% if transaccion.tipo_operacion %}
-                                        {{ transaccion.get_tipo_operacion_display }}
-                                    {% else %}
-                                        No disponible
-                                    {% endif %}
-                                </td>
-                                <td>
-                                    {% if transaccion.cantidad_divisa and transaccion.divisa %}
-                                        {{ transaccion.cantidad_divisa|floatformat:2 }} {{ transaccion.divisa.codigo }}
-                                    {% else %}
-                                        No disponible
-                                    {% endif %}
-                                </td>
-                                <td>{{ transaccion.monto|floatformat:2 }} PYG</td>
-                                
-                                <!-- Columna de acciones con el botón de cancelar condicional -->
-                                <td>
-                                    {% if transaccion.estado == 'Pendiente' or transaccion.estado == 'pendiente' %}
-                                        <a href="{% url 'cancelar_transaccion' transaccion.id %}" class="btn btn-danger btn-sm">
-                                            Cancelar
-                                        </a>
-                                    {% else %}
-                                        <span class="text-muted">-</span>
-                                    {% endif %}
-                                </td>
-                            </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-            </div>
+        {% if transacciones_finalizadas %}
+            <section class="transaction-history-section transaction-history-section--completed" aria-labelledby="finalizadas-title">
+                <h2 id="finalizadas-title">Operaciones finalizadas</h2>
+                {% include "transacciones/_tabla.html" with transacciones=transacciones_finalizadas mostrar_pago=False only %}
+            </section>
         {% else %}
-            <section class="card empty-state">
-                <h2 class="card-title">Aún no hay transacciones</h2>
-                <p class="text-body">Las operaciones efectuadas desde el conversor aparecerán aquí.</p>
-                <a class="btn btn-primary" href="{% url 'home' %}#conversor">Ir al conversor</a>
+            <section class="transaction-history-section" aria-labelledby="finalizadas-title">
+                <h2 id="finalizadas-title">Operaciones finalizadas</h2>
+                <p class="text-body">Aún no hay operaciones finalizadas.</p>
             </section>
         {% endif %}
+
+        <section id="pendientes" class="transaction-history-section transaction-history-section--pending" aria-labelledby="sin-pago-title">
+            <h2 id="sin-pago-title">Operaciones pendientes o canceladas</h2>
+            {% if transacciones_sin_pago %}
+                {% include "transacciones/_tabla.html" with transacciones=transacciones_sin_pago mostrar_pago=True medios_pago=medios_pago %}
+            {% else %}
+                <p class="text-body">No hay transacciones pendientes ni canceladas.</p>
+            {% endif %}
+        </section>
+
     </main>
 {% endblock %}

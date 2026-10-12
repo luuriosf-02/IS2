@@ -1,0 +1,101 @@
+<div class="table-wrapper transaction-history-table-wrapper">
+    <table class="links-table transaction-history-table{% if mostrar_pago %} transaction-history-table--pending{% else %} transaction-history-table--completed{% endif %}">
+        <thead>
+            <tr>
+                {% if mostrar_pago %}
+                    <th>Referencia / fecha</th>
+                    <th>Operación</th>
+                    <th>Total (PYG)</th>
+                    <th>Estado</th>
+                    <th>Acción</th>
+                {% else %}
+                    <th>ID</th>
+                    <th>Inicio</th>
+                    <th>Finalización</th>
+                    <th>Medio de pago</th>
+                    <th>Estado</th>
+                    <th>Tipo</th>
+                    <th>Cantidad operada</th>
+                    <th>Total en guaraníes</th>
+                {% endif %}
+            </tr>
+        </thead>
+        <tbody>
+            {% for transaccion in transacciones %}
+                <tr>
+                    {% if mostrar_pago %}
+                        <td>
+                            <strong>{{ transaccion.referencia }}</strong><br>
+                            <small>{{ transaccion.fecha_creacion|date:"d/m/Y H:i" }}</small>
+                        </td>
+                        <td>
+                            <strong>{{ transaccion.get_tipo_operacion_display }}</strong><br>
+                            <small>{{ transaccion.cantidad_divisa|floatformat:2 }} {{ transaccion.divisa.codigo }}</small>
+                        </td>
+                        <td class="transaction-total">{{ transaccion.monto|floatformat:2 }}</td>
+                    {% else %}
+                        <td><strong>{{ transaccion.referencia }}</strong></td>
+                        <td>{{ transaccion.fecha_creacion|date:"d/m/Y H:i" }}</td>
+                        <td>
+                            {% if transaccion.fecha_finalizacion %}
+                                {{ transaccion.fecha_finalizacion|date:"d/m/Y H:i" }}
+                            {% else %}
+                                Pendiente
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if transaccion.medio_pago %}
+                                {{ transaccion.medio_pago.get_marca_display }}<br>
+                                <small>•••• {{ transaccion.medio_pago.ultimos_cuatro }}</small>
+                            {% else %}
+                                No introducido
+                            {% endif %}
+                        </td>
+                    {% endif %}
+                    <td>
+                        <span class="transaction-status transaction-status-{{ transaccion.estado }}">
+                            {{ transaccion.get_estado_display }}
+                        </span>
+                    </td>
+                    {% if mostrar_pago %}
+                        <td>
+                            {% if transaccion.estado == 'pendiente' %}
+                                <div class="pending-payment-actions">
+                                    {% if medios_pago %}
+                                        <form method="post" action="{% url 'transacciones:crear' %}" class="pending-payment-form">
+                                            {% csrf_token %}
+                                            <input type="hidden" name="transaccion_id" value="{{ transaccion.pk }}">
+                                            <input type="hidden" name="return_to" value="historial">
+                                            <select class="form-control" id="medio-pago-{{ transaccion.pk }}" name="medio_pago" aria-label="Medio de pago para {{ transaccion.referencia }}" required>
+                                                <option value="">Medio de pago</option>
+                                                {% for medio in medios_pago %}
+                                                    <option value="{{ medio.pk }}">{{ medio.get_marca_display }} ···· {{ medio.ultimos_cuatro }}{% if medio.alias %} · {{ medio.alias }}{% endif %}</option>
+                                                {% endfor %}
+                                            </select>
+                                            <button type="submit" class="btn btn-primary btn-sm">Completar</button>
+                                        </form>
+                                    {% else %}
+                                        <a class="btn btn-outline btn-sm" href="{% url 'payments:lista' %}">Registrar medio</a>
+                                    {% endif %}
+                                    <a href="{% url 'cancelar_transaccion' transaccion.pk %}" class="btn btn-danger btn-sm">Cancelar</a>
+                                </div>
+                            {% else %}
+                                <span class="text-muted">Sin pago</span>
+                            {% endif %}
+                        </td>
+                    {% else %}
+                        <td>{{ transaccion.get_tipo_operacion_display }}</td>
+                        <td>
+                            {% if transaccion.cantidad_divisa and transaccion.divisa %}
+                                {{ transaccion.cantidad_divisa|floatformat:2 }} {{ transaccion.divisa.codigo }}
+                            {% else %}
+                                No disponible
+                            {% endif %}
+                        </td>
+                        <td class="transaction-total">{{ transaccion.monto|floatformat:2 }} PYG</td>
+                    {% endif %}
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
