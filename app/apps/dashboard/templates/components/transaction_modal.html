@@ -6,6 +6,16 @@
             <small>Continuar con esta cotización</small>
         </span>
     </button>
+    <form method="post" action="{% url 'transacciones:crear' %}" class="transaction-save-form">
+        {% csrf_token %}
+        <input type="hidden" name="operation" value="{{ conversion.operation }}">
+        <input type="hidden" name="amount" value="{{ conversion.amount }}">
+        <input type="hidden" name="currency" value="{{ conversion.foreign_currency }}">
+        <input type="hidden" name="quoted_rate" value="{{ conversion.rate }}">
+        <button type="submit" class="btn btn-outline" name="accion" value="guardar_pendiente">
+            Guardar pendiente
+        </button>
+    </form>
 
     <div class="modal-backdrop" data-transaction-modal hidden>
         <section class="transaction-modal" role="dialog" aria-modal="true" aria-labelledby="transaction-modal-title">
@@ -26,14 +36,15 @@
                 <div><span>Tasa aplicada</span><strong>{{ conversion.rate }} PYG</strong></div>
             </div>
 
-            {% if medios_pago %}
-                <form method="post" action="{% url 'transacciones:crear' %}">
-                    {% csrf_token %}
-                    <input type="hidden" name="operation" value="{{ conversion.operation }}">
-                    <input type="hidden" name="amount" value="{{ conversion.amount }}">
-                    <input type="hidden" name="currency" value="{{ conversion.foreign_currency }}">
+            <form method="post" action="{% url 'transacciones:crear' %}">
+                {% csrf_token %}
+                <input type="hidden" name="operation" value="{{ conversion.operation }}">
+                <input type="hidden" name="amount" value="{{ conversion.amount }}">
+                <input type="hidden" name="currency" value="{{ conversion.foreign_currency }}">
+                <input type="hidden" name="quoted_rate" value="{{ conversion.rate }}">
+                {% if medios_pago %}
                     <div class="field-stack">
-                        <label for="medio-pago">Medio de pago <span aria-hidden="true">*</span></label>
+                        <label for="medio-pago">Medio de pago para efectuar la operación</label>
                         <select class="form-control" id="medio-pago" name="medio_pago" required>
                             <option value="">Selecciona un medio de pago</option>
                             {% for medio in medios_pago %}
@@ -41,20 +52,21 @@
                             {% endfor %}
                         </select>
                     </div>
-                    <div class="transaction-modal-actions">
-                        <button type="button" class="btn btn-outline" data-close-transaction-modal>Volver</button>
-                        <button type="submit" class="btn btn-primary">Confirmar operación</button>
+                {% else %}
+                    <div class="system-message transaction-payment-warning">
+                        No cuentas con un medio de pago activo. Registra uno para poder efectuar la operación.
                     </div>
-                </form>
-            {% else %}
-                <div class="system-message transaction-payment-warning">
-                    No cuentas con un medio de pago activo. Registra uno para poder continuar.
-                </div>
+                {% endif %}
                 <div class="transaction-modal-actions">
                     <button type="button" class="btn btn-outline" data-close-transaction-modal>Volver</button>
-                    <a class="btn btn-primary" href="{% url 'payments:lista' %}">Gestionar medios de pago</a>
+                    {% if not medios_pago %}
+                        <a class="btn btn-outline" href="{% url 'payments:lista' %}">Gestionar medios de pago</a>
+                    {% endif %}
+                    {% if medios_pago %}
+                        <button type="submit" class="btn btn-primary" name="accion" value="efectuar">Efectuar operación</button>
+                    {% endif %}
                 </div>
-            {% endif %}
+            </form>
         </section>
     </div>
 

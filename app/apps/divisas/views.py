@@ -166,7 +166,7 @@ def cancelar_transaccion(request, transaccion_id):
 
     # Solo permitimos cancelar si está pendiente
     if transaccion.estado.lower() == 'pendiente':
-        transaccion.estado = 'Cancelada'
+        transaccion.estado = Transaccion.ESTADO_CANCELADA
         transaccion.fecha_finalizacion = timezone.now()
         transaccion.save()
 
