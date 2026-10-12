@@ -1,12 +1,16 @@
+import logging
+
+import stripe
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
-from django.db import transaction
-from django.shortcuts import get_object_or_404, redirect, render
+from django.shortcuts import render
 
+from apps.stripe.services import sync_customer_payment_methods
 from apps.users.client_selection import get_selected_client
 
-from .forms import MedioPagoForm
 from .models import MedioPago
+
+logger = logging.getLogger(__name__)
 
 
 def obtener_cliente_del_usuario(request):
@@ -29,8 +33,25 @@ def lista_medios_pago(request):
     if cliente is None:
         return render_sin_cliente_activo(request)
 
+    try:
+        sync_customer_payment_methods(cliente)
+    except stripe.error.StripeError as exc:
+        logger.warning(
+            "No se pudieron actualizar los medios de pago desde Stripe "
+            "para cliente %s (request_id=%s): %s",
+            cliente.pk,
+            getattr(exc, "request_id", None),
+            getattr(exc, "user_message", None) or str(exc),
+        )
+        messages.warning(
+            request,
+            "No se pudieron actualizar las tarjetas desde Stripe. "
+            "Se muestran los últimos datos disponibles.",
+        )
+
     medios_pago = MedioPago.objects.filter(
-        cliente=cliente
+        cliente=cliente,
+        stripe_payment_method_id__isnull=False,
     )
 
     return render(
@@ -42,131 +63,3 @@ def lista_medios_pago(request):
         },
     )
 
-
-@login_required
-def crear_medio_pago(request):
-    cliente = obtener_cliente_del_usuario(request)
-    if cliente is None:
-        return render_sin_cliente_activo(request)
-
-    if request.method == "POST":
-        form = MedioPagoForm(request.POST)
-
-        if form.is_valid():
-            with transaction.atomic():
-                medio_pago = form.save(commit=False)
-                medio_pago.cliente = cliente
-
-                if medio_pago.predeterminado:
-                    MedioPago.objects.filter(
-                        cliente=cliente,
-                        predeterminado=True,
-                    ).update(
-                        predeterminado=False
-                    )
-
-                medio_pago.save()
-
-            messages.success(
-                request,
-                "El medio de pago fue registrado correctamente.",
-            )
-
-            return redirect("payments:lista")
-
-    else:
-        form = MedioPagoForm()
-
-    return render(
-        request,
-        "payments/formulario.html",
-        {
-            "form": form,
-            "titulo": "Registrar medio de pago",
-            "texto_boton": "Guardar medio de pago",
-        },
-    )
-
-
-@login_required
-def editar_medio_pago(request, pk):
-    cliente = obtener_cliente_del_usuario(request)
-    if cliente is None:
-        return render_sin_cliente_activo(request)
-
-    medio_pago = get_object_or_404(
-        MedioPago,
-        pk=pk,
-        cliente=cliente,
-    )
-
-    if request.method == "POST":
-        form = MedioPagoForm(
-            request.POST,
-            instance=medio_pago,
-        )
-
-        if form.is_valid():
-            with transaction.atomic():
-                medio_pago = form.save(commit=False)
-
-                if medio_pago.predeterminado:
-                    MedioPago.objects.filter(
-                        cliente=cliente,
-                        predeterminado=True,
-                    ).exclude(
-                        pk=medio_pago.pk
-                    ).update(predeterminado=False)
-
-                medio_pago.save()
-
-            messages.success(
-                request,
-                "El medio de pago fue actualizado correctamente.",
-            )
-
-            return redirect("payments:lista")
-    else:
-        form = MedioPagoForm(instance=medio_pago)
-
-    return render(
-        request,
-        "payments/formulario.html",
-        {
-            "form": form,
-            "medio_pago": medio_pago,
-            "titulo": "Editar medio de pago",
-            "texto_boton": "Guardar cambios",
-        },
-    )
-
-
-@login_required
-def eliminar_medio_pago(request, pk):
-    cliente = obtener_cliente_del_usuario(request)
-    if cliente is None:
-        return render_sin_cliente_activo(request)
-
-    medio_pago = get_object_or_404(
-        MedioPago,
-        pk=pk,
-        cliente=cliente,
-    )
-
-    if request.method == "POST":
-        medio_pago.delete()
-
-        messages.success(
-            request,
-            "El medio de pago fue eliminado correctamente.",
-        )
-
-        return redirect("payments:lista")
-
-    return render(
-        request,
-        "payments/confirmar_eliminacion.html",
-        {
-            "medio_pago": medio_pago,
-        },
-    )

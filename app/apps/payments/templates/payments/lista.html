@@ -8,9 +8,10 @@
 <section class="payments-header">
     {% include 'components/section-title.html' with title='Medios de pago' description=cliente.nombre_razon_social %}
 
-    <a class="btn btn-primary" href="{% url 'payments:crear' %}">
-        Registrar medio de pago
-    </a>
+    <form method="post" action="{% url 'stripe:create_checkout_session' %}">
+        {% csrf_token %}
+        <button class="btn btn-primary" type="submit">Agregar medio de pago</button>
+    </form>
 </section>
 
 {% if medios_pago %}
@@ -19,10 +20,10 @@
             <article class="card payment-card">
                 <div class="payment-card-header">
                     <div>
-                        <h2 class="card-title">{{ medio.alias }}</h2>
+                        <h2 class="card-title">{{ medio.get_marca_display }}</h2>
 
                         <p class="text-body payment-type">
-                            {{ medio.get_tipo_display }}
+                            Tarjeta
                         </p>
                     </div>
 
@@ -38,11 +39,6 @@
                 <div class="payment-data text-body">
                     <strong>Marca</strong>
                     <span>{{ medio.get_marca_display }}</span>
-                </div>
-
-                <div class="payment-data text-body">
-                    <strong>Titular</strong>
-                    <span>{{ medio.titular }}</span>
                 </div>
 
                 <div class="payment-data text-body">
@@ -62,14 +58,9 @@
                     {% endif %}
                 </div>
 
-                <div class="inline-actions payment-actions">
-                    <a class="btn btn-outline btn-sm" href="{% url 'payments:editar' medio.pk %}">
-                        Editar
-                    </a>
-                    <a class="btn btn-danger btn-sm" href="{% url 'payments:eliminar' medio.pk %}">
-                        Eliminar
-                    </a>
-                </div>
+                <a class="btn btn-danger btn-sm" href="{% url 'stripe:confirm_delete_payment_method' medio.pk %}">
+                    Eliminar
+                </a>
             </article>
         {% endfor %}
     </section>
@@ -77,9 +68,10 @@
     <section class="card empty-state">
         <h2 class="card-title">No hay medios de pago registrados</h2>
         <p class="text-body">Agregá el primer medio de pago del cliente.</p>
-        <a class="btn btn-primary" href="{% url 'payments:crear' %}">
-            Registrar medio de pago
-        </a>
+        <form method="post" action="{% url 'stripe:create_checkout_session' %}">
+            {% csrf_token %}
+            <button class="btn btn-primary" type="submit">Agregar medio de pago</button>
+        </form>
     </section>
 {% endif %}
 {% endblock %}
