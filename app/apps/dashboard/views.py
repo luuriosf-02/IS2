@@ -6,6 +6,7 @@ from django.db.models import OuterRef, Subquery
 
 from apps.divisas.models import Moneda, TasaCambio
 from apps.payments.models import MedioPago
+from apps.transacciones.models import Transaccion
 from apps.users.client_selection import get_selected_client
 
 PYG_CODE = 'PYG'
@@ -118,7 +119,17 @@ def home(request):
             activo=True,
         ) if cliente_activo else MedioPago.objects.none(),
     }
-    context.update(get_conversion_context(request))
+    conversion_context = get_conversion_context(request)
+    context.update(conversion_context)
+
+    context['transacciones_pendientes_count'] = (
+        Transaccion.objects.filter(
+            cliente=cliente_activo,
+            estado=Transaccion.ESTADO_PENDIENTE,
+        ).count()
+        if cliente_activo
+        else 0
+    )
     return render(request, 'dashboard.html', context)
 
 

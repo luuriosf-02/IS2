@@ -1,0 +1,6 @@
+{% extends 'cajas/base.html' %}
+{% block caja_content %}
+<h1>{{ titulo }}</h1>
+<form method="post">{% csrf_token %}{{ form.as_p }}<button type="submit">{{ boton }}</button></form>
+<p><a href="{% url 'cajas:lista' %}">Volver a mis cajas</a></p>
+{% endblock %}

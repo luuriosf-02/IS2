@@ -12,6 +12,7 @@ class MedioPago(models.Model):
     el número completo de la tarjeta ni el código CVV.
     """
     TIPO_CHOICES = [
+        ("TARJETA", "Tarjeta"),
         ("CREDITO", "Tarjeta de crédito"),
         ("DEBITO", "Tarjeta de débito"),
         ("BILLETERA", "Billetera electrónica"),
@@ -29,6 +30,14 @@ class MedioPago(models.Model):
         on_delete=models.PROTECT,
         related_name="medios_pago",
         verbose_name="Cliente",
+    )
+
+    stripe_payment_method_id = models.CharField(
+        max_length=255,
+        unique=True,
+        null=True,
+        blank=True,
+        verbose_name="Identificador del método en Stripe",
     )
 
     tipo = models.CharField(
@@ -97,3 +106,12 @@ class MedioPago(models.Model):
         ordering = ["-predeterminado", "-fecha_creacion"]
         verbose_name = "Medio de pago"
         verbose_name_plural = "Medios de pago"
+
+
+class ClienteStripeCustomer(models.Model):
+    cliente = models.OneToOneField(
+        Cliente,
+        on_delete=models.CASCADE,
+        related_name="stripe_customer_link",
+    )
+    stripe_customer_id = models.CharField(max_length=255, unique=True)

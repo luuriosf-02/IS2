@@ -2,9 +2,25 @@
 from pathlib import Path
 import os
 
+#Para Stripe
+def _read_webhook_secret():
+    env_value = os.environ.get("STRIPE_WEBHOOK_SECRET")
+    if env_value:
+        return env_value
+    secret_file = Path("/secrets/whsec")
+    if secret_file.exists():
+        return secret_file.read_text().strip()
+    return ""
+
+STRIPE_WEBHOOK_SECRET = _read_webhook_secret()
+
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
+
+#Stripe keys
+STRIPE_PUBLISHABLE_KEY = os.environ["STRIPE_PUBLISHABLE_KEY"]  # pk_test_...
+STRIPE_SECRET_KEY = os.environ["STRIPE_SECRET_KEY"]            # sk_test_...
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
@@ -15,7 +31,7 @@ SECRET_KEY = 'django-insecure-f!l93_7%(=l8em8&(b&im5rig5nin9_r3ram@3bfd7mnn%t^6_
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ["localhost", "127.0.0.1", "web"]
 
 
 # Application definition
@@ -36,6 +52,8 @@ INSTALLED_APPS = [
     "apps.divisas",
     "apps.payments",
     "apps.transacciones",
+    "apps.stripe",
+    "apps.cajas.apps.CajasConfig",
 ]
 
 AUTHENTICATION_BACKENDS= (
@@ -87,7 +105,9 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
+                'django.template.context_processors.csrf',
                 'apps.users.context_processors.active_client',
+                "apps.cajas.context_processors.permisos_caja",
             ],
         },
     },

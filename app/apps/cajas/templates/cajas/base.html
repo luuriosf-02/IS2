@@ -1,0 +1,61 @@
+{% extends 'layouts/base.html' %}
+{% block title %}Control de cajas | Global Exchange{% endblock %}
+{% block content %}
+{% include 'components/navbar.html' %}
+<style>
+/* Estilos exclusivos del módulo de cajas. */
+.caja-shell{--caja-purple:#7446e8;--caja-ink:#18243e;--caja-muted:#6b7288;--caja-line:#e8e6f2;max-width:1160px;width:calc(100% - 64px);margin:36px auto 56px;color:var(--caja-ink);box-sizing:border-box}
+.caja-shell *{box-sizing:border-box}
+.caja-shell .caja-intro{display:flex;align-items:center;gap:12px;margin-bottom:20px}
+.caja-shell .caja-icon{display:grid;place-items:center;width:44px;height:44px;border-radius:14px;background:#eee8ff;color:var(--caja-purple);flex-shrink:0}
+.caja-shell .caja-eyebrow{font-size:11px;font-weight:700;letter-spacing:1.5px;color:var(--caja-purple);text-transform:uppercase;margin:0 0 3px}
+.caja-shell .caja-subtitle{font-size:13px;color:var(--caja-muted);margin:0}
+.caja-shell .caja-panel{background:#fff;border:1px solid var(--caja-line);border-top:4px solid var(--caja-purple);border-radius:20px;padding:32px;box-shadow:0 8px 30px rgba(41,27,89,.05);min-width:0}
+.caja-shell h1{font-size:clamp(24px,3vw,32px);line-height:1.25;letter-spacing:-.7px;margin:0 0 18px;color:var(--caja-ink)}
+.caja-shell h2{font-size:19px;letter-spacing:-.2px;margin:30px 0 16px;padding-bottom:12px;border-bottom:1px solid var(--caja-line);color:var(--caja-ink)}
+.caja-shell p{font-size:14px;line-height:1.7;margin:12px 0;color:var(--caja-muted);overflow-wrap:anywhere}
+.caja-shell a{color:var(--caja-purple);text-decoration:none;font-weight:600;transition:background .18s,color .18s}
+.caja-shell a:hover{text-decoration:underline}
+.caja-shell .acciones{display:flex;gap:12px;flex-wrap:wrap;align-items:center;margin:20px 0}
+.caja-shell .acciones a,.caja-shell .caja-panel > a{display:inline-flex;align-items:center;justify-content:center;border:1px solid #ded4fc;background:#f6f2ff;border-radius:10px;padding:10px 16px;min-height:42px;font-size:13px;text-decoration:none}
+.caja-shell .acciones a:hover,.caja-shell .caja-panel > a:hover{background:#ece3ff}
+.caja-shell .acciones span{padding:8px 13px;background:#edf8f2;border:1px solid #cdebdc;color:#21764e;border-radius:999px;font-size:12px;font-weight:600}
+.caja-shell .tabla{overflow-x:auto;margin:16px 0 24px;border:1px solid var(--caja-line);border-radius:13px;background:#fff}
+.caja-shell table{width:100%;border-collapse:collapse;margin:0;font-size:13px;white-space:nowrap}
+.caja-shell th{background:#f5f2fc;color:#65587c;padding:15px 18px;text-align:left;font-size:11px;letter-spacing:.4px;font-weight:700}
+.caja-shell td{padding:16px 18px;border-top:1px solid #efedf5;text-align:left;color:var(--caja-ink);font-variant-numeric:tabular-nums;white-space:normal;min-width:105px;overflow-wrap:anywhere}
+.caja-shell td:first-child{font-weight:600;color:#6540c0}
+.caja-shell tbody tr:nth-child(even){background:#fcfbff}
+.caja-shell tbody tr:hover{background:#f6f3ff}
+.caja-shell td a{display:inline-block;background:#f3edff;padding:6px 10px;border-radius:7px;font-size:12px}
+.caja-shell form[method="post"]{max-width:720px;background:#faf9fd;border:1px solid var(--caja-line);border-radius:15px;padding:24px;margin:20px 0}
+.caja-shell form[method="post"] p{margin:0 0 20px}
+.caja-shell form[method="post"] label{display:block;font-size:13px;font-weight:600;color:#34405a;margin-bottom:8px}
+.caja-shell input:not([type="hidden"]),.caja-shell select,.caja-shell textarea{display:block;width:100%;max-width:100%;background:#fff;color:var(--caja-ink);border:1px solid #dcd9e8;border-radius:10px;padding:11px 13px;font:inherit;font-size:14px;line-height:1.4;min-height:44px;outline:none;transition:border-color .18s,box-shadow .18s}
+.caja-shell textarea{min-height:110px;resize:vertical}
+.caja-shell input:focus,.caja-shell select:focus,.caja-shell textarea:focus{border-color:var(--caja-purple);box-shadow:0 0 0 3px rgba(116,70,232,.12)}
+.caja-shell button{display:inline-flex;justify-content:center;align-items:center;background:var(--caja-purple);color:#fff;border:0;border-radius:10px;padding:12px 20px;min-height:44px;font:inherit;font-size:13px;font-weight:600;cursor:pointer;box-shadow:0 3px 8px rgba(116,70,232,.15);transition:background .18s,transform .18s}
+.caja-shell button:hover{background:#6236cf;transform:translateY(-1px)}
+.caja-shell button:focus-visible,.caja-shell a:focus-visible{outline:3px solid #bba5f5;outline-offset:3px}
+.caja-shell form[method="get"]{display:flex;gap:16px;align-items:flex-end;flex-wrap:wrap;padding:18px;background:#f8f6fd;border:1px solid var(--caja-line);border-radius:13px;margin:16px 0}
+.caja-shell form[method="get"] label{display:block;flex:1;min-width:145px;color:#596079;font-size:12px;font-weight:600}
+.caja-shell form[method="get"] select{margin-top:7px}
+.caja-shell .errorlist{list-style:none;padding:12px 16px;margin:12px 0;background:#fff0ef;border:1px solid #ffd7d2;border-radius:10px;color:#ae3527;font-size:13px}
+.caja-shell .helptext{display:block;margin-top:6px;font-size:12px;color:var(--caja-muted)}
+.caja-shell .caja-message{padding:14px 18px;border-radius:12px;border:1px solid #d8cdf8;background:#f4efff;color:#6540a6;margin:0 0 16px;font-size:13px;line-height:1.5}
+.caja-shell .caja-message.success{background:#edf8f2;border-color:#ccebdc;color:#21764e}
+.caja-shell .caja-message.error{background:#fff0ef;border-color:#ffd7d2;color:#ae3527}
+.caja-shell .caja-message.warning{background:#fff8e8;border-color:#f4dfad;color:#946820}
+@media(max-width:700px){.caja-shell{width:calc(100% - 28px);margin:24px auto 36px}.caja-shell .caja-panel{padding:20px 16px;border-radius:15px}.caja-shell form[method="post"]{padding:18px 14px}.caja-shell th,.caja-shell td{padding:12px}.caja-shell form[method="get"]{gap:12px}.caja-shell .acciones a{flex:1}.caja-shell .caja-intro{margin-bottom:16px}}
+</style>
+<div class="caja-shell">
+  <div class="caja-intro">
+    <div class="caja-icon" aria-hidden="true"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="3" y="5" width="18" height="15" rx="3"/><path d="M7 5V3h10v2M3 11h18M8 15h8"/></svg></div>
+    <div><div class="caja-eyebrow">Global Exchange · Operaciones</div><p class="caja-subtitle">Control de efectivo y arqueo por moneda</p></div>
+  </div>
+  {% for message in messages %}<div class="caja-message {{ message.tags }}" role="status">{{ message }}</div>{% endfor %}
+  <section class="caja-panel" aria-label="Control de caja">
+    {% block caja_content %}{% endblock %}
+  </section>
+</div>
+{% endblock %}

@@ -147,13 +147,24 @@
                         <div class="result-amount">{{ conversion.result|floatformat:2 }} {{ conversion.to_currency }}</div>
                     </div>
                     <div class="result-grid">
-                        <div class="result-metric"><span>Dólares {% if conversion.operation == 'compra' %}comprados{% else %}vendidos{% endif %}</span><strong>{{ conversion.amount|floatformat:2 }} {{ conversion.from_currency }}</strong></div>
+                        <div class="result-metric"><span>Monedas {% if conversion.operation == 'compra' %}compradas{% else %}vendidas{% endif %}</span><strong>{{ conversion.amount|floatformat:2 }} {{ conversion.from_currency }}</strong></div>
                         <div class="result-metric"><span>Tasa aplicada</span><strong>{{ conversion.rate }} PYG</strong></div>
                         <div class="result-metric"><span>Tipo de operación</span><strong>{% if conversion.operation == 'compra' %}Compra{% else %}Venta{% endif %}</strong></div>
                     </div>
                 </div>
                 <div class="converter-actions" style="margin-top: 1rem;">
                     {% include 'components/transaction_modal.html' %}
+                </div>
+            {% endif %}
+            {% if cliente_activo %}
+                <div class="pending-transactions-prompt" role="status">
+                    {% if transacciones_pendientes_count %}
+                        <a class="btn btn-outline" href="{% url 'transacciones:historial' %}#pendientes">
+                            Ver transacciones pendientes ({{ transacciones_pendientes_count }})
+                        </a>
+                    {% else %}
+                        <p class="text-body">No hay transacciones pendientes.</p>
+                    {% endif %}
                 </div>
             {% endif %}
         </div>

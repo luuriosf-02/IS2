@@ -1,4 +1,5 @@
 from datetime import date
+from unittest.mock import Mock, patch
 
 from django.contrib.auth import get_user_model
 from django.test import TestCase
@@ -8,10 +9,10 @@ from apps.clientes.models import Cliente
 from apps.users.models import UserClientLink
 
 from .forms import MedioPagoForm
-from .models import MedioPago
+from .models import ClienteStripeCustomer, MedioPago
 
 from django.conf import settings
-from django.test import TestCase, override_settings
+from django.test import override_settings
 
 User = get_user_model()
 
@@ -44,6 +45,7 @@ class MedioPagoModelTest(TestCase):
 
         self.medio_pago = MedioPago.objects.create(
             cliente=self.cliente,
+            stripe_payment_method_id="pm_test_4785",
             tipo="DEBITO",
             alias="Tarjeta principal",
             titular="Cliente Test",
@@ -168,6 +170,7 @@ class MedioPagoViewsTest(TestCase):
         self.usuario = User.objects.create_user(
             username="usuario_crud",
             password="password123",
+            email="juan.perez@example.com",
         )
 
         self.cliente = Cliente.objects.create(
@@ -187,6 +190,7 @@ class MedioPagoViewsTest(TestCase):
 
         self.medio_pago = MedioPago.objects.create(
             cliente=self.cliente,
+            stripe_payment_method_id="pm_view_test_4785",
             tipo="DEBITO",
             alias="Cédula",
             titular="Juan Pérez",
@@ -200,19 +204,6 @@ class MedioPagoViewsTest(TestCase):
 
         self.client.force_login(self.usuario)
 
-    def datos_medio_pago(self):
-        return {
-            "tipo": "CREDITO",
-            "alias": "Nueva tarjeta",
-            "titular": "Juan Pérez",
-            "marca": "MASTERCARD",
-            "ultimos_cuatro": "1234",
-            "mes_vencimiento": 10,
-            "anio_vencimiento": date.today().year + 2,
-            "predeterminado": "on",
-            "activo": "on",
-        }
-
     def test_listar_medios_pago(self):
         """
         Comprueba que el usuario visualice sus medios de pago.
@@ -223,105 +214,189 @@ class MedioPagoViewsTest(TestCase):
         )
 
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, "Cédula")
+        self.assertContains(response, "Visa")
         self.assertContains(response, "4785")
+        self.assertNotContains(response, "Editar")
 
-    def test_crear_medio_pago(self):
-        """
-        Comprueba la creación mediante la vista.
-        """
-
-        response = self.client.post(
-            reverse("payments:crear"),
-            data=self.datos_medio_pago(),
+    @patch("apps.stripe.services.stripe.PaymentMethod.list")
+    def test_lista_sincroniza_tarjetas_directamente_desde_stripe(
+        self,
+        listar_payment_methods,
+    ):
+        ClienteStripeCustomer.objects.create(
+            cliente=self.cliente,
+            stripe_customer_id="cus_cliente_test",
         )
+        payment_method = Mock(id="pm_stripe_list_4242")
+        payment_method.to_dict.return_value = {
+            "id": "pm_stripe_list_4242",
+            "card": {
+                "brand": "visa",
+                "last4": "4242",
+                "exp_month": 11,
+                "exp_year": date.today().year + 2,
+            },
+            "billing_details": {"name": "Juan Pérez"},
+        }
+        listar_payment_methods.return_value.auto_paging_iter.return_value = [
+            payment_method
+        ]
 
-        self.assertRedirects(
-            response,
-            reverse("payments:lista"),
+        response = self.client.get(reverse("payments:lista"))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "4242")
+        listar_payment_methods.assert_called_once_with(
+            customer="cus_cliente_test",
+            type="card",
+            limit=100,
         )
-
         self.assertTrue(
             MedioPago.objects.filter(
                 cliente=self.cliente,
-                ultimos_cuatro="1234",
+                stripe_payment_method_id="pm_stripe_list_4242",
             ).exists()
         )
 
-    def test_editar_medio_pago(self):
-        """
-        Comprueba la modificación mediante la vista.
-        """
-
-        datos = self.datos_medio_pago()
-        datos["alias"] = "Tarjeta actualizada"
+    @patch("apps.stripe.views.stripe.checkout.Session.create")
+    @patch("apps.stripe.views.stripe.Customer.create")
+    def test_crear_medio_de_pago_abre_stripe(
+        self,
+        crear_customer,
+        crear_sesion,
+    ):
+        crear_customer.return_value.id = "cus_cliente_test"
+        crear_sesion.return_value.url = "https://checkout.stripe.test/session"
 
         response = self.client.post(
-            reverse(
-                "payments:editar",
-                args=[self.medio_pago.pk],
-            ),
-            data=datos,
+            reverse("stripe:create_checkout_session")
         )
 
-        self.assertRedirects(
-            response,
-            reverse("payments:lista"),
-        )
-
-        self.medio_pago.refresh_from_db()
-
+        self.assertEqual(response.status_code, 303)
         self.assertEqual(
-            self.medio_pago.alias,
-            "Tarjeta actualizada",
+            response["Location"],
+            "https://checkout.stripe.test/session",
         )
+        crear_customer.assert_called_once_with(
+            name=self.cliente.nombre_razon_social,
+            email=self.usuario.email,
+            metadata={"cliente_id": str(self.cliente.pk)},
+        )
+        crear_sesion.assert_called_once_with(
+            mode="setup",
+            currency="usd",
+            customer="cus_cliente_test",
+            success_url=response.wsgi_request.build_absolute_uri(
+                reverse("payments:lista")
+            ),
+            cancel_url=response.wsgi_request.build_absolute_uri(
+                reverse("payments:lista")
+            ),
+        )
+        stripe_customer = ClienteStripeCustomer.objects.get(cliente=self.cliente)
+        self.assertEqual(stripe_customer.stripe_customer_id, "cus_cliente_test")
 
-    def test_eliminar_medio_pago(self):
-        """
-        Comprueba la eliminación mediante la vista.
-        """
+    @patch("apps.stripe.views.stripe.checkout.Session.create")
+    @patch("apps.stripe.views.stripe.Customer.modify")
+    def test_checkout_actualiza_el_email_del_customer_existente(
+        self,
+        modificar_customer,
+        crear_sesion,
+    ):
+        ClienteStripeCustomer.objects.create(
+            cliente=self.cliente,
+            stripe_customer_id="cus_cliente_existente",
+        )
+        crear_sesion.return_value.url = "https://checkout.stripe.test/session"
 
         response = self.client.post(
+            reverse("stripe:create_checkout_session")
+        )
+
+        self.assertEqual(response.status_code, 303)
+        modificar_customer.assert_called_once_with(
+            "cus_cliente_existente",
+            email=self.usuario.email,
+        )
+        crear_sesion.assert_called_once_with(
+            mode="setup",
+            currency="usd",
+            customer="cus_cliente_existente",
+            success_url=response.wsgi_request.build_absolute_uri(
+                reverse("payments:lista")
+            ),
+            cancel_url=response.wsgi_request.build_absolute_uri(
+                reverse("payments:lista")
+            ),
+        )
+
+    @patch("apps.stripe.views.stripe.PaymentMethod.detach")
+    def test_eliminar_medio_de_pago_lo_desvincula_en_stripe(self, detach):
+        response = self.client.post(
             reverse(
-                "payments:eliminar",
+                "stripe:delete_payment_method",
                 args=[self.medio_pago.pk],
             )
         )
 
-        self.assertRedirects(
-            response,
-            reverse("payments:lista"),
-        )
-
+        self.assertRedirects(response, reverse("payments:lista"))
+        detach.assert_called_once_with("pm_test_4785")
         self.assertFalse(
-            MedioPago.objects.filter(
-                pk=self.medio_pago.pk
-            ).exists()
+            MedioPago.objects.filter(pk=self.medio_pago.pk).exists()
         )
 
-    def test_un_solo_medio_predeterminado(self):
-        """
-        Comprueba que solamente exista un medio predeterminado.
-        """
+    @patch("apps.stripe.views.stripe.PaymentMethod.retrieve")
+    @patch("apps.stripe.views.stripe.Webhook.construct_event")
+    def test_webhook_guarda_el_medio_en_el_cliente_de_stripe(
+        self,
+        construct_event,
+        retrieve_payment_method,
+    ):
+        ClienteStripeCustomer.objects.create(
+            cliente=self.cliente,
+            stripe_customer_id="cus_cliente_test",
+        )
+        construct_event.return_value = {
+            "type": "setup_intent.succeeded",
+            "data": {
+                "object": {
+                    "customer": "cus_cliente_test",
+                    "payment_method": "pm_webhook_test",
+                },
+            },
+        }
+        payment_method = Mock(id="pm_webhook_test")
+        payment_method.to_dict.return_value = {
+            "id": "pm_webhook_test",
+            "card": {
+                "brand": "visa",
+                "last4": "4242",
+                "exp_month": 12,
+                "exp_year": date.today().year + 1,
+            },
+            "billing_details": {"name": "Juan Pérez"},
+        }
+        retrieve_payment_method.return_value = payment_method
 
-        self.client.post(
-            reverse("payments:crear"),
-            data=self.datos_medio_pago(),
+        response = self.client.post(
+            reverse("stripe:stripe_webhook"),
+            data=b"{}",
+            content_type="application/json",
         )
 
-        self.medio_pago.refresh_from_db()
+        self.assertEqual(response.status_code, 200)
+        medio_pago = MedioPago.objects.get(
+            stripe_payment_method_id="pm_webhook_test"
+        )
+        self.assertEqual(medio_pago.cliente, self.cliente)
+        self.assertEqual(medio_pago.ultimos_cuatro, "4242")
 
-        self.assertFalse(
-            self.medio_pago.predeterminado
+    def test_no_hay_ruta_para_editar_medio_de_pago(self):
+        response = self.client.get(
+            f"/medios-pago/{self.medio_pago.pk}/editar/"
         )
 
-        self.assertEqual(
-            MedioPago.objects.filter(
-                cliente=self.cliente,
-                predeterminado=True,
-            ).count(),
-            1,
-        )
+        self.assertEqual(response.status_code, 404)
 
 @override_settings(MIDDLEWARE=TEST_MIDDLEWARE)
 

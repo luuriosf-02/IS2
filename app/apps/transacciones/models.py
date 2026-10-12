@@ -46,6 +46,8 @@ class Transaccion(models.Model):
         MedioPago,
         on_delete=models.PROTECT,
         related_name="transacciones",
+        null=True,
+        blank=True,
         verbose_name="Medio de pago",
     )
     monto = models.DecimalField(
