@@ -1,0 +1,3 @@
+<p>Página {{ pagina.number }} de {{ pagina.paginator.num_pages }}.
+{% if pagina.has_previous %}<a href="?page={{ pagina.previous_page_number }}&moneda={{ filtro_moneda|urlencode }}&tipo={{ filtro_tipo|urlencode }}&estado={{ filtro_estado|urlencode }}">Anterior</a>{% endif %}
+{% if pagina.has_next %}<a href="?page={{ pagina.next_page_number }}&moneda={{ filtro_moneda|urlencode }}&tipo={{ filtro_tipo|urlencode }}&estado={{ filtro_estado|urlencode }}">Siguiente</a>{% endif %}</p>

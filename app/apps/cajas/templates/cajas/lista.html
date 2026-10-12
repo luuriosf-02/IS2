@@ -1,0 +1,9 @@
+{% extends 'cajas/base.html' %}
+{% block caja_content %}
+<h1>Mis cajas</h1>
+{% if caja_abierta %}<a href="{% url 'cajas:detalle' caja_abierta.pk %}">Ir a mi caja abierta</a>{% else %}<a href="{% url 'cajas:apertura' %}">Abrir caja</a>{% endif %}
+<div class="tabla"><table><thead><tr><th>Caja</th><th>Apertura</th><th>Cierre</th><th>Estado</th><th>Detalle</th></tr></thead><tbody>
+{% for caja in pagina %}<tr><td>{{ caja.pk }}</td><td>{{ caja.apertura|date:'d/m/Y H:i' }}</td><td>{{ caja.cierre|date:'d/m/Y H:i'|default:'—' }}</td><td>{% if caja.cierre %}Cerrada{% else %}Abierta{% endif %}</td><td><a href="{% url 'cajas:detalle' caja.pk %}">Consultar</a></td></tr>{% empty %}<tr><td colspan="5">Todavía no abriste una caja.</td></tr>{% endfor %}
+</tbody></table></div>
+{% include 'cajas/paginacion.html' %}
+{% endblock %}
