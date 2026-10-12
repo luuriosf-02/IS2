@@ -4,3 +4,4 @@ python-dotenv>=1.0
 mozilla-django-oidc>=4.0
 sphinx
 sphinx-rtd-theme
+stripe

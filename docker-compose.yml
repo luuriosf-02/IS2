@@ -18,6 +18,16 @@ services:
       timeout: 5s
       retries: 5
 
+#Servicio de un solo uso para obtener el whsec
+  stripe-secret:
+    image: stripe/stripe-cli:latest
+    entrypoint: ["/bin/sh", "-c"]
+    command: ["stripe listen --print-secret > /secrets/whsec"]
+    environment:
+      STRIPE_API_KEY: ${STRIPE_SECRET_KEY}
+    volumes:
+      - stripe-secrets:/secrets
+
   # 2. APLICACIÓN DJANGO (Backend Principal)
   web:
     build: .
@@ -26,6 +36,7 @@ services:
     command: python manage.py runserver 0.0.0.0:8000
     volumes:
       - ./app:/app
+      - stripe-secrets:/secrets:ro
     ports:
       - "8000:8000"
     env_file:
@@ -33,6 +44,8 @@ services:
     depends_on:
       db:
         condition: service_healthy
+      stripe-secret:
+        condition: service_completed_successfully
 
   # 3. KEYCLOAK (Autenticación y Gestión de Identidad)
   keycloak:
@@ -104,7 +117,20 @@ services:
       db:
         condition: service_healthy
 
+  #5. CLI de Stripe para webhook local
+  stripe-cli:
+    image: stripe/stripe-cli:latest
+    command: >
+      listen
+      --api-key ${STRIPE_SECRET_KEY}
+      --forward-to http://web:8000/stripe/payments/webhook/
+    depends_on:
+      - web
+  
+  
+
 volumes:
   postgres_data:
   keycloak_data:
   grafana_data:
+  stripe-secrets:

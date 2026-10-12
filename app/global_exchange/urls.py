@@ -18,4 +18,5 @@ urlpatterns = [
     path('divisas/', include('apps.divisas.urls')),
     path("medios-pago/", include("apps.payments.urls")),
     path("transacciones/", include("apps.transacciones.urls")),
+    path("stripe/", include("apps.stripe.urls")),
 ]

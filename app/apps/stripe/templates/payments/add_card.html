@@ -1,0 +1,5 @@
+<!-- templates/payments/add_card.html -->
+<form method="post" action="{% url 'create_checkout_session' %}">
+  {% csrf_token %}
+  <button type="submit">Agregar tarjeta</button>
+</form>

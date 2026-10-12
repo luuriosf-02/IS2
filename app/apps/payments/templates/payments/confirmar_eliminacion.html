@@ -8,7 +8,7 @@
     <section class="section-header">
         <div>
             <h1 class="section-title">Eliminar medio de pago</h1>
-            <p class="text-body">Esta acción eliminará definitivamente el registro.</p>
+            <p class="text-body">El medio de pago se eliminará de Stripe.</p>
         </div>
     </section>
 
@@ -21,7 +21,7 @@
             <strong>{{ medio_pago.ultimos_cuatro }}</strong>?
         </p>
 
-        <form method="post">
+            <form method="post" action="{% url 'stripe:delete_payment_method' medio_pago.pk %}">
             {% csrf_token %}
 
             <div class="inline-actions">

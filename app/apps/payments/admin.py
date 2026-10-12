@@ -31,10 +31,16 @@ class MedioPagoAdmin(admin.ModelAdmin):
         "alias",
     )
 
-    readonly_fields = (
-        "fecha_creacion",
-        "fecha_modificacion",
-    )
+    readonly_fields = tuple(field.name for field in MedioPago._meta.fields)
+
+    def has_add_permission(self, request):
+        return False
+
+    def has_change_permission(self, request, obj=None):
+        return False
+
+    def has_delete_permission(self, request, obj=None):
+        return False
 
     ordering = (
         "-predeterminado",
