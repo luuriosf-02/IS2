@@ -36,6 +36,7 @@ INSTALLED_APPS = [
     "apps.divisas",
     "apps.payments",
     "apps.transacciones",
+    "apps.cajas.apps.CajasConfig",
 ]
 
 AUTHENTICATION_BACKENDS= (
@@ -88,6 +89,7 @@ TEMPLATES = [
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
                 'apps.users.context_processors.active_client',
+                "apps.cajas.context_processors.permisos_caja",
             ],
         },
     },
