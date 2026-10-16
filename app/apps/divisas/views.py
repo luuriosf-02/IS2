@@ -8,13 +8,6 @@ from .models import TasaCambio, Moneda, Notificacion
 from apps.transacciones.models import Transaccion
 
 
-def _notificar_cotizacion(usuario, moneda):
-    Notificacion.objects.create(
-        usuario=usuario,
-        mensaje=f"Se ha registrado una nueva cotización para {moneda.nombre}"
-    )
-
-
 def _cancelar_transacciones_pendientes(moneda):
     Transaccion.objects.filter(
         divisa=moneda,
@@ -64,7 +57,6 @@ def gestion_divisas_view(request):
                     or tasa.tasa_venta != tasa_anterior.tasa_venta
                 ):
                     _cancelar_transacciones_pendientes(tasa.moneda)
-                _notificar_cotizacion(request.user, tasa.moneda)
                 messages.success(request, 'Tasa de cambio creada correctamente.')
                 return redirect('gestion_divisas')
         elif action == 'editar_tasa':
@@ -82,7 +74,6 @@ def gestion_divisas_view(request):
                 )
                 if tasas_actuales != tasas_anteriores:
                     _cancelar_transacciones_pendientes(tasa_actualizada.moneda)
-                _notificar_cotizacion(request.user, tasa_actualizada.moneda)
                 messages.success(request, 'Tasa de cambio actualizada correctamente.')
                 return redirect('gestion_divisas')
             tasa_en_edicion = tasa
@@ -117,7 +108,6 @@ def gestion_divisas_view(request):
                     or tasa_nueva.tasa_venta != tasa_anterior.tasa_venta
                 ):
                     _cancelar_transacciones_pendientes(instancia_moneda)
-                _notificar_cotizacion(request.user, instancia_moneda)
                 return redirect('gestion_divisas')
 
     edit_tasa_id = request.GET.get('edit_tasa_id')
@@ -141,6 +131,7 @@ def gestion_divisas_view(request):
 
 
 
+@login_required
 def dashboard_cliente(request):
     tasas_vigentes = TasaCambio.objects.select_related('moneda').order_by('moneda')
 

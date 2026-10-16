@@ -20,4 +20,5 @@ urlpatterns = [
     path("transacciones/", include("apps.transacciones.urls")),
     path("stripe/", include("apps.stripe.urls")),
     path("cajas/", include("apps.cajas.urls")),
+    path("notificaciones/", include("apps.divisas.notification_urls")),
 ]

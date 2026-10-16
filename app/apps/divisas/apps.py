@@ -5,4 +5,4 @@ class DivisasConfig(AppConfig):
     name = 'apps.divisas'
 
     def ready(self):
-        import apps.divisas.signals 
+        from . import signals  # noqa: F401

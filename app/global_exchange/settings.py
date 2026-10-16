@@ -49,7 +49,7 @@ INSTALLED_APPS = [
     "apps.dashboard",
     "apps.users",
     'apps.clientes',
-    "apps.divisas",
+    "apps.divisas.apps.DivisasConfig",
     "apps.payments",
     "apps.transacciones",
     "apps.stripe",

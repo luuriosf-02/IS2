@@ -20,6 +20,9 @@
         {% if puede_operar_caja %}
         <a href="{% url 'cajas:lista' %}" class="navbar-action-btn">Mi caja</a>
         {% endif %}
+
+        {% include "divisas/campanita.html" %}
+
         <!-- Bloque cuando está logueado -->
         <div class="user-avatar">
             {{ user.first_name|slice:":1" }}{{ user.last_name|slice:":1" }}
