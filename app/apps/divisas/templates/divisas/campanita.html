@@ -1,0 +1,66 @@
+{% if request.user.is_authenticated %}
+<style>
+.ge-notif{position:relative;display:inline-block;color:#172554;font:14px system-ui}
+.ge-notif button{cursor:pointer;border:0;border-radius:8px;padding:9px 12px;background:#eef2ff;color:#253b80}
+.ge-notif summary{cursor:pointer;list-style:none;padding:10px;border-radius:12px;background:#eef2ff}
+.ge-notif summary::-webkit-details-marker{display:none}
+.ge-notif-badge{background:#dc2626;color:white;border-radius:20px;padding:2px 6px;font-size:11px}
+.ge-notif-panel{position:absolute;right:0;top:48px;width:min(370px,calc(100vw - 32px));max-height:440px;overflow:auto;background:white;border:1px solid #e2e8f0;border-radius:14px;box-shadow:0 12px 35px #17255426;z-index:1000}
+.ge-notif-head{padding:16px;border-bottom:1px solid #e2e8f0;display:flex;gap:12px;align-items:center;justify-content:space-between}
+.ge-notif-item{padding:14px 16px;border-bottom:1px solid #e2e8f0;background:#eff6ff}
+.ge-notif-item.is-read{background:white;color:#64748b}
+.ge-notif-item p{white-space:pre-line;margin:8px 0;line-height:1.5}
+.ge-notif-item time{font-size:12px;display:block;margin-bottom:8px}
+</style>
+<details class="ge-notif" id="ge-notif">
+ <summary aria-label="Notificaciones">🔔 <span id="ge-notif-badge" class="ge-notif-badge" hidden></span></summary>
+ <div class="ge-notif-panel">
+  <div class="ge-notif-head"><strong>Notificaciones</strong><button type="button" id="ge-notif-all">Marcar todas leídas</button></div>
+  <div id="ge-notif-list" aria-live="polite">Cargando…</div>
+  <p id="ge-notif-error" role="status" style="padding:0 16px"></p>
+ </div>
+ <form hidden id="ge-notif-csrf">{% csrf_token %}</form>
+</details>
+<script>
+(() => {
+ const root=document.getElementById('ge-notif');
+ const list=document.getElementById('ge-notif-list');
+ const badge=document.getElementById('ge-notif-badge');
+ const error=document.getElementById('ge-notif-error');
+ const base="{% url 'notificaciones:lista' %}";
+ const token=root.querySelector('[name=csrfmiddlewaretoken]').value;
+ let busy=false;
+ async function refresh(){
+  if(busy)return; busy=true;
+  try{
+   const response=await fetch(base,{credentials:'same-origin',headers:{'Accept':'application/json'}});
+   if(!response.ok)throw Error();
+   const data=await response.json();
+   badge.hidden=data.no_leidas===0; badge.textContent=data.no_leidas>99?'99+':data.no_leidas;
+   root.querySelector('summary').setAttribute('aria-label',`Notificaciones: ${data.no_leidas} sin leer`);
+   list.replaceChildren();
+   if(!data.notificaciones.length){list.textContent='No tenés notificaciones.';}
+   data.notificaciones.forEach(n=>{
+    const item=document.createElement('article');item.className='ge-notif-item'+(n.leida?' is-read':'');
+    const title=document.createElement('strong');title.textContent=n.titulo;
+    const message=document.createElement('p');message.textContent=n.mensaje;
+    const date=document.createElement('time');date.dateTime=n.fecha_creacion;date.textContent=new Date(n.fecha_creacion).toLocaleString('es-PY');
+    item.append(title,message,date);
+    if(!n.leida){const button=document.createElement('button');button.type='button';button.textContent='Marcar leída';button.onclick=()=>mark(`${base}${n.id}/leer/`);item.append(button);}
+    list.append(item);
+   });error.textContent='';
+  }catch(e){error.textContent='No se pudieron actualizar los avisos. Se reintentará automáticamente.';}
+  finally{busy=false;}
+ }
+ async function mark(url){
+  try{const r=await fetch(url,{method:'POST',credentials:'same-origin',headers:{'X-CSRFToken':token}});if(!r.ok)throw Error();await refresh();}
+  catch(e){error.textContent='No se pudo marcar la notificación.';}
+ }
+ document.getElementById('ge-notif-all').onclick=()=>mark("{% url 'notificaciones:leer_todas' %}");
+ root.addEventListener('toggle',()=>{if(root.open)refresh();});
+ document.addEventListener('click',e=>{if(!root.contains(e.target))root.open=false;});
+ root.addEventListener('keydown',e=>{if(e.key==='Escape')root.open=false;});
+ refresh();setInterval(()=>{if(!document.hidden)refresh();},30000);
+})();
+</script>
+{% endif %}
