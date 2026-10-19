@@ -1,4 +1,5 @@
 from decimal import Decimal
+from unittest.mock import Mock, patch
 
 from django.contrib.auth import get_user_model
 from django.db.models.deletion import ProtectedError
@@ -7,7 +8,7 @@ from django.urls import reverse
 
 from apps.clientes.models import Cliente
 from apps.divisas.models import Moneda, TasaCambio
-from apps.payments.models import MedioPago
+from apps.payments.models import ClienteStripeCustomer, MedioPago
 
 from .models import Transaccion
 
@@ -103,6 +104,7 @@ class TransaccionLifecycleTest(TestCase):
         )
         self.medio_pago = MedioPago.objects.create(
             cliente=self.cliente,
+            stripe_payment_method_id="pm_transaccion_test",
             tipo="DEBITO",
             alias="Tarjeta principal",
             titular="Cliente Test",
@@ -110,6 +112,10 @@ class TransaccionLifecycleTest(TestCase):
             ultimos_cuatro="4242",
             mes_vencimiento=12,
             anio_vencimiento=2099,
+        )
+        ClienteStripeCustomer.objects.create(
+            cliente=self.cliente,
+            stripe_customer_id="cus_transaccion_test",
         )
         self.pyg = Moneda.objects.get(codigo="PYG")
         self.usd = Moneda.objects.create(
@@ -125,7 +131,15 @@ class TransaccionLifecycleTest(TestCase):
         )
         self.client.force_login(usuario)
 
-    def test_calculo_no_guarda_hasta_efectuar_y_se_guarda_como_pagada(self):
+    @patch("apps.stripe.services.stripe.PaymentIntent.create")
+    def test_calculo_no_guarda_hasta_efectuar_y_se_guarda_como_pagada(
+        self, crear_intento
+    ):
+        crear_intento.return_value = Mock(
+            id="pi_transaccion_test",
+            status="succeeded",
+            latest_charge=Mock(receipt_url="https://stripe.test/receipt"),
+        )
         response_calculo = self.client.post(
             reverse("home"),
             {"operation": "compra", "currency": "USD", "amount": "10"},
@@ -154,6 +168,11 @@ class TransaccionLifecycleTest(TestCase):
         self.assertEqual(transaccion.estado, Transaccion.ESTADO_PAGADA)
         self.assertEqual(transaccion.medio_pago, self.medio_pago)
         self.assertIsNotNone(transaccion.fecha_finalizacion)
+        self.assertEqual(transaccion.receipt_url, "https://stripe.test/receipt")
+        crear_intento.assert_called_once()
+        self.assertEqual(crear_intento.call_args.kwargs["payment_method"], "pm_transaccion_test")
+        self.assertEqual(crear_intento.call_args.kwargs["amount"], 71000)
+        self.assertEqual(crear_intento.call_args.kwargs["currency"], "pyg")
 
     def test_modal_guarda_como_pendiente_sin_medio_de_pago(self):
         self.client.post(
@@ -180,6 +199,33 @@ class TransaccionLifecycleTest(TestCase):
         self.assertIsNone(transaccion.fecha_finalizacion)
         self.assertEqual(transaccion.cantidad_divisa, Decimal("12.50"))
 
+    @patch("apps.stripe.services.stripe.PaymentIntent.create")
+    def test_pago_rechazado_permanece_pendiente(self, crear_intento):
+        import stripe
+
+        crear_intento.side_effect = stripe.error.CardError(
+            "Pago rechazado",
+            "param",
+            "card_declined",
+        )
+        response = self.client.post(
+            reverse("transacciones:crear"),
+            {
+                "operation": "compra",
+                "amount": "10",
+                "currency": "USD",
+                "quoted_rate": "7100",
+                "medio_pago": self.medio_pago.pk,
+                "accion": "efectuar",
+            },
+        )
+
+        self.assertEqual(response.status_code, 302)
+        transaccion = Transaccion.objects.get()
+        self.assertEqual(transaccion.estado, Transaccion.ESTADO_PENDIENTE)
+        self.assertIsNone(transaccion.medio_pago)
+        self.assertFalse(transaccion.receipt_url)
+
     def test_historial_separa_operaciones_con_pago_y_sin_pago(self):
         pendiente = self.crear_transaccion("HIST-PENDIENTE")
         cancelada = self.crear_transaccion(
@@ -190,12 +236,15 @@ class TransaccionLifecycleTest(TestCase):
             "HIST-PAGADA",
             estado=Transaccion.ESTADO_PAGADA,
             medio_pago=self.medio_pago,
+            receipt_url="https://stripe.test/receipt",
         )
 
         response = self.client.get(reverse("transacciones:historial"))
 
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'name="csrfmiddlewaretoken"')
+        self.assertContains(response, 'href="https://stripe.test/receipt"')
+        self.assertContains(response, "Ver comprobante de pago")
         self.assertEqual(
             set(response.context["transacciones_sin_pago"].values_list("pk", flat=True)),
             {pendiente.pk, cancelada.pk},
@@ -205,7 +254,13 @@ class TransaccionLifecycleTest(TestCase):
             [pagada.pk],
         )
 
-    def test_pendiente_se_completa_desde_historial(self):
+    @patch("apps.stripe.services.stripe.PaymentIntent.create")
+    def test_pendiente_se_completa_desde_historial(self, crear_intento):
+        crear_intento.return_value = Mock(
+            id="pi_transaccion_pendiente",
+            status="succeeded",
+            latest_charge=Mock(receipt_url="https://stripe.test/receipt-pendiente"),
+        )
         pendiente = self.crear_transaccion("HIST-COMPLETAR", medio_pago=None)
 
         response = self.client.post(
@@ -222,6 +277,10 @@ class TransaccionLifecycleTest(TestCase):
         self.assertEqual(pendiente.estado, Transaccion.ESTADO_PAGADA)
         self.assertEqual(pendiente.medio_pago, self.medio_pago)
         self.assertIsNotNone(pendiente.fecha_finalizacion)
+        self.assertEqual(
+            pendiente.receipt_url,
+            "https://stripe.test/receipt-pendiente",
+        )
 
     def crear_transaccion(self, referencia, **kwargs):
         datos = {

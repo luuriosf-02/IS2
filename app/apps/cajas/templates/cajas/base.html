@@ -49,6 +49,7 @@
 @media(max-width:700px){.caja-shell{width:calc(100% - 28px);margin:24px auto 36px}.caja-shell .caja-panel{padding:20px 16px;border-radius:15px}.caja-shell form[method="post"]{padding:18px 14px}.caja-shell th,.caja-shell td{padding:12px}.caja-shell form[method="get"]{gap:12px}.caja-shell .acciones a{flex:1}.caja-shell .caja-intro{margin-bottom:16px}}
 </style>
 <div class="caja-shell">
+  {% include 'components/back-button.html' with href='/' text='Volver al inicio' %}
   <div class="caja-intro">
     <div class="caja-icon" aria-hidden="true"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="3" y="5" width="18" height="15" rx="3"/><path d="M7 5V3h10v2M3 11h18M8 15h8"/></svg></div>
     <div><div class="caja-eyebrow">Global Exchange · Operaciones</div><p class="caja-subtitle">Control de efectivo y arqueo por moneda</p></div>

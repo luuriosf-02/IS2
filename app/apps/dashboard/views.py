@@ -94,10 +94,15 @@ def get_conversion_context(request):
 
 def home(request):
     es_analista = False
+    es_cajero = False
     cliente_activo = None
 
     if request.user.is_authenticated:
         profile = getattr(request.user, 'profile', None)
+        es_cajero = (
+            bool(profile and profile.role == 'Cajero')
+            or request.user.groups.filter(name='Cajero').exists()
+        )
         cliente_activo = get_selected_client(request)
         if cliente_activo and not cliente_activo.activo:
             cliente_activo = None
@@ -113,10 +118,12 @@ def home(request):
     context = {
         'user': request.user,
         'es_analista': es_analista,
+        'es_cajero': es_cajero,
         'cliente_activo': cliente_activo,
         'medios_pago': MedioPago.objects.filter(
             cliente=cliente_activo,
             activo=True,
+            stripe_payment_method_id__isnull=False,
         ) if cliente_activo else MedioPago.objects.none(),
     }
     conversion_context = get_conversion_context(request)
