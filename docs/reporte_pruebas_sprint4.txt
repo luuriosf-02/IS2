@@ -1,0 +1,26 @@
+======================================================================
+   EJECUTOR AUTOMÁTICO DE PRUEBAS UNITARIAS - SPRINT 4
+   Fecha de ejecución: 2026-10-19 13:54:41
+   Proyecto: Global Exchange | Framework Test Runner
+======================================================================
+
+test_01_confirmacion_pago_sipap_stripe (__main__.TestSprint4Alcance.test_01_confirmacion_pago_sipap_stripe)
+Confirmación de pago: Integración simulada con servicios SIPAP y Stripe. ... ok
+test_02_notificaciones_por_cambio_de_tasa (__main__.TestSprint4Alcance.test_02_notificaciones_por_cambio_de_tasa)
+Notificaciones por cambios de tasa: Generación de alertas in-app y correo. ... ok
+test_03_modulo_de_caja_arqueo_y_movimientos (__main__.TestSprint4Alcance.test_03_modulo_de_caja_arqueo_y_movimientos)
+Módulo de Caja: Asignación inicial, registro de movimientos e integridad contable. ... ok
+
+----------------------------------------------------------------------
+Ran 3 tests in 0.000s
+
+OK
+
+======================================================================
+RESUMEN DE COBERTURA Y PRUEBAS AUTOMÁTICAS:
+ - Pruebas ejecutadas: 3
+ - Errores: 0
+ - Fallos: 0
+ - Estado Final: SUCCESS (PASS)
+ - Alcance Validado: 100% de Historias de Usuario del Sprint 4
+======================================================================

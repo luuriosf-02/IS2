@@ -49,3 +49,23 @@
 ### Consulta 3: Historial de transacciones de solo lectura
 - **Prompt:** ¿Cómo garantizar que el historial de transacciones sea exclusivamente de consulta?
 - **Respuesta IA:** Restringir la vista para responder únicamente a peticiones `GET` y no exponer endpoints de modificación (`POST`/`PUT`/`DELETE`) sobre transacciones finalizadas o registradas.
+
+# Registro de Interacción con IA (CHIA) - Sprint 4
+
+## Proyecto: Global Exchange
+**Sprint:** 4  
+**Fecha:** Octubre 2026  
+
+---
+
+### Consulta 1: Integración de pasarelas de pago (SIPAP y Stripe)
+- **Prompt:** ¿Cómo estructurar el servicio de validación de pagos para soportar tanto transferencias locales SIPAP (con comprobante digital) como cargos internacionales vía Stripe?
+- **Respuesta IA:** Se propuso un patrón de servicios separados (`PaymentProcessorService`) con métodos estáticos independientes para SIPAP (que conmuta el estado a `PENDING_VALIDATION`) y Stripe (que procesa cobros en línea de manera síncrona), asegurando el control de excepciones ante fallos de cobro.
+
+### Consulta 2: Notificaciones automáticas por variaciones de tasa
+- **Prompt:** ¿Cómo disparar alertas en tiempo real y correos automáticos cuando el Administrador actualiza las tasas de cambio de las divisas?
+- **Respuesta IA:** Se sugirió encapsular la lógica de actualización en un método de servicio que invoque simultáneamente al canal de WebSockets (`channels`) para la actualización in-app en pantalla y a la función de correo de Django (`send_mail`).
+
+### Consulta 3: Pruebas unitarias para el Módulo de Caja y Control de Integridad
+- **Prompt:** ¿Cómo escribir una prueba unitaria en Django que valide que los movimientos de caja no puedan ser eliminados físicamente (cumpliendo con RNF09)?
+- **Respuesta IA:** Se implementó una prueba utilizando `self.assertRaises(NotImplementedError)` para asegurar que el método `delete()` del modelo `CashMovement` arroje una excepción y bloquee cualquier intento de borrado físico.
