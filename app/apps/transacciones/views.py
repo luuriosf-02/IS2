@@ -1,10 +1,12 @@
+import logging
 import uuid
 from decimal import Decimal, InvalidOperation
 
+import stripe
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
-from django.shortcuts import get_object_or_404, redirect, render  
-from django.utils import timezone  
+from django.shortcuts import get_object_or_404, redirect, render
+from django.utils import timezone
 
 from apps.dashboard.views import (
     PYG_CODE,
@@ -13,12 +15,13 @@ from apps.dashboard.views import (
     get_currency,
 )
 from apps.divisas.models import Moneda
-from apps.payments.models import MedioPago
+from apps.payments.models import ClienteStripeCustomer, MedioPago
+from apps.stripe.services import PaymentNotSucceeded, charge_transaction
 from apps.users.client_selection import get_selected_client
 
 from .models import Transaccion
 
-
+logger = logging.getLogger(__name__)
 
 
 @login_required
@@ -58,26 +61,49 @@ def crear_transaccion(request):
             pk=request.POST.get("medio_pago"),
             cliente=cliente,
             activo=True,
+            stripe_payment_method_id__isnull=False,
         ).first()
         if medio_pago is None:
             messages.error(request, "Selecciona un medio de pago activo para continuar.")
             return redirect(destino)
 
-        actualizadas = Transaccion.objects.filter(
+        transaccion = Transaccion.objects.filter(
             pk=transaccion_id,
+            cliente=cliente,
+            estado=Transaccion.ESTADO_PENDIENTE,
+            medio_pago__isnull=True,
+        ).first()
+        if transaccion is None:
+            messages.error(
+                request,
+                "La operación ya no está pendiente. Vuelve a calcularla con la tasa actual.",
+            )
+            return redirect(destino)
+
+        try:
+            _, receipt_url = charge_transaction(transaccion, medio_pago)
+        except (
+            stripe.error.StripeError,
+            PaymentNotSucceeded,
+            ClienteStripeCustomer.DoesNotExist,
+        ) as exc:
+            logger.warning("No se pudo cobrar la transacción %s: %s", transaccion.pk, exc)
+            messages.error(request, "Stripe no pudo procesar el pago. Verifica la tarjeta e inténtalo de nuevo.")
+            return redirect(destino)
+
+        actualizadas = Transaccion.objects.filter(
+            pk=transaccion.pk,
             cliente=cliente,
             estado=Transaccion.ESTADO_PENDIENTE,
             medio_pago__isnull=True,
         ).update(
             medio_pago=medio_pago,
+            receipt_url=receipt_url or "",
             estado=Transaccion.ESTADO_PAGADA,
             fecha_finalizacion=timezone.now(),
         )
         if not actualizadas:
-            messages.error(
-                request,
-                "La operación ya no está pendiente. Vuelve a calcularla con la tasa actual.",
-            )
+            messages.error(request, "El pago se procesó, pero la operación cambió. Contacta con soporte.")
             return redirect(destino)
 
         messages.success(request, "La operación fue registrada y finalizada correctamente.")
@@ -92,6 +118,7 @@ def crear_transaccion(request):
             pk=request.POST.get("medio_pago"),
             cliente=cliente,
             activo=True,
+            stripe_payment_method_id__isnull=False,
         ).first()
         if medio_pago is None:
             messages.error(request, "Selecciona un medio de pago activo para efectuar la operación.")
@@ -126,29 +153,46 @@ def crear_transaccion(request):
         messages.error(request, "La moneda de la operación ya no está disponible.")
         return redirect(destino)
 
-    finalizada = accion == "efectuar"
-    Transaccion.objects.create(
+    transaccion = Transaccion.objects.create(
         cliente=cliente,
-        medio_pago=medio_pago,
+        medio_pago=None,
         monto=conversion["result"],
         moneda=moneda_pyg,
         cantidad_divisa=conversion["amount"],
         divisa=divisa,
         tipo_operacion=operation,
-        estado=(
-            Transaccion.ESTADO_PAGADA
-            if finalizada
-            else Transaccion.ESTADO_PENDIENTE
-        ),
+        estado=Transaccion.ESTADO_PENDIENTE,
         referencia=f"GE-{uuid.uuid4().hex[:12].upper()}",
         descripcion=(
             f"{operation.capitalize()} de {conversion['amount']} "
             f"{conversion['foreign_currency']}"
         ),
-        fecha_finalizacion=timezone.now() if finalizada else None,
     )
 
+    finalizada = accion == "efectuar"
     if finalizada:
+        try:
+            _, receipt_url = charge_transaction(transaccion, medio_pago)
+        except (
+            stripe.error.StripeError,
+            PaymentNotSucceeded,
+            ClienteStripeCustomer.DoesNotExist,
+        ) as exc:
+            logger.warning("No se pudo cobrar la transacción %s: %s", transaccion.pk, exc)
+            messages.error(request, "Stripe no pudo procesar el pago. Verifica la tarjeta e inténtalo de nuevo.")
+            return redirect(destino)
+
+        transaccion.medio_pago = medio_pago
+        transaccion.receipt_url = receipt_url or ""
+        transaccion.estado = Transaccion.ESTADO_PAGADA
+        transaccion.fecha_finalizacion = timezone.now()
+        transaccion.save(update_fields=[
+            "medio_pago",
+            "receipt_url",
+            "estado",
+            "fecha_finalizacion",
+            "fecha_actualizacion",
+        ])
         messages.success(request, "La operación fue registrada y finalizada correctamente.")
     else:
         messages.success(request, "La operación se guardó como pendiente de pago.")
@@ -180,6 +224,10 @@ def historial_transacciones(request):
             "cliente": cliente,
             "transacciones_finalizadas": finalizadas,
             "transacciones_sin_pago": sin_pago,
-            "medios_pago": MedioPago.objects.filter(cliente=cliente, activo=True),
+            "medios_pago": MedioPago.objects.filter(
+                cliente=cliente,
+                activo=True,
+                stripe_payment_method_id__isnull=False,
+            ),
         },
     )

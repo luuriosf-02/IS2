@@ -34,7 +34,12 @@
                         </td>
                         <td class="transaction-total">{{ transaccion.monto|floatformat:2 }}</td>
                     {% else %}
-                        <td><strong>{{ transaccion.referencia }}</strong></td>
+                        <td>
+                            <strong>{{ transaccion.referencia }}</strong>
+                            {% if transaccion.receipt_url %}
+                                <a href="{{ transaccion.receipt_url }}" target="_blank" rel="noopener noreferrer" class="transaction-receipt-link" aria-label="Ver comprobante de pago de {{ transaccion.referencia }}" title="Ver comprobante de pago">↗</a>
+                            {% endif %}
+                        </td>
                         <td>{{ transaccion.fecha_creacion|date:"d/m/Y H:i" }}</td>
                         <td>
                             {% if transaccion.fecha_finalizacion %}

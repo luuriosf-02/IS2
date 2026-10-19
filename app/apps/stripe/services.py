@@ -1,6 +1,48 @@
+from decimal import Decimal, ROUND_HALF_UP
+
 import stripe
+from django.conf import settings
 
 from apps.payments.models import ClienteStripeCustomer, MedioPago
+
+
+stripe.api_key = settings.STRIPE_SECRET_KEY
+
+
+class PaymentNotSucceeded(Exception):
+    pass
+
+
+def charge_transaction(transaction, payment_method):
+    stripe_customer = ClienteStripeCustomer.objects.get(
+        cliente=transaction.cliente,
+    )
+    intent = stripe.PaymentIntent.create(
+        amount=int(
+            Decimal(transaction.monto).quantize(
+                Decimal("1"), rounding=ROUND_HALF_UP
+            )
+        ),
+        currency="pyg",
+        customer=stripe_customer.stripe_customer_id,
+        payment_method=payment_method.stripe_payment_method_id,
+        confirm=True,
+        off_session=True,
+        description=transaction.descripcion or transaction.referencia,
+        metadata={"referencia": transaction.referencia},
+        expand=["latest_charge"],
+        idempotency_key=(
+            f"{transaction.identificador}:{payment_method.stripe_payment_method_id}"
+        ),
+    )
+    if intent.status != "succeeded":
+        raise PaymentNotSucceeded(intent.status)
+
+    charge = intent.latest_charge
+    if isinstance(charge, str):
+        charge = stripe.Charge.retrieve(charge)
+
+    return intent.id, getattr(charge, "receipt_url", None)
 
 
 def save_stripe_payment_method(client, payment_method):

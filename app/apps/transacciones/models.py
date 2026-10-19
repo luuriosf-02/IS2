@@ -96,6 +96,11 @@ class Transaccion(models.Model):
         unique=True,
         verbose_name="Referencia",
     )
+    receipt_url = models.URLField(
+        max_length=500,
+        blank=True,
+        verbose_name="Comprobante de pago",
+    )
     descripcion = models.CharField(
         max_length=255,
         blank=True,
