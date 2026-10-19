@@ -320,6 +320,26 @@
   color: var(--color-neutral-700);
 }
 
+.transaction-receipt-link {
+  display: inline-flex;
+  width: 1.35rem;
+  height: 1.35rem;
+  margin-left: 0.35rem;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  color: var(--color-neutral-700);
+  font-size: 0.85rem;
+  line-height: 1;
+  text-decoration: none;
+}
+
+.transaction-receipt-link:hover,
+.transaction-receipt-link:focus-visible {
+  background: var(--color-neutral-100);
+  color: var(--color-neutral-900);
+}
+
 .transaction-status {
   display: inline-block;
   padding: 0.25rem 0.55rem;

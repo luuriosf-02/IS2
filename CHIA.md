@@ -97,3 +97,28 @@ Las respuestas de la IA se utilizaron como propuestas técnicas y no como result
 ## 5. Conclusión
 
 La herramienta de IA sirvió como apoyo para acelerar el análisis, ofrecer ejemplos de implementación y diagnosticar errores. El equipo mantuvo la responsabilidad de decidir el alcance final, adaptar las propuestas a la arquitectura existente, ejecutar las pruebas y validar la integración del trabajo en el repositorio.
+
+
+## Notificaciones por cambios de tasas
+
+Consultas y aportes de la IA:
+
+Revisión de los modelos, vistas, señales y configuración de Django.
+
+Preparación del código para generar avisos al registrar o modificar cotizaciones, evitando duplicados cuando las tasas no cambian.
+
+Incorporación de una campanita con contador, listado desplegable y marcado de notificaciones como leídas.
+
+Orientación para corregir configuraciones duplicadas y problemas de inicio de Docker por falta del archivo .env y de la dependencia stripe.
+
+Asistencia con ramas, integración en develop y main, y comandos para actualizar la documentación Sphinx.
+
+Decisión final: Las notificaciones se mostrarán únicamente dentro de la aplicación, para los usuarios activos, sin envío de correos.
+
+Validación: La IA informó que nueve pruebas pasaron en un entorno aislado. La comprobación funcional y la ejecución de pruebas en el proyecto completo quedan a cargo del equipo.
+
+## CONTROL DE CAJAS
+
+Aportes de la IA: Generó una propuesta de código e instrucciones de instalación, ayudó a corregir problemas de configuración y pruebas, y propuso mejoras visuales. Además, preparó un breve discurso y ejemplos para demostrar el funcionamiento.
+
+Intervención propia: Se incorporaron los archivos al proyecto, se configuraron rutas y permisos, y se verificó el acceso a la interfaz mediante Docker.

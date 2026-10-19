@@ -26,6 +26,13 @@
                         </div>
                     {% endif %}
 
+                    {% if es_cajero %}
+                        <div class="dashboard-sidebar-group">
+                            <span class="dashboard-sidebar-label">Caja</span>
+                            <a href="{% url 'cajas:lista' %}" class="dashboard-sidebar-link">Mis cajas</a>
+                        </div>
+                    {% endif %}
+
                     {% if user.profile.role == 'Cliente' or user.profile.role == 'No registrado' %}
                         <div class="dashboard-sidebar-group">
                             <span class="dashboard-sidebar-label">Mi cuenta</span>
