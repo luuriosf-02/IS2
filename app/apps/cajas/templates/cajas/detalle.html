@@ -1,21 +1,39 @@
 {% extends 'cajas/base.html' %}
 {% block caja_content %}
 <h1>Caja #{{ caja.pk }}</h1>
-<p>Cajero: {{ caja.cajero }} · Apertura: {{ caja.apertura|date:'d/m/Y H:i' }}</p>
-<p>{{ caja.observacion_apertura }}</p>
+<p>Cajero: {{ caja.cajero }} · Asignación: {{ caja.apertura|date:'d/m/Y H:i' }}</p>
+<p>{{ caja.observacion_apertura }}</p><p>Abierta por: {{ caja.abierta_por|default:"Sin registro (caja anterior)" }}</p>
 <div class="acciones"><a href="{% url 'cajas:lista' %}">Mis cajas</a>
-{% if not caja.cierre %}<a href="{% url 'cajas:movimiento' caja.pk %}">Registrar movimiento</a><a href="{% url 'cajas:cierre' caja.pk %}">Cerrar caja</a>{% else %}<span>Cerrada: {{ caja.cierre|date:'d/m/Y H:i' }}</span>{% endif %}</div>
+{% if not caja.cierre and puede_operar_esta_caja and caja.habilitada %}<a href="{% url 'cajas:cambio' caja.pk %}">Realizar cambio</a><a href="{% url 'cajas:movimiento' caja.pk %}">Registrar movimiento</a><a href="{% url 'cajas:cierre' caja.pk %}">Cerrar caja</a>{% elif caja.cierre %}<span>Cerrada: {{ caja.cierre|date:'d/m/Y H:i' }}</span>{% endif %}</div>
+<p><strong>Estado: {{ caja.estado }}</strong></p>
+{% if caja.aceptada_en %}<p>Aceptada por {{ caja.aceptada_por }} el {{ caja.aceptada_en|date:'d/m/Y H:i' }}.</p>{% elif caja.apertura_anterior %}<p>Esta caja ya existía antes de incorporar la aceptación. Se conserva su operación previa; no tiene un conteo inicial registrado.</p>{% elif not caja.cierre %}
+<p>Los fondos están asignados. Falta que el cajero cuente el efectivo y acepte la caja.</p>
+{% if puede_operar_esta_caja %}<div class="acciones"><a href="{% url 'cajas:aceptacion' caja.pk %}">Contar y aceptar caja</a></div>{% endif %}
+{% endif %}
+<h2>Verificación inicial del efectivo</h2>
+{% for conteo in conteos_iniciales %}
+<p>Conteo del {{ conteo.fecha|date:'d/m/Y H:i' }} · {% if conteo.coincide %}Coincide: caja aceptada{% else %}Con diferencias: no aceptada{% endif %}</p>
+<p>{{ conteo.observacion }}</p>
+<div class="tabla"><table><thead><tr><th>Moneda</th><th>Asignado por administrador</th><th>Contado por cajero</th><th>Diferencia</th></tr></thead><tbody>
+{% for dato in conteo.detalles.all %}<tr><td>{{ dato.moneda.codigo }}</td><td>{{ dato.asignado }}</td><td>{{ dato.contado }}</td><td>{{ dato.diferencia }}</td></tr>{% endfor %}
+</tbody></table></div>
+{% empty %}<p>Todavía no hay conteos iniciales registrados.</p>{% endfor %}
 <h2>Saldos por moneda</h2>
 <div class="tabla"><table><thead><tr><th>Moneda</th><th>Inicial</th><th>Saldo calculado</th><th>Contado al cierre</th><th>Diferencia</th></tr></thead><tbody>
 {% for saldo in saldos %}<tr><td>{{ saldo.moneda.codigo }}</td><td>{{ saldo.inicial }}</td><td>{{ saldo.actual }}</td><td>{{ saldo.contado|default_if_none:'—' }}</td><td>{{ saldo.diferencia|default_if_none:'—' }}</td></tr>{% endfor %}
 </tbody></table></div>
 {% if caja.cierre %}<p>Observación del cierre: {{ caja.observacion_cierre|default:'Sin observación' }}</p>{% endif %}
+<h2>Cambios de efectivo</h2>
+<p>Los cambios generan dos movimientos relacionados. Anular uno revierte el cambio completo.</p>
+<div class="tabla"><table><thead><tr><th>Cambio</th><th>Recibido del cliente</th><th>Entregado al cliente</th><th>Tasa PYG / divisa</th><th>Estado</th></tr></thead><tbody>
+{% for cambio in cambios %}<tr><td>#{{ cambio.pk }}</td><td>{{ cambio.monto_recibido }} {{ cambio.moneda_recibida.codigo }}</td><td>{{ cambio.monto_entregado }} {{ cambio.moneda_entregada.codigo }}</td><td>{{ cambio.tasa }} ({{ cambio.get_tipo_tasa_display }})</td><td>{% if cambio.anulado_en %}Anulado{% else %}Vigente{% endif %}</td></tr>{% empty %}<tr><td colspan="5">Sin cambios de efectivo.</td></tr>{% endfor %}
+</tbody></table></div>
 <h2>Movimientos</h2>
 <form method="get"><label>Moneda <select name="moneda"><option value="">Todas</option>{% for saldo in saldos %}<option value="{{ saldo.moneda_id }}" {% if filtro_moneda == saldo.moneda_id|stringformat:'s' %}selected{% endif %}>{{ saldo.moneda.codigo }}</option>{% endfor %}</select></label>
 <label>Tipo <select name="tipo"><option value="">Todos</option><option value="ingreso" {% if filtro_tipo == 'ingreso' %}selected{% endif %}>Ingreso</option><option value="egreso" {% if filtro_tipo == 'egreso' %}selected{% endif %}>Egreso</option></select></label>
 <label>Estado <select name="estado"><option value="">Todos</option><option value="vigente" {% if filtro_estado == 'vigente' %}selected{% endif %}>Vigente</option><option value="anulado" {% if filtro_estado == 'anulado' %}selected{% endif %}>Anulado</option></select></label><button>Filtrar</button></form>
 <div class="tabla"><table><thead><tr><th>Fecha</th><th>Moneda</th><th>Tipo</th><th>Monto</th><th>Concepto / referencia</th><th>Estado / acción</th></tr></thead><tbody>
-{% for mov in pagina %}<tr><td>{{ mov.fecha|date:'d/m/Y H:i' }}</td><td>{{ mov.moneda.codigo }}</td><td>{{ mov.get_tipo_display }}</td><td>{{ mov.monto }}</td><td>{{ mov.concepto }}<br>{{ mov.referencia }}</td><td>{% if mov.anulado_en %}Anulado: {{ mov.motivo_anulacion }}{% elif not caja.cierre %}<a href="{% url 'cajas:anulacion' mov.pk %}">Anular</a>{% else %}Vigente{% endif %}</td></tr>{% empty %}<tr><td colspan="6">No hay movimientos para estos filtros.</td></tr>{% endfor %}
+{% for mov in pagina %}<tr><td>{{ mov.fecha|date:'d/m/Y H:i' }}</td><td>{{ mov.moneda.codigo }}</td><td>{{ mov.get_tipo_display }}</td><td>{{ mov.monto }}</td><td>{{ mov.concepto }}<br>{{ mov.referencia }}</td><td>{% if mov.anulado_en %}Anulado: {{ mov.motivo_anulacion }}{% elif not caja.cierre and puede_operar_esta_caja and caja.habilitada %}<a href="{% url 'cajas:anulacion' mov.pk %}">{% if mov.cambio_id %}Anular cambio completo{% else %}Anular{% endif %}</a>{% else %}Vigente{% endif %}</td></tr>{% empty %}<tr><td colspan="6">No hay movimientos para estos filtros.</td></tr>{% endfor %}
 </tbody></table></div>
 {% include 'cajas/paginacion.html' %}
 {% endblock %}

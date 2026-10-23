@@ -17,8 +17,11 @@
             </select>
         </form>
         {% endif %}
-        {% if puede_operar_caja %}
-        <a href="{% url 'cajas:lista' %}" class="navbar-action-btn">Mi caja</a>
+
+        {% if puede_operar_caja and not puede_administrar_cajas %}
+            <a href="{% url 'cajas:lista' %}" class="navbar-action-btn">
+                Mi caja
+            </a>
         {% endif %}
 
         {% include "divisas/campanita.html" %}

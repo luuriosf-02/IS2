@@ -12,3 +12,4 @@ def active_client(request):
         "available_clients": get_available_clients(request.user),
         "selected_client": get_selected_client(request),
     }
+

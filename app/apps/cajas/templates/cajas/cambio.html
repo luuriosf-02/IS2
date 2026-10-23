@@ -1,0 +1,16 @@
+{% extends 'cajas/base.html' %}
+{% block caja_content %}
+<h1>Realizar cambio · Caja #{{ caja.pk }}</h1>
+<p>Ingresá el efectivo que entrega el cliente. El sistema calcula cuánto debés entregarle usando la tasa vigente. Disponible entre PYG y una divisa extranjera.</p>
+{% if cotizacion %}
+<h2>Confirmar operación</h2>
+<p>Entran a caja: <strong>{{ cotizacion.monto }} {{ cotizacion.recibida.codigo }}</strong></p>
+<p>Salen de caja: <strong>{{ cotizacion.resultado }} {{ cotizacion.entregada.codigo }}</strong></p>
+<p>Tasa de {{ cotizacion.tipo }}: {{ cotizacion.tasa }} PYG por unidad de divisa. Redondeo a dos decimales.</p>
+<form method="post">{% csrf_token %}{{ confirmacion.as_p }}<button name="accion" value="confirmar">Confirmar cambio</button></form>
+<p><a href="{% url 'cajas:cambio' caja.pk %}">Volver a calcular</a></p>
+{% else %}
+<form method="post">{% csrf_token %}{{ form.as_p }}<button name="accion" value="calcular">Calcular cambio</button></form>
+{% endif %}
+<p><a href="{% url 'cajas:detalle' caja.pk %}">Volver a la caja</a></p>
+{% endblock %}
