@@ -1,0 +1,8 @@
+{% extends 'cajas/base.html' %}
+{% block caja_content %}
+<h1>Contar y aceptar caja #{{ caja.pk }}</h1>
+<p>Contá físicamente el efectivo recibido e ingresá el total de cada moneda. La caja se habilita únicamente si todos los importes coinciden con los asignados por el administrador. Los campos empiezan en cero para que cargues tu propio conteo.</p>
+<p>Si hay diferencias, se registrarán para revisión y la caja seguirá pendiente. Coordiná con el administrador y volvé a contar el efectivo real; no ajustes el conteo solo para hacerlo coincidir.</p>
+<form method="post">{% csrf_token %}{{ form.as_p }}<button type="submit">Verificar conteo y aceptar si coincide</button></form>
+<p><a href="{% url 'cajas:detalle' caja.pk %}">Volver a la caja</a></p>
+{% endblock %}

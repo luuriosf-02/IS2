@@ -26,6 +26,14 @@
                         </div>
                     {% endif %}
 
+                    {% if puede_administrar_cajas %}
+                        <div class="dashboard-sidebar-group">
+                            <span class="dashboard-sidebar-label">Administración de cajas</span>
+                            <a href="{% url 'cajas:apertura' %}" class="dashboard-sidebar-link">Asignar caja a cajero</a>
+                            <a href="{% url 'cajas:lista' %}" class="dashboard-sidebar-link">Consultar cajas y conteos</a>
+                        </div>
+                    {% endif %}
+
                     {% if es_cajero %}
                         <div class="dashboard-sidebar-group">
                             <span class="dashboard-sidebar-label">Caja</span>
@@ -65,6 +73,19 @@
                     Bienvenido a nuestra plataforma financiera
                 </h1>
                 {% include 'components/paragraph.html' with text="Inicia sesión para acceder a servicios de cambio de divisas seguros y preferenciales." %}
+            </div>
+        {% endif %}
+
+        {% if user.is_authenticated and puede_administrar_cajas %}
+            <div class="card" style="margin-bottom: 2rem; border-top: 4px solid #7446e8;">
+                <h2 class="card-title">Administración de cajas</h2>
+                <div class="card-body">
+                    <p class="text-body">Asigná una caja y los fondos iniciales a cada cajero. Consultá sus conteos, diferencias y aceptación.</p>
+                    <div style="display: flex; flex-wrap: wrap; gap: 1rem; margin-top: 1rem;">
+                        <a href="{% url 'cajas:apertura' %}" class="btn btn-primary">Asignar caja a cajero</a>
+                        <a href="{% url 'cajas:lista' %}" class="btn" style="background: #f3edff; color: #6540c0; border: 1px solid #ded4fc;">Consultar cajas y conteos</a>
+                    </div>
+                </div>
             </div>
         {% endif %}
 
