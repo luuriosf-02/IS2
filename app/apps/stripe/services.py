@@ -1,4 +1,5 @@
 from decimal import Decimal, ROUND_HALF_UP
+import logging
 
 import stripe
 from django.conf import settings
@@ -7,10 +8,24 @@ from apps.payments.models import ClienteStripeCustomer, MedioPago
 
 
 stripe.api_key = settings.STRIPE_SECRET_KEY
+logger = logging.getLogger(__name__)
 
 
 class PaymentNotSucceeded(Exception):
     pass
+
+
+def issue_invoice_for_paid_transaction(transaction):
+    from apps.facturacion.services import emitir_factura
+
+    try:
+        return emitir_factura(transaction)
+    except Exception:
+        logger.exception(
+            "No se pudo emitir la factura de la transacción %s",
+            transaction.pk,
+        )
+        return None
 
 
 def charge_transaction(transaction, payment_method):

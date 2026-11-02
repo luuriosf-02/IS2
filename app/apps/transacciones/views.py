@@ -16,12 +16,32 @@ from apps.dashboard.views import (
 )
 from apps.divisas.models import Moneda
 from apps.payments.models import ClienteStripeCustomer, MedioPago
-from apps.stripe.services import PaymentNotSucceeded, charge_transaction
+from apps.stripe.services import (
+    PaymentNotSucceeded,
+    charge_transaction,
+    issue_invoice_for_paid_transaction,
+)
 from apps.users.client_selection import get_selected_client
 
 from .models import Transaccion
 
 logger = logging.getLogger(__name__)
+
+
+def _notificar_factura(request, transaccion):
+    factura = issue_invoice_for_paid_transaction(transaccion)
+    if factura is not None and factura.estado == "emitida":
+        messages.info(
+            request,
+            f"Factura electrónica solicitada con CDC {factura.cdc}; "
+            "queda pendiente de aprobación por SIFEN.",
+        )
+    else:
+        messages.warning(
+            request,
+            "El pago se confirmó, pero la factura electrónica no pudo emitirse. "
+            "Contacta con soporte para revisar el registro de facturación.",
+        )
 
 
 @login_required
@@ -106,6 +126,8 @@ def crear_transaccion(request):
             messages.error(request, "El pago se procesó, pero la operación cambió. Contacta con soporte.")
             return redirect(destino)
 
+        transaccion.refresh_from_db()
+        _notificar_factura(request, transaccion)
         messages.success(request, "La operación fue registrada y finalizada correctamente.")
         return redirect(destino)
 
@@ -193,6 +215,7 @@ def crear_transaccion(request):
             "fecha_finalizacion",
             "fecha_actualizacion",
         ])
+        _notificar_factura(request, transaccion)
         messages.success(request, "La operación fue registrada y finalizada correctamente.")
     else:
         messages.success(request, "La operación se guardó como pendiente de pago.")
@@ -216,7 +239,7 @@ def historial_transacciones(request):
     )
     finalizadas = transacciones.exclude(
         estado__in=(Transaccion.ESTADO_PENDIENTE, Transaccion.ESTADO_CANCELADA)
-    )
+    ).prefetch_related("documentos_electronicos")
     return render(
         request,
         "transacciones/historial.html",
