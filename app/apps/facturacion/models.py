@@ -31,6 +31,8 @@ class FacturaElectronica(models.Model):
         default=TIPO_FACTURA,
     )
     numero_documento = models.CharField(max_length=7, unique=True)
+    motivo = models.TextField(blank=True)
+    stripe_refund_id = models.CharField(max_length=255, blank=True)
     cdc = models.CharField(max_length=44, blank=True)
     estado = models.CharField(
         max_length=10,

@@ -52,12 +52,40 @@ def charge_transaction(transaction, payment_method):
     )
     if intent.status != "succeeded":
         raise PaymentNotSucceeded(intent.status)
+    transaction.stripe_payment_intent_id = intent.id
 
     charge = intent.latest_charge
     if isinstance(charge, str):
         charge = stripe.Charge.retrieve(charge)
 
     return intent.id, getattr(charge, "receipt_url", None)
+
+
+def refund_transaction(transaction, reason):
+    if transaction.stripe_refund_id:
+        if transaction.stripe_refund_reason != reason:
+            raise ValueError(
+                "El motivo no se puede cambiar después de iniciar el reembolso."
+            )
+        return stripe.Refund.retrieve(transaction.stripe_refund_id)
+    if not transaction.stripe_payment_intent_id:
+        raise ValueError(
+            "La transacción no tiene un PaymentIntent de Stripe registrado; "
+            "no es posible reembolsarla automáticamente."
+        )
+    refund = stripe.Refund.create(
+        payment_intent=transaction.stripe_payment_intent_id,
+        reason="requested_by_customer",
+        metadata={
+            "transaccion": transaction.referencia,
+            "motivo_nota_credito": reason[:500],
+        },
+        idempotency_key=f"refund-credit-note:{transaction.identificador}",
+    )
+    transaction.stripe_refund_id = refund.id
+    transaction.stripe_refund_reason = reason[:500]
+    transaction.save(update_fields=["stripe_refund_id", "stripe_refund_reason"])
+    return refund
 
 
 def save_stripe_payment_method(client, payment_method):

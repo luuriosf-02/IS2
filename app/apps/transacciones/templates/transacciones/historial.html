@@ -40,7 +40,7 @@
         {% if transacciones_finalizadas %}
             <section class="transaction-history-section transaction-history-section--completed" aria-labelledby="finalizadas-title">
                 <h2 id="finalizadas-title">Operaciones finalizadas</h2>
-                {% include "transacciones/_tabla.html" with transacciones=transacciones_finalizadas mostrar_pago=False only %}
+                {% include "transacciones/_tabla.html" with transacciones=transacciones_finalizadas mostrar_pago=False nota_credito_disponible_ids=nota_credito_disponible_ids notas_credito_existentes=notas_credito_existentes %}
             </section>
         {% else %}
             <section class="transaction-history-section" aria-labelledby="finalizadas-title">

@@ -1619,3 +1619,40 @@
   color: var(--color-neutral-900);
   cursor: pointer;
 }
+
+.credit-note-request {
+  margin-top: 0.5rem;
+}
+
+.credit-note-request summary {
+  display: inline-flex;
+  cursor: pointer;
+  list-style: none;
+}
+
+.credit-note-request summary::-webkit-details-marker {
+  display: none;
+}
+
+.credit-note-request form {
+  display: grid;
+  gap: 0.5rem;
+  width: min(20rem, 75vw);
+  margin-top: 0.5rem;
+  padding: 0.75rem;
+  border: 1px solid var(--color-border, #cbd5e1);
+  border-radius: var(--radius-md);
+  background: #fff;
+}
+
+.credit-note-request textarea {
+  width: 100%;
+  resize: vertical;
+}
+
+.credit-note-status {
+  display: block;
+  margin-top: 0.4rem;
+  font-size: var(--font-size-sm);
+}
+

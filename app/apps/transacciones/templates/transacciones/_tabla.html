@@ -112,9 +112,25 @@
                                             <span>XML</span>
                                         </a>
                                     {% endif %}
+                                    {% if documento.tipo_documento == 'nota_credito' %}
+                                        <span class="credit-note-status">Nota {{ documento.numero_documento }} · {{ documento.get_estado_display }}</span>
+                                    {% endif %}
                                 {% empty %}
                                     <span class="text-muted">Sin factura</span>
                                 {% endfor %}
+                                {% if transaccion.pk in nota_credito_disponible_ids %}
+                                    <details class="credit-note-request">
+                                        <summary class="btn btn-outline btn-sm">Reembolso y nota de crédito</summary>
+                                        <form method="post" action="{% url 'facturacion:solicitar_nota_credito' transaccion.pk %}">
+                                            {% csrf_token %}
+                                            <label for="motivo-nota-{{ transaccion.pk }}">Motivo del reembolso</label>
+                                            <textarea id="motivo-nota-{{ transaccion.pk }}" name="motivo" minlength="5" maxlength="500" required rows="3" placeholder="Explica el motivo del reembolso" {% if transaccion.stripe_refund_id %}readonly{% endif %}>{{ transaccion.stripe_refund_reason }}</textarea>
+                                            <button type="submit" class="btn btn-danger btn-sm">Reembolsar y emitir nota</button>
+                                        </form>
+                                    </details>
+                                {% elif transaccion.pk in notas_credito_existentes %}
+                                    <span class="credit-note-status">Nota de crédito ya solicitada</span>
+                                {% endif %}
                             </div>
                         </td>
                     {% endif %}

@@ -107,6 +107,7 @@ def build_exchange_invoice(
     invoice_number,
     tipo_documento="factura",
     cdc_referenciado=None,
+    motivo_nota="",
 ):
     """Build the SIFEN summarized DE for a settled currency exchange."""
     if transaction.estado != "pagada" or transaction.medio_pago_id is None:
@@ -125,6 +126,8 @@ def build_exchange_invoice(
         raise FacturaSeguraError("El tipo de documento fiscal no es válido.") from error
     if tipo_documento == "nota_credito" and not cdc_referenciado:
         raise FacturaSeguraError("La nota de crédito requiere el CDC de la factura original.")
+    if tipo_documento == "nota_credito" and not motivo_nota.strip():
+        raise FacturaSeguraError("La nota de crédito requiere un motivo.")
 
     client = transaction.cliente
     email = _recipient_email(client)
@@ -244,6 +247,7 @@ def build_exchange_invoice(
     }
     if tipo_documento == "nota_credito":
         document["iMotEmi"] = _required_setting("FS_I_MOT_EMI_NOTA")
+        document["dInfAdic"] = motivo_nota.strip()[:500]
         document["gCamDEAsoc"] = [
             {
                 "iTipDocAso": "1",
@@ -309,7 +313,12 @@ def _reserve_document_number(tipo_documento):
     )
 
 
-def _validate_emission_configuration(transaction, tipo_documento, cdc_referenciado):
+def _validate_emission_configuration(
+    transaction,
+    tipo_documento,
+    cdc_referenciado,
+    motivo_nota="",
+):
     settings_name = {
         "factura": "DS_I_TI_DE_FACTURA",
         "nota_credito": "DS_I_TI_DE_NOTA",
@@ -371,6 +380,8 @@ def _validate_emission_configuration(transaction, tipo_documento, cdc_referencia
             raise FacturaSeguraError(
                 "La nota de crédito requiere el CDC de la factura original."
             )
+        if not motivo_nota.strip():
+            raise FacturaSeguraError("La nota de crédito requiere un motivo.")
     _required_setting("FS_I_FOR_PRO_PA")
     payment_method = transaction.medio_pago
     _required_setting(f"FS_I_DEN_TARJ_{payment_method.marca}")
@@ -380,14 +391,23 @@ def _validate_emission_configuration(transaction, tipo_documento, cdc_referencia
         )
 
 
-def emitir_documento(transaccion, tipo_documento="factura", cdc_referenciado=None):
+def emitir_documento(
+    transaccion,
+    tipo_documento="factura",
+    cdc_referenciado=None,
+    motivo_nota="",
+    stripe_refund_id="",
+):
     """Issue one electronic document per transaction and document type."""
     from .models import FacturaElectronica
 
     if tipo_documento not in DOCUMENT_NUMBER_RANGES:
         raise FacturaSeguraError("El tipo de documento fiscal no es válido.")
-    if tipo_documento == "nota_credito" and not cdc_referenciado:
-        raise FacturaSeguraError("La nota de crédito requiere el CDC de la factura original.")
+    if tipo_documento == "nota_credito":
+        if not cdc_referenciado:
+            raise FacturaSeguraError("La nota de crédito requiere el CDC de la factura original.")
+        if not motivo_nota.strip():
+            raise FacturaSeguraError("La nota de crédito requiere un motivo.")
 
     with db_transaction.atomic():
         locked_transaction = (
@@ -399,6 +419,7 @@ def emitir_documento(transaccion, tipo_documento="factura", cdc_referenciado=Non
             locked_transaction,
             tipo_documento,
             cdc_referenciado,
+            motivo_nota,
         )
         factura = FacturaElectronica.objects.filter(
             transaccion=locked_transaction,
@@ -410,6 +431,8 @@ def emitir_documento(transaccion, tipo_documento="factura", cdc_referenciado=Non
         factura = FacturaElectronica.objects.create(
             transaccion=locked_transaction,
             tipo_documento=tipo_documento,
+            motivo=motivo_nota.strip()[:500],
+            stripe_refund_id=stripe_refund_id,
             numero_documento=_reserve_document_number(tipo_documento),
             estado=FacturaElectronica.ESTADO_EMITIENDO,
         )
@@ -420,6 +443,7 @@ def emitir_documento(transaccion, tipo_documento="factura", cdc_referenciado=Non
             factura.numero_documento,
             tipo_documento=tipo_documento,
             cdc_referenciado=cdc_referenciado,
+            motivo_nota=motivo_nota,
         )
         factura.documento = documento
         factura.save(update_fields=["documento", "fecha_actualizacion"])
@@ -468,11 +492,13 @@ def emitir_factura(transaccion):
     return emitir_documento(transaccion, tipo_documento="factura")
 
 
-def emitir_nota_credito(transaccion, cdc_referenciado):
+def emitir_nota_credito(transaccion, cdc_referenciado, motivo, stripe_refund_id):
     return emitir_documento(
         transaccion,
         tipo_documento="nota_credito",
         cdc_referenciado=cdc_referenciado,
+        motivo_nota=motivo,
+        stripe_refund_id=stripe_refund_id,
     )
 
 

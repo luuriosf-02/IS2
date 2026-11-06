@@ -6,10 +6,12 @@ from django.db import transaction
 from django.contrib.auth import get_user_model
 from django.test import SimpleTestCase, TestCase, override_settings
 from django.urls import reverse
+from django.utils import timezone
 
 from apps.clientes.models import Cliente
 from apps.divisas.models import Moneda
 from apps.payments.models import MedioPago
+from apps.stripe.services import refund_transaction
 from apps.transacciones.models import Transaccion
 
 from . import services
@@ -414,8 +416,10 @@ class ExchangeInvoicePayloadTests(SimpleTestCase):
             26,
             tipo_documento="nota_credito",
             cdc_referenciado="0" * 44,
+            motivo_nota="Reembolso solicitado por el cliente",
         )
         self.assertEqual(document["iTiDE"], "5")
+        self.assertEqual(document["dInfAdic"], "Reembolso solicitado por el cliente")
         self.assertEqual(document["gCamDEAsoc"][0]["dCdCDERef"], "0" * 44)
 
 
@@ -669,3 +673,228 @@ class ElectronicDocumentDownloadTests(TestCase):
         self.assertContains(response, "Transacción GE-DOWNLOAD-TEST")
         self.assertContains(response, "fue cancelada o inutilizada")
         download.assert_not_called()
+
+
+class CreditNoteRefundRequestTests(TestCase):
+    def setUp(self):
+        self.user = get_user_model().objects.create_user(
+            username="credit-note-refund-test",
+            password="test-password",
+        )
+        self.client_record = Cliente.objects.create(
+            nombre_razon_social="Cliente de reembolso",
+            documento="12345678",
+            activo=True,
+            creado_por=self.user,
+        )
+        self.payment_method = MedioPago.objects.create(
+            cliente=self.client_record,
+            tipo="CREDITO",
+            alias="Tarjeta de prueba",
+            titular="Cliente",
+            marca="VISA",
+            ultimos_cuatro="4242",
+            mes_vencimiento=12,
+            anio_vencimiento=2099,
+        )
+        self.pyg = Moneda.objects.get(codigo="PYG")
+        self.usd = Moneda.objects.create(
+            codigo="USD",
+            nombre="Dólar estadounidense",
+            simbolo="$",
+        )
+        self.transaction = Transaccion.objects.create(
+            cliente=self.client_record,
+            medio_pago=self.payment_method,
+            monto="71000.00",
+            cantidad_divisa="10.00",
+            divisa=self.usd,
+            tipo_operacion="compra",
+            moneda=self.pyg,
+            estado=Transaccion.ESTADO_PAGADA,
+            referencia="GE-REFUND-TEST",
+            fecha_finalizacion=timezone.now(),
+            stripe_payment_intent_id="pi_refund_test",
+        )
+        self.invoice = FacturaElectronica.objects.create(
+            transaccion=self.transaction,
+            tipo_documento=FacturaElectronica.TIPO_FACTURA,
+            numero_documento="0000285",
+            cdc="2" * 44,
+            estado=FacturaElectronica.ESTADO_EMITIDA,
+        )
+        self.client.force_login(self.user)
+        session = self.client.session
+        session["active_client_id"] = self.client_record.pk
+        session["oidc_id_token_expiration"] = time.time() + 3600
+        session.save()
+
+    @override_settings(FS_D_RUC_EM="80002247")
+    @patch("apps.facturacion.views.services.emitir_nota_credito")
+    @patch("apps.facturacion.views.refund_transaction")
+    @patch("apps.facturacion.views.services.get_estado_sifen")
+    def test_refund_and_note_are_requested_with_reason(
+        self,
+        get_state,
+        refund,
+        issue_credit_note,
+    ):
+        get_state.return_value = {
+            "code": 0,
+            "results": [{"estado_sifen": "Aprobado", "estado_can": ""}],
+        }
+        refund.return_value = SimpleNamespace(status="succeeded", id="re_test_1")
+        issue_credit_note.return_value = SimpleNamespace(
+            numero_documento="0000097",
+            cdc="3" * 44,
+        )
+
+        response = self.client.post(
+            reverse(
+                "facturacion:solicitar_nota_credito",
+                args=(self.transaction.pk,),
+            ),
+            {"motivo": "Cliente desistió de la operación"},
+        )
+
+        self.assertRedirects(response, reverse("transacciones:historial"))
+        get_state.assert_called_once_with("2" * 44, "80002247")
+        refund.assert_called_once_with(
+            self.transaction,
+            "Cliente desistió de la operación",
+        )
+        issue_credit_note.assert_called_once_with(
+            self.transaction,
+            "2" * 44,
+            "Cliente desistió de la operación",
+            "re_test_1",
+        )
+
+    @override_settings(FS_D_RUC_EM="80002247")
+    @patch("apps.facturacion.views.refund_transaction")
+    @patch("apps.facturacion.views.services.get_estado_sifen")
+    def test_rejects_refund_after_three_days_before_stripe_call(
+        self,
+        get_state,
+        refund,
+    ):
+        self.transaction.fecha_finalizacion = timezone.now() - timezone.timedelta(days=3, seconds=1)
+        self.transaction.save(update_fields=["fecha_finalizacion"])
+
+        response = self.client.post(
+            reverse(
+                "facturacion:solicitar_nota_credito",
+                args=(self.transaction.pk,),
+            ),
+            {"motivo": "Cliente desistió de la operación"},
+        )
+
+        self.assertRedirects(response, reverse("transacciones:historial"))
+        get_state.assert_not_called()
+        refund.assert_not_called()
+
+    @override_settings(FS_D_RUC_EM="80002247")
+    @patch("apps.facturacion.views.refund_transaction")
+    @patch("apps.facturacion.views.services.get_estado_sifen")
+    def test_unapproved_original_invoice_is_not_refunded(self, get_state, refund):
+        get_state.return_value = {
+            "code": 0,
+            "results": [{"estado_sifen": "ENVIADO_A_SIFEN", "estado_can": ""}],
+        }
+
+        response = self.client.post(
+            reverse(
+                "facturacion:solicitar_nota_credito",
+                args=(self.transaction.pk,),
+            ),
+            {"motivo": "Cliente desistió de la operación"},
+        )
+
+        self.assertRedirects(response, reverse("transacciones:historial"))
+        refund.assert_not_called()
+
+    @patch("apps.facturacion.views.refund_transaction")
+    def test_requires_a_reason(self, refund):
+        response = self.client.post(
+            reverse(
+                "facturacion:solicitar_nota_credito",
+                args=(self.transaction.pk,),
+            ),
+            {"motivo": "  "},
+        )
+
+        self.assertRedirects(response, reverse("transacciones:historial"))
+        refund.assert_not_called()
+
+    def test_history_shows_reason_form_for_eligible_payment(self):
+        response = self.client.get(reverse("transacciones:historial"))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Reembolso y nota de crédito")
+        self.assertContains(response, f'action="{reverse("facturacion:solicitar_nota_credito", args=(self.transaction.pk,))}"')
+        self.assertContains(response, 'name="motivo"')
+        self.assertRegex(
+            response.content.decode(),
+            r'<form[^>]*action="[^"]*nota-credito/[^"]*"[^>]*>\s*<input[^>]*name="csrfmiddlewaretoken"[^>]*value="[^" ]+"',
+        )
+
+    def test_history_hides_reason_form_after_three_day_window(self):
+        self.transaction.fecha_finalizacion = timezone.now() - timezone.timedelta(days=3, seconds=1)
+        self.transaction.save(update_fields=["fecha_finalizacion"])
+
+        response = self.client.get(reverse("transacciones:historial"))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertNotContains(response, "Reembolso y nota de crédito")
+
+    def test_history_explains_missing_stripe_payment_intent(self):
+        self.transaction.stripe_payment_intent_id = ""
+        self.transaction.save(update_fields=["stripe_payment_intent_id"])
+
+        response = self.client.get(reverse("transacciones:historial"))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertNotContains(response, "Reembolso y nota de crédito")
+
+    def test_history_explains_when_original_invoice_is_missing(self):
+        self.invoice.delete()
+
+        response = self.client.get(reverse("transacciones:historial"))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertNotContains(response, "Reembolso y nota de crédito")
+
+    @patch("apps.stripe.services.stripe.Refund.retrieve")
+    @patch("apps.stripe.services.stripe.Refund.create")
+    def test_stripe_refund_is_idempotent_and_reason_cannot_change(
+        self,
+        create_refund,
+        retrieve_refund,
+    ):
+        create_refund.return_value = SimpleNamespace(
+            id="re_idempotent_test",
+            status="pending",
+        )
+
+        first_result = refund_transaction(self.transaction, "Motivo original")
+
+        self.assertEqual(first_result.id, "re_idempotent_test")
+        self.transaction.refresh_from_db()
+        self.assertEqual(self.transaction.stripe_refund_id, "re_idempotent_test")
+        self.assertEqual(self.transaction.stripe_refund_reason, "Motivo original")
+        self.assertEqual(
+            create_refund.call_args.kwargs["idempotency_key"],
+            f"refund-credit-note:{self.transaction.identificador}",
+        )
+
+        retrieve_refund.return_value = SimpleNamespace(
+            id="re_idempotent_test",
+            status="succeeded",
+        )
+        second_result = refund_transaction(self.transaction, "Motivo original")
+        self.assertEqual(second_result.status, "succeeded")
+        retrieve_refund.assert_called_once_with("re_idempotent_test")
+        create_refund.assert_called_once()
+
+        with self.assertRaisesRegex(ValueError, "no se puede cambiar"):
+            refund_transaction(self.transaction, "Otro motivo")

@@ -1,5 +1,6 @@
 import logging
 import uuid
+from datetime import timedelta
 from decimal import Decimal, InvalidOperation
 
 import stripe
@@ -119,6 +120,7 @@ def crear_transaccion(request):
         ).update(
             medio_pago=medio_pago,
             receipt_url=receipt_url or "",
+            stripe_payment_intent_id=transaccion.stripe_payment_intent_id,
             estado=Transaccion.ESTADO_PAGADA,
             fecha_finalizacion=timezone.now(),
         )
@@ -211,6 +213,7 @@ def crear_transaccion(request):
         transaccion.save(update_fields=[
             "medio_pago",
             "receipt_url",
+            "stripe_payment_intent_id",
             "estado",
             "fecha_finalizacion",
             "fecha_actualizacion",
@@ -240,6 +243,43 @@ def historial_transacciones(request):
     finalizadas = transacciones.exclude(
         estado__in=(Transaccion.ESTADO_PENDIENTE, Transaccion.ESTADO_CANCELADA)
     ).prefetch_related("documentos_electronicos")
+    from apps.facturacion.models import FacturaElectronica
+
+    now = timezone.now()
+    nota_credito_disponible_ids = set()
+    notas_credito_existentes = set()
+    for transaccion in finalizadas:
+        if transaccion.estado != Transaccion.ESTADO_PAGADA:
+            continue
+        documentos = list(transaccion.documentos_electronicos.all())
+        if any(
+            documento.tipo_documento == FacturaElectronica.TIPO_NOTA_CREDITO
+            for documento in documentos
+        ):
+            notas_credito_existentes.add(transaccion.pk)
+            continue
+        factura = next(
+            (
+                documento
+                for documento in documentos
+                if documento.tipo_documento == FacturaElectronica.TIPO_FACTURA
+                and documento.estado == FacturaElectronica.ESTADO_EMITIDA
+                and documento.cdc
+            ),
+            None,
+        )
+        fecha_pago = transaccion.fecha_finalizacion
+        dentro_del_plazo = (
+            fecha_pago is not None
+            and fecha_pago <= now
+            and now <= fecha_pago + timedelta(days=3)
+        )
+        if (
+            factura is not None
+            and transaccion.stripe_payment_intent_id
+            and dentro_del_plazo
+        ):
+            nota_credito_disponible_ids.add(transaccion.pk)
     return render(
         request,
         "transacciones/historial.html",
@@ -247,6 +287,8 @@ def historial_transacciones(request):
             "cliente": cliente,
             "transacciones_finalizadas": finalizadas,
             "transacciones_sin_pago": sin_pago,
+            "nota_credito_disponible_ids": nota_credito_disponible_ids,
+            "notas_credito_existentes": notas_credito_existentes,
             "medios_pago": MedioPago.objects.filter(
                 cliente=cliente,
                 activo=True,

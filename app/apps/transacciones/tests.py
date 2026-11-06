@@ -6,6 +6,7 @@ from django.contrib.auth import get_user_model
 from django.db.models.deletion import ProtectedError
 from django.test import TestCase
 from django.urls import reverse
+from django.utils import timezone
 
 from apps.clientes.models import Cliente
 from apps.divisas.models import Moneda, TasaCambio
@@ -173,6 +174,7 @@ class TransaccionLifecycleTest(TestCase):
         transaccion.refresh_from_db()
         self.assertEqual(transaccion.estado, Transaccion.ESTADO_PAGADA)
         self.assertEqual(transaccion.medio_pago, self.medio_pago)
+        self.assertEqual(transaccion.stripe_payment_intent_id, "pi_transaccion_test")
         self.assertIsNotNone(transaccion.fecha_finalizacion)
         self.assertEqual(transaccion.receipt_url, "https://stripe.test/receipt")
         crear_intento.assert_called_once()
@@ -244,6 +246,8 @@ class TransaccionLifecycleTest(TestCase):
             estado=Transaccion.ESTADO_PAGADA,
             medio_pago=self.medio_pago,
             receipt_url="https://stripe.test/receipt",
+            stripe_payment_intent_id="pi_historial_test",
+            fecha_finalizacion=timezone.now(),
         )
         factura = FacturaElectronica.objects.create(
             transaccion=pagada,
@@ -267,6 +271,8 @@ class TransaccionLifecycleTest(TestCase):
             response,
             reverse("facturacion:descargar", args=(factura.pk, "xml")),
         )
+        self.assertContains(response, "Reembolso y nota de crédito")
+        self.assertContains(response, 'name="motivo"')
         self.assertEqual(
             set(response.context["transacciones_sin_pago"].values_list("pk", flat=True)),
             {pendiente.pk, cancelada.pk},
@@ -299,6 +305,10 @@ class TransaccionLifecycleTest(TestCase):
         pendiente.refresh_from_db()
         self.assertEqual(pendiente.estado, Transaccion.ESTADO_PAGADA)
         self.assertEqual(pendiente.medio_pago, self.medio_pago)
+        self.assertEqual(
+            pendiente.stripe_payment_intent_id,
+            "pi_transaccion_pendiente",
+        )
         self.assertIsNotNone(pendiente.fecha_finalizacion)
         self.assertEqual(
             pendiente.receipt_url,

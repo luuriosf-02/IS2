@@ -89,6 +89,15 @@ La numeración está separada por tipo de documento: facturas `0000285` a
 bloqueo transaccional; si se agota, se detiene la emisión en vez de asignar un
 número fuera del rango. Los números ya utilizados se saltan, no se reutilizan.
 
+Desde el historial, un pago con factura aprobada puede reembolsarse totalmente
+durante las 72 horas posteriores a `fecha_finalizacion`. La solicitud requiere
+un motivo de 5 a 500 caracteres. Se reembolsa primero en Stripe y, si Stripe
+confirma el reembolso, se emite la nota de crédito asociada al CDC de la factura
+original. El `PaymentIntent`, el refund y su motivo se guardan para reintentar
+consultas pendientes sin crear un segundo reembolso. Si falla la emisión fiscal
+después de que Stripe confirme, contactar soporte antes de volver a solicitar;
+el reembolso no se revierte automáticamente.
+
 Cada transacción tiene como máximo un registro local de factura y un número de
 documento de cada tipo, ambos con siete dígitos. Si Factura Segura devuelve CDC,
 se conserva junto con el DE y la respuesta. Si una llamada falla, el pago permanece
