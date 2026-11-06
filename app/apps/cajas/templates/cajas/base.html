@@ -59,4 +59,110 @@
     {% block caja_content %}{% endblock %}
   </section>
 </div>
+<script>
+(function () {
+    'use strict';
+
+    function mostrar(canonico) {
+        const partes = canonico.split('.');
+        const entero = partes[0].replace(/^0+(?=\d)/, '') || '0';
+        return entero.replace(/\B(?=(\d{3})+(?!\d))/g, '.') +
+            (partes.length > 1 ? ',' + partes[1] : '');
+    }
+
+    function leer(texto) {
+        if (texto === '') return '';
+        // En estos campos el punto agrupa miles y la coma indica decimales.
+        if (!/^[\d.]+(?:,\d{0,2})?$/.test(texto) || !/\d/.test(texto)) return null;
+        const partes = texto.replace(/\./g, '').split(',');
+        const entero = partes[0].replace(/^0+(?=\d)/, '') || '0';
+        return entero + (partes.length > 1 && partes[1] !== '' ? '.' + partes[1] : '');
+    }
+
+    function centavos(canonico) {
+        const partes = canonico.split('.');
+        return BigInt(partes[0]) * 100n + BigInt((partes[1] || '').padEnd(2, '0'));
+    }
+
+    function iniciar() {
+        document.querySelectorAll('.caja-shell form input[type="number"]').forEach(function (campo) {
+            const nombre = campo.name;
+            if (!nombre || campo.dataset.milesListo) return;
+            campo.dataset.milesListo = 'true';
+            const minimo = campo.getAttribute('min');
+            const maximo = campo.getAttribute('max');
+            const inicial = campo.value;
+            const oculto = document.createElement('input');
+            oculto.type = 'hidden';
+            oculto.name = nombre;
+            oculto.value = inicial;
+            oculto.defaultValue = inicial;
+            campo.removeAttribute('name');
+            campo.type = 'text';
+            campo.inputMode = 'decimal';
+            campo.placeholder = 'Ej.: 1.000.000,50';
+            campo.autocomplete = 'off';
+            campo.spellcheck = false;
+            campo.insertAdjacentElement('afterend', oculto);
+            campo.value = inicial ? mostrar(inicial) : '';
+            campo.defaultValue = campo.value;
+            const ayuda = document.createElement('span');
+            ayuda.className = 'helptext';
+            ayuda.id = campo.id + '_formato_monto';
+            ayuda.textContent = 'Punto para miles y coma para decimales. Ej.: 1.250,50.';
+            campo.insertAdjacentElement('afterend', ayuda);
+            campo.setAttribute('aria-describedby', [campo.getAttribute('aria-describedby'), ayuda.id].filter(Boolean).join(' '));
+
+            function actualizar(formatear) {
+                const antes = campo.value;
+                const posicion = campo.selectionStart;
+                const tokens = antes.slice(0, posicion === null ? antes.length : posicion).replace(/\./g, '').length;
+                const valor = leer(antes);
+                let error = '';
+                if (valor === null) {
+                    error = 'Ingresá un monto válido, con coma y hasta dos decimales.';
+                } else if (valor !== '') {
+                    if (minimo !== null && centavos(valor) < centavos(minimo)) {
+                        error = 'El monto mínimo es ' + mostrar(minimo) + '.';
+                    } else if (maximo !== null && centavos(valor) > centavos(maximo)) {
+                        error = 'El monto máximo es ' + mostrar(maximo) + '.';
+                    }
+                }
+                campo.setCustomValidity(error);
+                oculto.value = valor === null ? '' : valor;
+                oculto.disabled = campo.disabled;
+                if (formatear && valor !== null && antes !== '') {
+                    const comaFinal = antes.endsWith(',');
+                    campo.value = mostrar(valor) + (comaFinal ? ',' : '');
+                    let vistos = 0;
+                    let nuevaPosicion = 0;
+                    while (nuevaPosicion < campo.value.length && vistos < tokens) {
+                        if (campo.value[nuevaPosicion] !== '.') vistos++;
+                        nuevaPosicion++;
+                    }
+                    if (document.activeElement === campo) campo.setSelectionRange(nuevaPosicion, nuevaPosicion);
+                }
+            }
+
+            campo.addEventListener('input', function () { actualizar(true); });
+            campo.addEventListener('change', function () { actualizar(true); });
+            campo.addEventListener('blur', function () { actualizar(true); });
+            campo.form.addEventListener('submit', function (evento) {
+                actualizar(false);
+                if (!campo.checkValidity()) {
+                    evento.preventDefault();
+                    campo.reportValidity();
+                }
+            });
+            campo.form.addEventListener('reset', function () {
+                setTimeout(function () { actualizar(false); }, 0);
+            });
+            actualizar(false);
+        });
+    }
+
+    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', iniciar);
+    else iniciar();
+}());
+</script>
 {% endblock %}
