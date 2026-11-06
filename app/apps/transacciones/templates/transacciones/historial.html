@@ -19,10 +19,28 @@
             <a class="btn btn-primary" href="{% url 'home' %}#conversor">Nueva operación</a>
         </section>
 
+        {% if messages %}
+            <div class="transaction-history-messages" role="status" aria-live="polite">
+                {% for message in messages %}
+                    {% if 'invoice-availability' in message.tags %}
+                        <section class="invoice-availability-toast" role="alert" data-temporary-toast>
+                            <div>
+                                <h2>Factura todavía no disponible</h2>
+                                <p>{{ message }}</p>
+                            </div>
+                            <button type="button" class="invoice-availability-toast__close" aria-label="Cerrar aviso" data-close-toast>&times;</button>
+                        </section>
+                    {% else %}
+                        <p class="alert-{{ message.tags }}">{{ message }}</p>
+                    {% endif %}
+                {% endfor %}
+            </div>
+        {% endif %}
+
         {% if transacciones_finalizadas %}
             <section class="transaction-history-section transaction-history-section--completed" aria-labelledby="finalizadas-title">
                 <h2 id="finalizadas-title">Operaciones finalizadas</h2>
-                {% include "transacciones/_tabla.html" with transacciones=transacciones_finalizadas mostrar_pago=False only %}
+                {% include "transacciones/_tabla.html" with transacciones=transacciones_finalizadas mostrar_pago=False nota_credito_disponible_ids=nota_credito_disponible_ids notas_credito_existentes=notas_credito_existentes %}
             </section>
         {% else %}
             <section class="transaction-history-section" aria-labelledby="finalizadas-title">
@@ -41,4 +59,13 @@
         </section>
 
     </main>
+    <script>
+        document.querySelectorAll("[data-temporary-toast]").forEach((toast) => {
+            const timeout = window.setTimeout(() => toast.remove(), 9000);
+            toast.querySelector("[data-close-toast]").addEventListener("click", () => {
+                window.clearTimeout(timeout);
+                toast.remove();
+            });
+        });
+    </script>
 {% endblock %}

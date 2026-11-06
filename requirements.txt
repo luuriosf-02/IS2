@@ -5,3 +5,4 @@ mozilla-django-oidc>=4.0
 sphinx
 sphinx-rtd-theme
 stripe
+requests>=2.31

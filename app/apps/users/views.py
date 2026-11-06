@@ -82,30 +82,48 @@ def request_client_link(request):
         )
 
         if form.is_valid():
-            selected_clients = form.cleaned_data["clients"]
+            selected_clients = form.selected_clients
+            try:
+                with transaction.atomic():
+                    for client in selected_clients:
+                        locked_client = Cliente.objects.select_for_update().get(
+                            pk=client.pk
+                        )
+                        requested_status = (
+                            form.cleaned_data[f"tax_status_{client.pk}"] == "true"
+                        )
+                        if locked_client.es_contribuyente is None:
+                            locked_client.es_contribuyente = requested_status
+                            locked_client.save(update_fields=["es_contribuyente"])
+                        elif locked_client.es_contribuyente != requested_status:
+                            raise ValueError(
+                                f"La condición tributaria de {locked_client.nombre_razon_social} "
+                                "ya quedó fijada y no puede modificarse."
+                            )
 
-            for client in selected_clients:
-                link, created = UserClientLink.objects.get_or_create(
-                    user=request.user,
-                    client=client,
-                    defaults={
-                        "status": UserClientLink.STATUS_PENDING,
-                    },
+                        link, created = UserClientLink.objects.get_or_create(
+                            user=request.user,
+                            client=locked_client,
+                            defaults={
+                                "status": UserClientLink.STATUS_PENDING,
+                            },
+                        )
+
+                        if not created:
+                            link.status = UserClientLink.STATUS_PENDING
+                            link.reviewed_at = None
+                            link.reviewed_by = None
+                            link.rejection_reason = ""
+                            link.save()
+            except ValueError as error:
+                form.add_error(None, str(error))
+            else:
+                messages.success(
+                    request,
+                    "La solicitud de vinculación fue enviada correctamente.",
                 )
 
-                if not created:
-                    link.status = UserClientLink.STATUS_PENDING
-                    link.reviewed_at = None
-                    link.reviewed_by = None
-                    link.rejection_reason = ""
-                    link.save()
-
-            messages.success(
-                request,
-                "La solicitud de vinculación fue enviada correctamente.",
-            )
-
-            return redirect("my_client_links")
+                return redirect("my_client_links")
 
     else:
         form = ClientLinkRequestForm(user=request.user)
