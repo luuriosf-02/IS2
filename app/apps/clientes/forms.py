@@ -13,7 +13,7 @@ class ClienteForm(forms.ModelForm):
     
     class Meta:
         model = Cliente
-        fields = ['nombre_razon_social', 'documento', 'tipo_persona', 'activo']
+        fields = ['nombre_razon_social', 'documento', 'email', 'tipo_persona', 'activo']
         widgets = {
             'nombre_razon_social': forms.TextInput(attrs={
                 'class': 'form-input',

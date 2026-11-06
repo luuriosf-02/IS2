@@ -13,10 +13,24 @@
         <form method="post">
             {% csrf_token %}
             {{ form.non_field_errors }}
-            {{ form.clients.errors }}
-
             <div class="client-options">
-                {{ form.clients }}
+                {% for row in form.client_rows %}
+                    <div class="client-link-option">
+                        <label>
+                            {{ row.selection }}
+                            {{ row.client.nombre_razon_social }}
+                            ({{ row.client.documento }})
+                        </label>
+                        {{ row.selection.errors }}
+                        <div>
+                            {{ row.tax_status.label_tag }}
+                            {{ row.tax_status }}
+                            {{ row.tax_status.errors }}
+                        </div>
+                    </div>
+                {% empty %}
+                    <p>No hay clientes disponibles para solicitar.</p>
+                {% endfor %}
             </div>
 
             <button type="submit" class="btn btn-primary">Enviar solicitud</button>

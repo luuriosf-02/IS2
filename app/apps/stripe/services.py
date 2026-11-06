@@ -1,4 +1,5 @@
 from decimal import Decimal, ROUND_HALF_UP
+import logging
 
 import stripe
 from django.conf import settings
@@ -7,10 +8,24 @@ from apps.payments.models import ClienteStripeCustomer, MedioPago
 
 
 stripe.api_key = settings.STRIPE_SECRET_KEY
+logger = logging.getLogger(__name__)
 
 
 class PaymentNotSucceeded(Exception):
     pass
+
+
+def issue_invoice_for_paid_transaction(transaction):
+    from apps.facturacion.services import emitir_factura
+
+    try:
+        return emitir_factura(transaction)
+    except Exception:
+        logger.exception(
+            "No se pudo emitir la factura de la transacción %s",
+            transaction.pk,
+        )
+        return None
 
 
 def charge_transaction(transaction, payment_method):
@@ -37,12 +52,40 @@ def charge_transaction(transaction, payment_method):
     )
     if intent.status != "succeeded":
         raise PaymentNotSucceeded(intent.status)
+    transaction.stripe_payment_intent_id = intent.id
 
     charge = intent.latest_charge
     if isinstance(charge, str):
         charge = stripe.Charge.retrieve(charge)
 
     return intent.id, getattr(charge, "receipt_url", None)
+
+
+def refund_transaction(transaction, reason):
+    if transaction.stripe_refund_id:
+        if transaction.stripe_refund_reason != reason:
+            raise ValueError(
+                "El motivo no se puede cambiar después de iniciar el reembolso."
+            )
+        return stripe.Refund.retrieve(transaction.stripe_refund_id)
+    if not transaction.stripe_payment_intent_id:
+        raise ValueError(
+            "La transacción no tiene un PaymentIntent de Stripe registrado; "
+            "no es posible reembolsarla automáticamente."
+        )
+    refund = stripe.Refund.create(
+        payment_intent=transaction.stripe_payment_intent_id,
+        reason="requested_by_customer",
+        metadata={
+            "transaccion": transaction.referencia,
+            "motivo_nota_credito": reason[:500],
+        },
+        idempotency_key=f"refund-credit-note:{transaction.identificador}",
+    )
+    transaction.stripe_refund_id = refund.id
+    transaction.stripe_refund_reason = reason[:500]
+    transaction.save(update_fields=["stripe_refund_id", "stripe_refund_reason"])
+    return refund
 
 
 def save_stripe_payment_method(client, payment_method):

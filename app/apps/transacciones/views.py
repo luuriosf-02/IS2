@@ -1,5 +1,6 @@
 import logging
 import uuid
+from datetime import timedelta
 from decimal import Decimal, InvalidOperation
 
 import stripe
@@ -16,12 +17,32 @@ from apps.dashboard.views import (
 )
 from apps.divisas.models import Moneda
 from apps.payments.models import ClienteStripeCustomer, MedioPago
-from apps.stripe.services import PaymentNotSucceeded, charge_transaction
+from apps.stripe.services import (
+    PaymentNotSucceeded,
+    charge_transaction,
+    issue_invoice_for_paid_transaction,
+)
 from apps.users.client_selection import get_selected_client
 
 from .models import Transaccion
 
 logger = logging.getLogger(__name__)
+
+
+def _notificar_factura(request, transaccion):
+    factura = issue_invoice_for_paid_transaction(transaccion)
+    if factura is not None and factura.estado == "emitida":
+        messages.info(
+            request,
+            f"Factura electrónica solicitada con CDC {factura.cdc}; "
+            "queda pendiente de aprobación por SIFEN.",
+        )
+    else:
+        messages.warning(
+            request,
+            "El pago se confirmó, pero la factura electrónica no pudo emitirse. "
+            "Contacta con soporte para revisar el registro de facturación.",
+        )
 
 
 @login_required
@@ -99,6 +120,7 @@ def crear_transaccion(request):
         ).update(
             medio_pago=medio_pago,
             receipt_url=receipt_url or "",
+            stripe_payment_intent_id=transaccion.stripe_payment_intent_id,
             estado=Transaccion.ESTADO_PAGADA,
             fecha_finalizacion=timezone.now(),
         )
@@ -106,6 +128,8 @@ def crear_transaccion(request):
             messages.error(request, "El pago se procesó, pero la operación cambió. Contacta con soporte.")
             return redirect(destino)
 
+        transaccion.refresh_from_db()
+        _notificar_factura(request, transaccion)
         messages.success(request, "La operación fue registrada y finalizada correctamente.")
         return redirect(destino)
 
@@ -189,10 +213,12 @@ def crear_transaccion(request):
         transaccion.save(update_fields=[
             "medio_pago",
             "receipt_url",
+            "stripe_payment_intent_id",
             "estado",
             "fecha_finalizacion",
             "fecha_actualizacion",
         ])
+        _notificar_factura(request, transaccion)
         messages.success(request, "La operación fue registrada y finalizada correctamente.")
     else:
         messages.success(request, "La operación se guardó como pendiente de pago.")
@@ -216,7 +242,44 @@ def historial_transacciones(request):
     )
     finalizadas = transacciones.exclude(
         estado__in=(Transaccion.ESTADO_PENDIENTE, Transaccion.ESTADO_CANCELADA)
-    )
+    ).prefetch_related("documentos_electronicos")
+    from apps.facturacion.models import FacturaElectronica
+
+    now = timezone.now()
+    nota_credito_disponible_ids = set()
+    notas_credito_existentes = set()
+    for transaccion in finalizadas:
+        if transaccion.estado != Transaccion.ESTADO_PAGADA:
+            continue
+        documentos = list(transaccion.documentos_electronicos.all())
+        if any(
+            documento.tipo_documento == FacturaElectronica.TIPO_NOTA_CREDITO
+            for documento in documentos
+        ):
+            notas_credito_existentes.add(transaccion.pk)
+            continue
+        factura = next(
+            (
+                documento
+                for documento in documentos
+                if documento.tipo_documento == FacturaElectronica.TIPO_FACTURA
+                and documento.estado == FacturaElectronica.ESTADO_EMITIDA
+                and documento.cdc
+            ),
+            None,
+        )
+        fecha_pago = transaccion.fecha_finalizacion
+        dentro_del_plazo = (
+            fecha_pago is not None
+            and fecha_pago <= now
+            and now <= fecha_pago + timedelta(days=3)
+        )
+        if (
+            factura is not None
+            and transaccion.stripe_payment_intent_id
+            and dentro_del_plazo
+        ):
+            nota_credito_disponible_ids.add(transaccion.pk)
     return render(
         request,
         "transacciones/historial.html",
@@ -224,6 +287,8 @@ def historial_transacciones(request):
             "cliente": cliente,
             "transacciones_finalizadas": finalizadas,
             "transacciones_sin_pago": sin_pago,
+            "nota_credito_disponible_ids": nota_credito_disponible_ids,
+            "notas_credito_existentes": notas_credito_existentes,
             "medios_pago": MedioPago.objects.filter(
                 cliente=cliente,
                 activo=True,

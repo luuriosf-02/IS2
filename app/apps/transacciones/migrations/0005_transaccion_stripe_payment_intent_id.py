@@ -1,0 +1,19 @@
+from django.db import migrations, models
+
+
+class Migration(migrations.Migration):
+    dependencies = [
+        ("transacciones", "0004_transaccion_receipt_url"),
+    ]
+
+    operations = [
+        migrations.AddField(
+            model_name="transaccion",
+            name="stripe_payment_intent_id",
+            field=models.CharField(
+                blank=True,
+                max_length=255,
+                verbose_name="PaymentIntent de Stripe",
+            ),
+        ),
+    ]

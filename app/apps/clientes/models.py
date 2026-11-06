@@ -1,6 +1,7 @@
 from django.db import models
 from django.conf import settings
 from django.db.models import Q
+from django.core.exceptions import ValidationError
 
 class Cliente(models.Model):
     """
@@ -21,6 +22,12 @@ class Cliente(models.Model):
 
     nombre_razon_social = models.CharField(max_length=255, verbose_name="Nombre o Razón Social")
     documento = models.CharField(max_length=50, unique=True, verbose_name="RUC o CI")
+    email = models.EmailField(blank=True, verbose_name="Correo para facturación")
+    es_contribuyente = models.BooleanField(
+        null=True,
+        blank=True,
+        verbose_name="Contribuyente",
+    )
     tipo_persona = models.CharField(max_length=10, choices=TIPO_PERSONA_CHOICES, default='FISICA')
     categoria = models.CharField(max_length=1, choices=CATEGORIA_CHOICES, default='B')
     limite_credito = models.DecimalField(max_digits=12, decimal_places=2, default=0.00)
@@ -38,6 +45,19 @@ class Cliente(models.Model):
 
     def __str__(self):
         return f"{self.nombre_razon_social} ({self.get_tipo_persona_display()})"
+
+    def save(self, *args, **kwargs):
+        if self.pk:
+            previous_value = (
+                type(self).objects.filter(pk=self.pk)
+                .values_list("es_contribuyente", flat=True)
+                .first()
+            )
+            if previous_value is not None and previous_value != self.es_contribuyente:
+                raise ValidationError(
+                    "La condición tributaria no se puede modificar después de solicitar la vinculación."
+                )
+        super().save(*args, **kwargs)
 
     class Meta:
         constraints = [
