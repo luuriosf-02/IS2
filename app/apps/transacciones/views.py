@@ -249,13 +249,28 @@ def historial_transacciones(request):
     nota_credito_disponible_ids = set()
     notas_credito_existentes = set()
     for transaccion in finalizadas:
+        transaccion.documento_factura = None
+        transaccion.documento_nota_credito = None
         if transaccion.estado != Transaccion.ESTADO_PAGADA:
             continue
         documentos = list(transaccion.documentos_electronicos.all())
-        if any(
-            documento.tipo_documento == FacturaElectronica.TIPO_NOTA_CREDITO
-            for documento in documentos
-        ):
+        transaccion.documento_factura = next(
+            (
+                documento
+                for documento in documentos
+                if documento.tipo_documento == FacturaElectronica.TIPO_FACTURA
+            ),
+            None,
+        )
+        transaccion.documento_nota_credito = next(
+            (
+                documento
+                for documento in documentos
+                if documento.tipo_documento == FacturaElectronica.TIPO_NOTA_CREDITO
+            ),
+            None,
+        )
+        if transaccion.documento_nota_credito is not None:
             notas_credito_existentes.add(transaccion.pk)
             continue
         factura = next(

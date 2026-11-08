@@ -492,7 +492,12 @@ def emitir_factura(transaccion):
     return emitir_documento(transaccion, tipo_documento="factura")
 
 
-def emitir_nota_credito(transaccion, cdc_referenciado, motivo, stripe_refund_id):
+def emitir_nota_credito(
+    transaccion,
+    cdc_referenciado,
+    motivo,
+    stripe_refund_id="",
+):
     return emitir_documento(
         transaccion,
         tipo_documento="nota_credito",
@@ -534,17 +539,6 @@ def _parse_json_response(response):
 def call_operation(operation, params):
     """Call a Factura Segura POST operation using its standard JSON envelope."""
     payload = {"operation": operation, "params": params}
-    #Esto para poder ver un comando curl y ejecutarlo luego
-    if operation in {"calcular_de", "generar_de"}:
-        curl_lines = [
-            "curl --request POST " + shlex.quote(settings.FS_API_URL),
-            "--header 'accept: application/json'",
-            "--header 'Content-Type: application/json'",
-            '--header "Authentication-Token: ${FS_TOKEN}"',
-            "--data-raw " + shlex.quote(json.dumps(payload, ensure_ascii=False)),
-        ]
-        curl_command = (" " + chr(92) + "\n  ").join(curl_lines)
-        print(f"\n# Factura Segura: {operation}\n{curl_command}\n", flush=True)
 
     response = requests.post(
         settings.FS_API_URL,
