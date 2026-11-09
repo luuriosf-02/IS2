@@ -279,8 +279,10 @@ def calcular_y_generar_factura(transaction, invoice_number):
 
 
 DOCUMENT_NUMBER_RANGES = {
-    "factura": (285, 296),
-    "nota_credito": (97, 108),
+    #"factura": (285, 296),
+    #"nota_credito": (97, 108),
+    "factura": (290, 296),
+    "nota_credito": (100, 108),
 }
 
 
