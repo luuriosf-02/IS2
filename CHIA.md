@@ -122,3 +122,8 @@ Validación: La IA informó que nueve pruebas pasaron en un entorno aislado. La 
 Aportes de la IA: Generó una propuesta de código e instrucciones de instalación, ayudó a corregir problemas de configuración y pruebas, y propuso mejoras visuales. Además, preparó un breve discurso y ejemplos para demostrar el funcionamiento.
 
 Intervención propia: Se incorporaron los archivos al proyecto, se configuraron rutas y permisos, y se verificó el acceso a la interfaz mediante Docker.
+
+## FACTURACIÓN
+Aportes de la IA: rápido acceso y entendimiento de la estructura de las facturas eKuatia para su uso mediante la api de Factura segura. Ayudó a subdividir esa estructura para un manejo más sencillo. Solucionó fácilmente el ajuste del hook de stripe junto con la emisión efectiva de facturas para que no funcionen de manera independiente.
+
+Intervención propia: revisión constante de los permisos adecuados de las operaciones y de los archivos cambiados. Envío separado de consultas a la api de factura segura según fuere necesario para identificar posibles faltas en la estructura u otras inconsistencias
