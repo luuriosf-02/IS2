@@ -263,6 +263,7 @@ class TransaccionLifecycleTest(TestCase):
         self.assertContains(response, 'name="csrfmiddlewaretoken"')
         self.assertContains(response, 'href="https://stripe.test/receipt"')
         self.assertContains(response, "Ver comprobante de pago")
+        self.assertContains(response, "popovertarget=\"documentos-")
         self.assertContains(
             response,
             reverse("facturacion:descargar", args=(factura.pk, "kude")),
@@ -271,6 +272,10 @@ class TransaccionLifecycleTest(TestCase):
             response,
             reverse("facturacion:descargar", args=(factura.pk, "xml")),
         )
+        self.assertContains(response, "Factura · KuDE (PDF)")
+        self.assertContains(response, "Factura · XML")
+        self.assertNotContains(response, "Nota de crédito · KuDE (PDF)")
+        self.assertNotContains(response, "Nota de crédito · XML")
         self.assertContains(response, "Reembolso y nota de crédito")
         self.assertContains(response, 'name="motivo"')
         self.assertEqual(
@@ -281,6 +286,46 @@ class TransaccionLifecycleTest(TestCase):
             list(response.context["transacciones_finalizadas"].values_list("pk", flat=True)),
             [pagada.pk],
         )
+
+    def test_historial_distinguishes_credit_note_download_options(self):
+        pagada = self.crear_transaccion(
+            "HIST-CON-NOTA",
+            estado=Transaccion.ESTADO_PAGADA,
+            medio_pago=self.medio_pago,
+            stripe_payment_intent_id="pi_historial_nota",
+            fecha_finalizacion=timezone.now(),
+        )
+        factura = FacturaElectronica.objects.create(
+            transaccion=pagada,
+            tipo_documento=FacturaElectronica.TIPO_FACTURA,
+            numero_documento="0000286",
+            cdc="2" * 44,
+            estado=FacturaElectronica.ESTADO_EMITIDA,
+        )
+        nota = FacturaElectronica.objects.create(
+            transaccion=pagada,
+            tipo_documento=FacturaElectronica.TIPO_NOTA_CREDITO,
+            numero_documento="0000097",
+            cdc="3" * 44,
+            estado=FacturaElectronica.ESTADO_EMITIDA,
+        )
+
+        response = self.client.get(reverse("transacciones:historial"))
+
+        self.assertContains(response, "Factura · KuDE (PDF)")
+        self.assertContains(response, "Factura · XML")
+        self.assertContains(response, "Nota de crédito · KuDE (PDF)")
+        self.assertContains(response, "Nota de crédito · XML")
+        for document, format_name in (
+            (factura, "kude"),
+            (factura, "xml"),
+            (nota, "kude"),
+            (nota, "xml"),
+        ):
+            self.assertContains(
+                response,
+                reverse("facturacion:descargar", args=(document.pk, format_name)),
+            )
 
     @patch("apps.stripe.services.stripe.PaymentIntent.create")
     @patch("apps.transacciones.views.issue_invoice_for_paid_transaction")

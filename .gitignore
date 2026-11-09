@@ -3,3 +3,4 @@ __pycache__/
 .venv
 .env
 api_factura_segura.pdf
+deploy.sh

@@ -627,6 +627,69 @@ class ElectronicDocumentDownloadTests(TestCase):
         download.assert_called_once_with("80002247", "1" * 44)
 
     @override_settings(FS_D_RUC_EM="80002247")
+    @patch("apps.facturacion.views.services.dwn_kude")
+    @patch("apps.facturacion.views.services.dwn_xml")
+    @patch("apps.facturacion.views.services.get_estado_sifen")
+    def test_credit_note_can_download_kude_and_xml(
+        self,
+        get_state,
+        download_xml,
+        download_kude,
+    ):
+        credit_note = FacturaElectronica.objects.create(
+            transaccion=self.transaction,
+            tipo_documento=FacturaElectronica.TIPO_NOTA_CREDITO,
+            numero_documento="0000097",
+            cdc="2" * 44,
+            estado=FacturaElectronica.ESTADO_EMITIDA,
+        )
+        get_state.return_value = {
+            "code": 0,
+            "results": [{"estado_sifen": "Aprobado", "estado_can": ""}],
+        }
+        download_kude.return_value = b"%PDF-credit-note"
+        download_xml.return_value = b"<credit-note/>"
+
+        kude_response = self.client.get(
+            reverse("facturacion:descargar", args=(credit_note.pk, "kude"))
+        )
+        xml_response = self.client.get(
+            reverse("facturacion:descargar", args=(credit_note.pk, "xml"))
+        )
+
+        self.assertEqual(kude_response.status_code, 200)
+        self.assertEqual(kude_response.content, b"%PDF-credit-note")
+        self.assertEqual(xml_response.status_code, 200)
+        self.assertEqual(xml_response.content, b"<credit-note/>")
+        self.assertEqual(
+            [call.args[0] for call in get_state.call_args_list],
+            ["2" * 44, "2" * 44],
+        )
+        download_kude.assert_called_once_with("80002247", "2" * 44)
+        download_xml.assert_called_once_with("80002247", "2" * 44)
+
+    def test_history_shows_download_links_for_emitted_credit_note(self):
+        credit_note = FacturaElectronica.objects.create(
+            transaccion=self.transaction,
+            tipo_documento=FacturaElectronica.TIPO_NOTA_CREDITO,
+            numero_documento="0000097",
+            cdc="2" * 44,
+            estado=FacturaElectronica.ESTADO_EMITIDA,
+        )
+
+        response = self.client.get(reverse("transacciones:historial"))
+
+        self.assertContains(
+            response,
+            reverse("facturacion:descargar", args=(credit_note.pk, "kude")),
+        )
+        self.assertContains(
+            response,
+            reverse("facturacion:descargar", args=(credit_note.pk, "xml")),
+        )
+        self.assertContains(response, "Nota de crédito 0000097")
+
+    @override_settings(FS_D_RUC_EM="80002247")
     @patch("apps.facturacion.views.services.dwn_xml")
     @patch("apps.facturacion.views.services.get_estado_sifen")
     def test_unapproved_invoice_cannot_download_xml(self, get_state, download):
@@ -747,6 +810,7 @@ class CreditNoteRefundRequestTests(TestCase):
         issue_credit_note.return_value = SimpleNamespace(
             numero_documento="0000097",
             cdc="3" * 44,
+            save=Mock(),
         )
 
         response = self.client.post(
@@ -759,16 +823,85 @@ class CreditNoteRefundRequestTests(TestCase):
 
         self.assertRedirects(response, reverse("transacciones:historial"))
         get_state.assert_called_once_with("2" * 44, "80002247")
-        refund.assert_called_once_with(
-            self.transaction,
-            "Cliente desistió de la operación",
-        )
         issue_credit_note.assert_called_once_with(
             self.transaction,
             "2" * 44,
             "Cliente desistió de la operación",
-            "re_test_1",
         )
+        refund.assert_called_once_with(
+            self.transaction,
+            "Cliente desistió de la operación",
+        )
+        self.assertEqual(issue_credit_note.return_value.stripe_refund_id, "re_test_1")
+        issue_credit_note.return_value.save.assert_called_once_with(
+            update_fields=["stripe_refund_id", "fecha_actualizacion"]
+        )
+
+    @override_settings(FS_D_RUC_EM="80002247")
+    @patch("builtins.print")
+    @patch("apps.facturacion.views.refund_transaction")
+    @patch("apps.facturacion.views.services.emitir_nota_credito")
+    @patch("apps.facturacion.views.services.get_estado_sifen")
+    def test_factura_segura_rejection_prevents_stripe_refund_and_prints_response(
+        self,
+        get_state,
+        issue_credit_note,
+        refund,
+        print_output,
+    ):
+        get_state.return_value = {
+            "code": 0,
+            "results": [{"estado_sifen": "Aprobado", "estado_can": ""}],
+        }
+        issue_credit_note.side_effect = services.FacturaSeguraAPIError(
+            -10001,
+            "DE inválido",
+            {"code": -10001, "description": "DE inválido"},
+        )
+
+        response = self.client.post(
+            reverse("facturacion:solicitar_nota_credito", args=(self.transaction.pk,)),
+            {"motivo": "Cliente desistió de la operación"},
+        )
+
+        self.assertRedirects(response, reverse("transacciones:historial"))
+        refund.assert_not_called()
+        print_output.assert_called_once_with(
+            "Respuesta de rechazo de Factura Segura: "
+            "{'code': -10001, 'description': 'DE inválido'}",
+            flush=True,
+        )
+
+    @override_settings(FS_D_RUC_EM="80002247")
+    @patch("apps.facturacion.views.services.sol_cancelacion")
+    @patch("apps.facturacion.views.refund_transaction")
+    @patch("apps.facturacion.views.services.emitir_nota_credito")
+    @patch("apps.facturacion.views.services.get_estado_sifen")
+    def test_stripe_rejection_requests_credit_note_cancellation(
+        self,
+        get_state,
+        issue_credit_note,
+        refund,
+        cancel_note,
+    ):
+        get_state.return_value = {
+            "code": 0,
+            "results": [{"estado_sifen": "Aprobado", "estado_can": ""}],
+        }
+        issue_credit_note.return_value = SimpleNamespace(
+            numero_documento="0000097",
+            cdc="3" * 44,
+            save=Mock(),
+        )
+        refund.return_value = SimpleNamespace(status="failed", id="re_failed")
+
+        response = self.client.post(
+            reverse("facturacion:solicitar_nota_credito", args=(self.transaction.pk,)),
+            {"motivo": "Cliente desistió de la operación"},
+        )
+
+        self.assertRedirects(response, reverse("transacciones:historial"))
+        cancel_note.assert_called_once_with("3" * 44, "80002247")
 
     @override_settings(FS_D_RUC_EM="80002247")
     @patch("apps.facturacion.views.refund_transaction")
