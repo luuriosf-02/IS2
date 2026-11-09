@@ -38,6 +38,36 @@ def _volver_al_historial_con_aviso(request, factura, motivo):
     return redirect("transacciones:historial")
 
 
+def _imprimir_respuesta_rechazo(error):
+    respuesta = getattr(error, "response", None)
+    if respuesta is None:
+        return
+    try:
+        detalle = respuesta.json()
+    except (AttributeError, ValueError):
+        detalle = getattr(respuesta, "text", str(respuesta))
+    # Temporal: retirar esta impresión cuando termine la depuración del flujo fiscal.
+    print(f"Respuesta de rechazo de Factura Segura: {detalle}", flush=True)
+
+
+def _cancelar_nota_credito(nota):
+    try:
+        respuesta = services.sol_cancelacion(nota.cdc, settings.FS_D_RUC_EM)
+        logger.warning(
+            "Se solicitó cancelar la nota de crédito %s tras fallar Stripe: %s",
+            nota.cdc,
+            respuesta,
+        )
+        return True
+    except (services.FacturaSeguraError, requests.RequestException) as error:
+        _imprimir_respuesta_rechazo(error)
+        logger.exception(
+            "No se pudo solicitar la cancelación de la nota de crédito %s",
+            nota.cdc,
+        )
+        return False
+
+
 @login_required
 def descargar_documento(request, factura_id, formato):
     if formato not in {"kude", "xml"}:
@@ -147,6 +177,7 @@ def solicitar_nota_credito(request, transaccion_id):
         )
         return redirect("transacciones:historial")
 
+    nota = None
     try:
         estado = services.get_estado_sifen(
             factura_original.cdc,
@@ -166,45 +197,48 @@ def solicitar_nota_credito(request, transaccion_id):
             )
             return redirect("transacciones:historial")
 
-        refund = refund_transaction(transaccion, motivo)
-        if refund.status != "succeeded":
-            if refund.status in {"pending", "requires_action"}:
-                messages.warning(
-                    request,
-                    f"El reembolso de {transaccion.referencia} sigue pendiente en Stripe; "
-                    "la nota se emitirá cuando Stripe lo confirme.",
-                )
-            else:
-                messages.error(
-                    request,
-                    f"Stripe no pudo completar el reembolso de {transaccion.referencia} "
-                    f"(estado: {refund.status}). Contacta con soporte.",
-                )
-            return redirect("transacciones:historial")
-
         nota = services.emitir_nota_credito(
             transaccion,
             factura_original.cdc,
             motivo,
-            refund.id,
         )
+        refund = refund_transaction(transaccion, motivo)
+        if refund.status != "succeeded":
+            cancelacion_solicitada = _cancelar_nota_credito(nota)
+            messages.error(
+                request,
+                f"Stripe no confirmó el reembolso de {transaccion.referencia} "
+                f"(estado: {refund.status}). "
+                + (
+                    "Se solicitó cancelar la nota de crédito."
+                    if cancelacion_solicitada
+                    else "No se pudo cancelar la nota de crédito; contacta con soporte."
+                ),
+            )
+            return redirect("transacciones:historial")
+        nota.stripe_refund_id = refund.id
+        nota.save(update_fields=["stripe_refund_id", "fecha_actualizacion"])
     except (stripe.error.StripeError, ValueError) as error:
+        if nota is not None:
+            _cancelar_nota_credito(nota)
         logger.exception("Stripe no pudo reembolsar la transacción %s", transaccion.pk)
         messages.error(
             request,
-            f"No se pudo completar el reembolso de {transaccion.referencia}: {error}",
+            f"No se pudo completar el reembolso de {transaccion.referencia}: {error}. "
+            "Se intentó cancelar la nota de crédito; contacta con soporte para confirmar el estado.",
         )
         return redirect("transacciones:historial")
     except (services.FacturaSeguraError, requests.RequestException) as error:
+        _imprimir_respuesta_rechazo(error)
         logger.exception(
-            "No se pudo completar la nota de crédito de la transacción %s: %s",
+            "No se pudo emitir la nota de crédito de la transacción %s: %s",
             transaccion.pk,
             error,
         )
         messages.error(
             request,
-            f"El reembolso de {transaccion.referencia} pudo procesarse, pero la nota de crédito falló. "
-            "Contacta con soporte antes de volver a intentarlo.",
+            f"Factura Segura no aceptó la nota de crédito de {transaccion.referencia}; "
+            "no se solicitó el reembolso en Stripe.",
         )
         return redirect("transacciones:historial")
 

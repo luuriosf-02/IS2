@@ -16,3 +16,7 @@ de este repositorio en caso de tener otra o si está desactualizada (./keycloak-
 - docker compose down -v
 
  ➡️ *La bandera -v es para borrar los volúmenes, entre ellos la configuración persistente de Keycloak*
+
+#### La documentación puede visualizarse con:
+- python -m http.server 8001 --directory app/docs/build/singlehtml
+- xdg-open app/docs/build/singlehtml/index.html

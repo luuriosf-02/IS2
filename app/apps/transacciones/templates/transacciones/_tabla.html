@@ -101,26 +101,34 @@
                         <td class="transaction-total">{{ transaccion.monto|floatformat:2 }} PYG</td>
                         <td>
                             <div class="transaction-document-actions">
-                                {% for documento in transaccion.documentos_electronicos.all %}
-                                    {% if documento.tipo_documento == 'factura' and documento.estado == 'emitida' and documento.cdc %}
-                                        <a class="btn btn-outline btn-sm" href="{% url 'facturacion:descargar' documento.pk 'kude' %}" title="Descargar KuDE PDF; se verifica aprobación SIFEN" aria-label="Descargar KuDE PDF de {{ documento.numero_documento }}">
-                                            <svg aria-hidden="true" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6M8 15h8M8 18h5"/></svg>
-                                            <span>PDF</span>
-                                        </a>
-                                        <a class="btn btn-outline btn-sm" href="{% url 'facturacion:descargar' documento.pk 'xml' %}" title="Descargar XML firmado; se verifica aprobación SIFEN" aria-label="Descargar XML de {{ documento.numero_documento }}">
-                                            <svg aria-hidden="true" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m8 17-5-5 5-5M16 7l5 5-5 5M14 4l-4 16"/></svg>
-                                            <span>XML</span>
-                                        </a>
+                                <button type="button" class="btn btn-outline btn-sm" popovertarget="documentos-{{ transaccion.pk }}" popovertargetaction="toggle" aria-haspopup="dialog">Descargar</button>
+                                <div id="documentos-{{ transaccion.pk }}" class="transaction-document-popover" popover="auto" aria-label="Descargas de {{ transaccion.referencia }}">
+                                    <section class="transaction-document-group">
+                                        <h3>Factura{% if transaccion.documento_factura %} {{ transaccion.documento_factura.numero_documento }}{% endif %}</h3>
+                                        {% if transaccion.documento_factura.estado == 'emitida' and transaccion.documento_factura.cdc %}
+                                            <a href="{% url 'facturacion:descargar' transaccion.documento_factura.pk 'kude' %}">Factura · KuDE (PDF)</a>
+                                            <a href="{% url 'facturacion:descargar' transaccion.documento_factura.pk 'xml' %}">Factura · XML</a>
+                                        {% else %}
+                                            <span aria-disabled="true">Factura · KuDE (PDF) · No disponible</span>
+                                            <span aria-disabled="true">Factura · XML · No disponible</span>
+                                        {% endif %}
+                                    </section>
+                                    {% if transaccion.documento_nota_credito %}
+                                        <section class="transaction-document-group">
+                                            <h3>Nota de crédito {{ transaccion.documento_nota_credito.numero_documento }}</h3>
+                                            {% if transaccion.documento_nota_credito.estado == 'emitida' and transaccion.documento_nota_credito.cdc %}
+                                                <a href="{% url 'facturacion:descargar' transaccion.documento_nota_credito.pk 'kude' %}">Nota de crédito · KuDE (PDF)</a>
+                                                <a href="{% url 'facturacion:descargar' transaccion.documento_nota_credito.pk 'xml' %}">Nota de crédito · XML</a>
+                                            {% else %}
+                                                <span aria-disabled="true">Nota de crédito · KuDE (PDF) · No disponible</span>
+                                                <span aria-disabled="true">Nota de crédito · XML · No disponible</span>
+                                            {% endif %}
+                                        </section>
                                     {% endif %}
-                                    {% if documento.tipo_documento == 'nota_credito' %}
-                                        <span class="credit-note-status">Nota {{ documento.numero_documento }} · {{ documento.get_estado_display }}</span>
-                                    {% endif %}
-                                {% empty %}
-                                    <span class="text-muted">Sin factura</span>
-                                {% endfor %}
+                                </div>
                                 {% if transaccion.pk in nota_credito_disponible_ids %}
                                     <details class="credit-note-request">
-                                        <summary class="btn btn-outline btn-sm">Reembolso y nota de crédito</summary>
+                                        <summary class="btn btn-outline btn-sm">Reembolsar</summary>
                                         <form method="post" action="{% url 'facturacion:solicitar_nota_credito' transaccion.pk %}">
                                             {% csrf_token %}
                                             <label for="motivo-nota-{{ transaccion.pk }}">Motivo del reembolso</label>
