@@ -69,3 +69,11 @@
 ### Consulta 3: Pruebas unitarias para el Módulo de Caja y Control de Integridad
 - **Prompt:** ¿Cómo escribir una prueba unitaria en Django que valide que los movimientos de caja no puedan ser eliminados físicamente (cumpliendo con RNF09)?
 - **Respuesta IA:** Se implementó una prueba utilizando `self.assertRaises(NotImplementedError)` para asegurar que el método `delete()` del modelo `CashMovement` arroje una excepción y bloquee cualquier intento de borrado físico.
+
+## Consulta: Sprint 5 - Facturación Electrónica y Simulación de Transacciones
+
+### Prompt:
+Generar la estructura de pruebas unitarias y script de despliegue automatizado (SCR) para el Hito 7 del proyecto Global Exchange.
+
+### Respuesta de la IA:
+Se proveyeron las pruebas automatizadas en `ejecutor_pruebas_sprint5.py`, el informe `qa_report_sprint5.md` y el script automatizado `deploy.sh` que realiza la construcción de contenedores Docker, la ejecución de migraciones de base de datos y la carga inicial de datos de prueba.
