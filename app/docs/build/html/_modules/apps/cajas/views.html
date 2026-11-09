@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>apps.cajas.views &#8212; documentación de Global Exchange - v2.0</title>
+    <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=6625fa76" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/alabaster.css?v=039e1c02" />
+    <script data-url_root="../../../" id="documentation_options" src="../../../_static/documentation_options.js?v=b04d0a2f"></script>
+    <script src="../../../_static/doctools.js?v=888ff710"></script>
+    <script src="../../../_static/sphinx_highlight.js?v=4825356b"></script>
+    <script src="../../../_static/translations.js?v=efdbd0b9"></script>
+    <link rel="index" title="Índice" href="../../../genindex.html" />
+    <link rel="search" title="Búsqueda" href="../../../search.html" />
+   
+  <link rel="stylesheet" href="../../../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <h1>Código fuente para apps.cajas.views</h1><div class="highlight"><pre>
+<span></span><span class="kn">from</span><span class="w"> </span><span class="nn">functools</span><span class="w"> </span><span class="kn">import</span> <span class="n">wraps</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">django.contrib</span><span class="w"> </span><span class="kn">import</span> <span class="n">messages</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">django.contrib.auth.decorators</span><span class="w"> </span><span class="kn">import</span> <span class="n">login_required</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">django.core.exceptions</span><span class="w"> </span><span class="kn">import</span> <span class="n">ValidationError</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">django.core.paginator</span><span class="w"> </span><span class="kn">import</span> <span class="n">Paginator</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">django.shortcuts</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_object_or_404</span><span class="p">,</span> <span class="n">redirect</span><span class="p">,</span> <span class="n">render</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">django.views.decorators.http</span><span class="w"> </span><span class="kn">import</span> <span class="n">require_http_methods</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.</span><span class="w"> </span><span class="kn">import</span> <span class="n">services</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.models</span><span class="w"> </span><span class="kn">import</span> <span class="n">Caja</span><span class="p">,</span> <span class="n">MovimientoCaja</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.forms</span><span class="w"> </span><span class="kn">import</span> <span class="n">ConteoForm</span><span class="p">,</span> <span class="n">MovimientoForm</span><span class="p">,</span> <span class="n">AnulacionForm</span><span class="p">,</span> <span class="n">AperturaForm</span><span class="p">,</span> <span class="n">CambioForm</span><span class="p">,</span> <span class="n">ConfirmarCambioForm</span>
+
+
+<div class="viewcode-block" id="cajero_required"><a class="viewcode-back" href="../../../index.html#apps.cajas.views.cajero_required">[documentos]</a><span class="k">def</span><span class="w"> </span><span class="nf">cajero_required</span><span class="p">(</span><span class="n">view</span><span class="p">):</span>
+    <span class="nd">@login_required</span>
+    <span class="nd">@wraps</span><span class="p">(</span><span class="n">view</span><span class="p">)</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">wrapper</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">services</span><span class="o">.</span><span class="n">puede_administrar</span><span class="p">(</span><span class="n">request</span><span class="o">.</span><span class="n">user</span><span class="p">):</span>
+            <span class="n">services</span><span class="o">.</span><span class="n">autorizar</span><span class="p">(</span><span class="n">request</span><span class="o">.</span><span class="n">user</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">view</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">wrapper</span></div>
+
+
+<div class="viewcode-block" id="lista"><a class="viewcode-back" href="../../../index.html#apps.cajas.views.lista">[documentos]</a><span class="nd">@cajero_required</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">lista</span><span class="p">(</span><span class="n">request</span><span class="p">):</span>
+    <span class="n">cajas</span> <span class="o">=</span> <span class="n">Caja</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">select_related</span><span class="p">(</span><span class="s1">&#39;cajero&#39;</span><span class="p">,</span> <span class="s1">&#39;abierta_por&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">all</span><span class="p">()</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">services</span><span class="o">.</span><span class="n">puede_administrar</span><span class="p">(</span><span class="n">request</span><span class="o">.</span><span class="n">user</span><span class="p">):</span>
+        <span class="n">cajas</span> <span class="o">=</span> <span class="n">cajas</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">cajero</span><span class="o">=</span><span class="n">request</span><span class="o">.</span><span class="n">user</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">render</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="s1">&#39;cajas/lista.html&#39;</span><span class="p">,</span> <span class="p">{</span><span class="s1">&#39;caja_abierta&#39;</span><span class="p">:</span> <span class="n">cajas</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">cierre__isnull</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span><span class="o">.</span><span class="n">first</span><span class="p">(),</span> <span class="s1">&#39;pagina&#39;</span><span class="p">:</span> <span class="n">Paginator</span><span class="p">(</span><span class="n">cajas</span><span class="p">,</span> <span class="mi">20</span><span class="p">)</span><span class="o">.</span><span class="n">get_page</span><span class="p">(</span><span class="n">request</span><span class="o">.</span><span class="n">GET</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;page&#39;</span><span class="p">))})</span></div>
+
+
+<div class="viewcode-block" id="apertura"><a class="viewcode-back" href="../../../index.html#apps.cajas.views.apertura">[documentos]</a><span class="nd">@cajero_required</span>
+<span class="nd">@require_http_methods</span><span class="p">([</span><span class="s1">&#39;GET&#39;</span><span class="p">,</span> <span class="s1">&#39;POST&#39;</span><span class="p">])</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">apertura</span><span class="p">(</span><span class="n">request</span><span class="p">):</span>
+    <span class="n">services</span><span class="o">.</span><span class="n">autorizar_admin</span><span class="p">(</span><span class="n">request</span><span class="o">.</span><span class="n">user</span><span class="p">)</span>
+    <span class="n">form</span> <span class="o">=</span> <span class="n">AperturaForm</span><span class="p">(</span><span class="n">request</span><span class="o">.</span><span class="n">POST</span> <span class="k">if</span> <span class="n">request</span><span class="o">.</span><span class="n">method</span> <span class="o">==</span> <span class="s1">&#39;POST&#39;</span> <span class="k">else</span> <span class="kc">None</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">request</span><span class="o">.</span><span class="n">method</span> <span class="o">==</span> <span class="s1">&#39;POST&#39;</span> <span class="ow">and</span> <span class="n">form</span><span class="o">.</span><span class="n">is_valid</span><span class="p">():</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">caja</span> <span class="o">=</span> <span class="n">services</span><span class="o">.</span><span class="n">abrir_caja</span><span class="p">(</span><span class="n">request</span><span class="o">.</span><span class="n">user</span><span class="p">,</span> <span class="n">form</span><span class="o">.</span><span class="n">cleaned_data</span><span class="p">[</span><span class="s1">&#39;cajero&#39;</span><span class="p">],</span> <span class="n">form</span><span class="o">.</span><span class="n">montos</span><span class="p">(),</span> <span class="n">form</span><span class="o">.</span><span class="n">cleaned_data</span><span class="p">[</span><span class="s1">&#39;observacion&#39;</span><span class="p">])</span>
+        <span class="k">except</span> <span class="n">ValidationError</span> <span class="k">as</span> <span class="n">error</span><span class="p">:</span>
+            <span class="n">form</span><span class="o">.</span><span class="n">add_error</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="n">error</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">messages</span><span class="o">.</span><span class="n">success</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="s1">&#39;Caja asignada. El cajero debe contar y aceptar los fondos antes de operar.&#39;</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">redirect</span><span class="p">(</span><span class="s1">&#39;cajas:detalle&#39;</span><span class="p">,</span> <span class="n">pk</span><span class="o">=</span><span class="n">caja</span><span class="o">.</span><span class="n">pk</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">render</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="s1">&#39;cajas/form.html&#39;</span><span class="p">,</span> <span class="p">{</span><span class="s1">&#39;form&#39;</span><span class="p">:</span> <span class="n">form</span><span class="p">,</span> <span class="s1">&#39;titulo&#39;</span><span class="p">:</span> <span class="s1">&#39;Asignar caja y fondos iniciales&#39;</span><span class="p">,</span> <span class="s1">&#39;boton&#39;</span><span class="p">:</span> <span class="s1">&#39;Asignar caja&#39;</span><span class="p">})</span></div>
+
+
+<div class="viewcode-block" id="detalle"><a class="viewcode-back" href="../../../index.html#apps.cajas.views.detalle">[documentos]</a><span class="nd">@cajero_required</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">detalle</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="n">pk</span><span class="p">):</span>
+    <span class="n">cajas</span> <span class="o">=</span> <span class="n">Caja</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">all</span><span class="p">()</span> <span class="k">if</span> <span class="n">services</span><span class="o">.</span><span class="n">puede_administrar</span><span class="p">(</span><span class="n">request</span><span class="o">.</span><span class="n">user</span><span class="p">)</span> <span class="k">else</span> <span class="n">Caja</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">cajero</span><span class="o">=</span><span class="n">request</span><span class="o">.</span><span class="n">user</span><span class="p">)</span>
+    <span class="n">caja</span> <span class="o">=</span> <span class="n">get_object_or_404</span><span class="p">(</span><span class="n">cajas</span><span class="p">,</span> <span class="n">pk</span><span class="o">=</span><span class="n">pk</span><span class="p">)</span>
+    <span class="n">movimientos</span> <span class="o">=</span> <span class="n">caja</span><span class="o">.</span><span class="n">movimientos</span><span class="o">.</span><span class="n">select_related</span><span class="p">(</span><span class="s1">&#39;moneda&#39;</span><span class="p">)</span>
+    <span class="n">moneda</span> <span class="o">=</span> <span class="n">request</span><span class="o">.</span><span class="n">GET</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;moneda&#39;</span><span class="p">,</span> <span class="s1">&#39;&#39;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">moneda</span><span class="o">.</span><span class="n">isdigit</span><span class="p">():</span>
+        <span class="n">movimientos</span> <span class="o">=</span> <span class="n">movimientos</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">moneda_id</span><span class="o">=</span><span class="nb">int</span><span class="p">(</span><span class="n">moneda</span><span class="p">))</span>
+    <span class="n">tipo</span> <span class="o">=</span> <span class="n">request</span><span class="o">.</span><span class="n">GET</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;tipo&#39;</span><span class="p">,</span> <span class="s1">&#39;&#39;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">tipo</span> <span class="ow">in</span> <span class="nb">dict</span><span class="p">(</span><span class="n">MovimientoCaja</span><span class="o">.</span><span class="n">TIPOS</span><span class="p">):</span>
+        <span class="n">movimientos</span> <span class="o">=</span> <span class="n">movimientos</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">tipo</span><span class="o">=</span><span class="n">tipo</span><span class="p">)</span>
+    <span class="n">estado</span> <span class="o">=</span> <span class="n">request</span><span class="o">.</span><span class="n">GET</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;estado&#39;</span><span class="p">,</span> <span class="s1">&#39;&#39;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">estado</span> <span class="ow">in</span> <span class="p">(</span><span class="s1">&#39;vigente&#39;</span><span class="p">,</span> <span class="s1">&#39;anulado&#39;</span><span class="p">):</span>
+        <span class="n">movimientos</span> <span class="o">=</span> <span class="n">movimientos</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">anulado_en__isnull</span><span class="o">=</span><span class="n">estado</span> <span class="o">==</span> <span class="s1">&#39;vigente&#39;</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">render</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="s1">&#39;cajas/detalle.html&#39;</span><span class="p">,</span> <span class="p">{</span><span class="s1">&#39;caja&#39;</span><span class="p">:</span> <span class="n">caja</span><span class="p">,</span> <span class="s1">&#39;saldos&#39;</span><span class="p">:</span> <span class="n">caja</span><span class="o">.</span><span class="n">saldos</span><span class="o">.</span><span class="n">select_related</span><span class="p">(</span><span class="s1">&#39;moneda&#39;</span><span class="p">),</span> <span class="s1">&#39;pagina&#39;</span><span class="p">:</span> <span class="n">Paginator</span><span class="p">(</span><span class="n">movimientos</span><span class="p">,</span> <span class="mi">25</span><span class="p">)</span><span class="o">.</span><span class="n">get_page</span><span class="p">(</span><span class="n">request</span><span class="o">.</span><span class="n">GET</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;page&#39;</span><span class="p">)),</span> <span class="s1">&#39;filtro_moneda&#39;</span><span class="p">:</span> <span class="n">moneda</span><span class="p">,</span> <span class="s1">&#39;filtro_tipo&#39;</span><span class="p">:</span> <span class="n">tipo</span><span class="p">,</span> <span class="s1">&#39;filtro_estado&#39;</span><span class="p">:</span> <span class="n">estado</span><span class="p">,</span> <span class="s1">&#39;puede_operar_esta_caja&#39;</span><span class="p">:</span> <span class="n">caja</span><span class="o">.</span><span class="n">cajero_id</span> <span class="o">==</span> <span class="n">request</span><span class="o">.</span><span class="n">user</span><span class="o">.</span><span class="n">pk</span><span class="p">,</span> <span class="s1">&#39;cambios&#39;</span><span class="p">:</span> <span class="n">caja</span><span class="o">.</span><span class="n">cambios</span><span class="o">.</span><span class="n">select_related</span><span class="p">(</span><span class="s1">&#39;moneda_recibida&#39;</span><span class="p">,</span> <span class="s1">&#39;moneda_entregada&#39;</span><span class="p">),</span> <span class="s1">&#39;conteos_iniciales&#39;</span><span class="p">:</span> <span class="n">caja</span><span class="o">.</span><span class="n">conteos_iniciales</span><span class="o">.</span><span class="n">prefetch_related</span><span class="p">(</span><span class="s1">&#39;detalles__moneda&#39;</span><span class="p">)})</span></div>
+
+
+<div class="viewcode-block" id="movimiento"><a class="viewcode-back" href="../../../index.html#apps.cajas.views.movimiento">[documentos]</a><span class="nd">@cajero_required</span>
+<span class="nd">@require_http_methods</span><span class="p">([</span><span class="s1">&#39;GET&#39;</span><span class="p">,</span> <span class="s1">&#39;POST&#39;</span><span class="p">])</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">movimiento</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="n">pk</span><span class="p">):</span>
+    <span class="n">caja</span> <span class="o">=</span> <span class="n">get_object_or_404</span><span class="p">(</span><span class="n">Caja</span><span class="p">,</span> <span class="n">pk</span><span class="o">=</span><span class="n">pk</span><span class="p">,</span> <span class="n">cajero</span><span class="o">=</span><span class="n">request</span><span class="o">.</span><span class="n">user</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">caja</span><span class="o">.</span><span class="n">cierre</span><span class="p">:</span>
+        <span class="n">messages</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="s1">&#39;La caja está cerrada.&#39;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">redirect</span><span class="p">(</span><span class="s1">&#39;cajas:detalle&#39;</span><span class="p">,</span> <span class="n">pk</span><span class="o">=</span><span class="n">pk</span><span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">caja</span><span class="o">.</span><span class="n">habilitada</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">redirect</span><span class="p">(</span><span class="s1">&#39;cajas:aceptacion&#39;</span><span class="p">,</span> <span class="n">pk</span><span class="o">=</span><span class="n">pk</span><span class="p">)</span>
+    <span class="n">form</span> <span class="o">=</span> <span class="n">MovimientoForm</span><span class="p">(</span><span class="n">request</span><span class="o">.</span><span class="n">POST</span> <span class="k">if</span> <span class="n">request</span><span class="o">.</span><span class="n">method</span> <span class="o">==</span> <span class="s1">&#39;POST&#39;</span> <span class="k">else</span> <span class="kc">None</span><span class="p">,</span> <span class="n">caja</span><span class="o">=</span><span class="n">caja</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">request</span><span class="o">.</span><span class="n">method</span> <span class="o">==</span> <span class="s1">&#39;POST&#39;</span> <span class="ow">and</span> <span class="n">form</span><span class="o">.</span><span class="n">is_valid</span><span class="p">():</span>
+        <span class="n">d</span> <span class="o">=</span> <span class="n">form</span><span class="o">.</span><span class="n">cleaned_data</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">services</span><span class="o">.</span><span class="n">registrar_movimiento</span><span class="p">(</span><span class="n">request</span><span class="o">.</span><span class="n">user</span><span class="p">,</span> <span class="n">pk</span><span class="p">,</span> <span class="n">d</span><span class="p">[</span><span class="s1">&#39;moneda&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">pk</span><span class="p">,</span> <span class="n">d</span><span class="p">[</span><span class="s1">&#39;tipo&#39;</span><span class="p">],</span> <span class="n">d</span><span class="p">[</span><span class="s1">&#39;monto&#39;</span><span class="p">],</span> <span class="n">d</span><span class="p">[</span><span class="s1">&#39;concepto&#39;</span><span class="p">],</span> <span class="n">d</span><span class="p">[</span><span class="s1">&#39;clave&#39;</span><span class="p">],</span> <span class="n">d</span><span class="p">[</span><span class="s1">&#39;referencia&#39;</span><span class="p">])</span>
+        <span class="k">except</span> <span class="n">ValidationError</span> <span class="k">as</span> <span class="n">error</span><span class="p">:</span>
+            <span class="n">form</span><span class="o">.</span><span class="n">add_error</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="n">error</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">messages</span><span class="o">.</span><span class="n">success</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="s1">&#39;Movimiento registrado.&#39;</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">redirect</span><span class="p">(</span><span class="s1">&#39;cajas:detalle&#39;</span><span class="p">,</span> <span class="n">pk</span><span class="o">=</span><span class="n">pk</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">render</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="s1">&#39;cajas/form.html&#39;</span><span class="p">,</span> <span class="p">{</span><span class="s1">&#39;form&#39;</span><span class="p">:</span> <span class="n">form</span><span class="p">,</span> <span class="s1">&#39;titulo&#39;</span><span class="p">:</span> <span class="s1">&#39;Registrar movimiento de efectivo&#39;</span><span class="p">,</span> <span class="s1">&#39;boton&#39;</span><span class="p">:</span> <span class="s1">&#39;Guardar&#39;</span><span class="p">})</span></div>
+
+
+<div class="viewcode-block" id="anulacion"><a class="viewcode-back" href="../../../index.html#apps.cajas.views.anulacion">[documentos]</a><span class="nd">@cajero_required</span>
+<span class="nd">@require_http_methods</span><span class="p">([</span><span class="s1">&#39;GET&#39;</span><span class="p">,</span> <span class="s1">&#39;POST&#39;</span><span class="p">])</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">anulacion</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="n">pk</span><span class="p">):</span>
+    <span class="n">mov</span> <span class="o">=</span> <span class="n">get_object_or_404</span><span class="p">(</span><span class="n">MovimientoCaja</span><span class="p">,</span> <span class="n">pk</span><span class="o">=</span><span class="n">pk</span><span class="p">,</span> <span class="n">caja__cajero</span><span class="o">=</span><span class="n">request</span><span class="o">.</span><span class="n">user</span><span class="p">)</span>
+    <span class="n">form</span> <span class="o">=</span> <span class="n">AnulacionForm</span><span class="p">(</span><span class="n">request</span><span class="o">.</span><span class="n">POST</span> <span class="k">if</span> <span class="n">request</span><span class="o">.</span><span class="n">method</span> <span class="o">==</span> <span class="s1">&#39;POST&#39;</span> <span class="k">else</span> <span class="kc">None</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">request</span><span class="o">.</span><span class="n">method</span> <span class="o">==</span> <span class="s1">&#39;POST&#39;</span> <span class="ow">and</span> <span class="n">form</span><span class="o">.</span><span class="n">is_valid</span><span class="p">():</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">services</span><span class="o">.</span><span class="n">anular_movimiento</span><span class="p">(</span><span class="n">request</span><span class="o">.</span><span class="n">user</span><span class="p">,</span> <span class="n">pk</span><span class="p">,</span> <span class="n">form</span><span class="o">.</span><span class="n">cleaned_data</span><span class="p">[</span><span class="s1">&#39;motivo&#39;</span><span class="p">])</span>
+        <span class="k">except</span> <span class="n">ValidationError</span> <span class="k">as</span> <span class="n">error</span><span class="p">:</span>
+            <span class="n">form</span><span class="o">.</span><span class="n">add_error</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="n">error</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">messages</span><span class="o">.</span><span class="n">success</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="s1">&#39;Anulación registrada; se revirtieron los saldos afectados.&#39;</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">redirect</span><span class="p">(</span><span class="s1">&#39;cajas:detalle&#39;</span><span class="p">,</span> <span class="n">pk</span><span class="o">=</span><span class="n">mov</span><span class="o">.</span><span class="n">caja_id</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">render</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="s1">&#39;cajas/form.html&#39;</span><span class="p">,</span> <span class="p">{</span><span class="s1">&#39;form&#39;</span><span class="p">:</span> <span class="n">form</span><span class="p">,</span> <span class="s1">&#39;titulo&#39;</span><span class="p">:</span> <span class="sa">f</span><span class="s1">&#39;Anular movimiento #</span><span class="si">{</span><span class="n">mov</span><span class="o">.</span><span class="n">pk</span><span class="si">}</span><span class="s1">: </span><span class="si">{</span><span class="n">mov</span><span class="o">.</span><span class="n">monto</span><span class="si">}</span><span class="s1"> </span><span class="si">{</span><span class="n">mov</span><span class="o">.</span><span class="n">moneda</span><span class="o">.</span><span class="n">codigo</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">,</span> <span class="s1">&#39;boton&#39;</span><span class="p">:</span> <span class="s1">&#39;Anular movimiento&#39;</span><span class="p">})</span></div>
+
+
+<div class="viewcode-block" id="cierre"><a class="viewcode-back" href="../../../index.html#apps.cajas.views.cierre">[documentos]</a><span class="nd">@cajero_required</span>
+<span class="nd">@require_http_methods</span><span class="p">([</span><span class="s1">&#39;GET&#39;</span><span class="p">,</span> <span class="s1">&#39;POST&#39;</span><span class="p">])</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">cierre</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="n">pk</span><span class="p">):</span>
+    <span class="n">caja</span> <span class="o">=</span> <span class="n">get_object_or_404</span><span class="p">(</span><span class="n">Caja</span><span class="p">,</span> <span class="n">pk</span><span class="o">=</span><span class="n">pk</span><span class="p">,</span> <span class="n">cajero</span><span class="o">=</span><span class="n">request</span><span class="o">.</span><span class="n">user</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">caja</span><span class="o">.</span><span class="n">cierre</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">redirect</span><span class="p">(</span><span class="s1">&#39;cajas:detalle&#39;</span><span class="p">,</span> <span class="n">pk</span><span class="o">=</span><span class="n">pk</span><span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">caja</span><span class="o">.</span><span class="n">habilitada</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">redirect</span><span class="p">(</span><span class="s1">&#39;cajas:aceptacion&#39;</span><span class="p">,</span> <span class="n">pk</span><span class="o">=</span><span class="n">pk</span><span class="p">)</span>
+    <span class="n">form</span> <span class="o">=</span> <span class="n">ConteoForm</span><span class="p">(</span><span class="n">request</span><span class="o">.</span><span class="n">POST</span> <span class="k">if</span> <span class="n">request</span><span class="o">.</span><span class="n">method</span> <span class="o">==</span> <span class="s1">&#39;POST&#39;</span> <span class="k">else</span> <span class="kc">None</span><span class="p">,</span> <span class="n">caja</span><span class="o">=</span><span class="n">caja</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">request</span><span class="o">.</span><span class="n">method</span> <span class="o">==</span> <span class="s1">&#39;POST&#39;</span> <span class="ow">and</span> <span class="n">form</span><span class="o">.</span><span class="n">is_valid</span><span class="p">():</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">services</span><span class="o">.</span><span class="n">cerrar_caja</span><span class="p">(</span><span class="n">request</span><span class="o">.</span><span class="n">user</span><span class="p">,</span> <span class="n">pk</span><span class="p">,</span> <span class="n">form</span><span class="o">.</span><span class="n">montos</span><span class="p">(),</span> <span class="n">form</span><span class="o">.</span><span class="n">cleaned_data</span><span class="p">[</span><span class="s1">&#39;observacion&#39;</span><span class="p">])</span>
+        <span class="k">except</span> <span class="n">ValidationError</span> <span class="k">as</span> <span class="n">error</span><span class="p">:</span>
+            <span class="n">form</span><span class="o">.</span><span class="n">add_error</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="n">error</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">messages</span><span class="o">.</span><span class="n">success</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="s1">&#39;Caja cerrada. Consultá el resultado del arqueo.&#39;</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">redirect</span><span class="p">(</span><span class="s1">&#39;cajas:detalle&#39;</span><span class="p">,</span> <span class="n">pk</span><span class="o">=</span><span class="n">pk</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">render</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="s1">&#39;cajas/form.html&#39;</span><span class="p">,</span> <span class="p">{</span><span class="s1">&#39;form&#39;</span><span class="p">:</span> <span class="n">form</span><span class="p">,</span> <span class="s1">&#39;titulo&#39;</span><span class="p">:</span> <span class="s1">&#39;Cerrar caja: ingresá el efectivo contado por moneda&#39;</span><span class="p">,</span> <span class="s1">&#39;boton&#39;</span><span class="p">:</span> <span class="s1">&#39;Confirmar cierre&#39;</span><span class="p">})</span></div>
+
+
+<div class="viewcode-block" id="cambio"><a class="viewcode-back" href="../../../index.html#apps.cajas.views.cambio">[documentos]</a><span class="nd">@cajero_required</span>
+<span class="nd">@require_http_methods</span><span class="p">([</span><span class="s1">&#39;GET&#39;</span><span class="p">,</span> <span class="s1">&#39;POST&#39;</span><span class="p">])</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">cambio</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="n">pk</span><span class="p">):</span>
+    <span class="n">caja</span> <span class="o">=</span> <span class="n">get_object_or_404</span><span class="p">(</span><span class="n">Caja</span><span class="p">,</span> <span class="n">pk</span><span class="o">=</span><span class="n">pk</span><span class="p">,</span> <span class="n">cajero</span><span class="o">=</span><span class="n">request</span><span class="o">.</span><span class="n">user</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">caja</span><span class="o">.</span><span class="n">cierre</span><span class="p">:</span>
+        <span class="n">messages</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="s1">&#39;La caja está cerrada.&#39;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">redirect</span><span class="p">(</span><span class="s1">&#39;cajas:detalle&#39;</span><span class="p">,</span> <span class="n">pk</span><span class="o">=</span><span class="n">pk</span><span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">caja</span><span class="o">.</span><span class="n">habilitada</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">redirect</span><span class="p">(</span><span class="s1">&#39;cajas:aceptacion&#39;</span><span class="p">,</span> <span class="n">pk</span><span class="o">=</span><span class="n">pk</span><span class="p">)</span>
+    <span class="n">form</span> <span class="o">=</span> <span class="n">CambioForm</span><span class="p">(</span><span class="n">request</span><span class="o">.</span><span class="n">POST</span> <span class="k">if</span> <span class="n">request</span><span class="o">.</span><span class="n">method</span> <span class="o">==</span> <span class="s1">&#39;POST&#39;</span> <span class="k">else</span> <span class="kc">None</span><span class="p">,</span> <span class="n">caja</span><span class="o">=</span><span class="n">caja</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">request</span><span class="o">.</span><span class="n">method</span> <span class="o">==</span> <span class="s1">&#39;POST&#39;</span> <span class="ow">and</span> <span class="n">request</span><span class="o">.</span><span class="n">POST</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;accion&#39;</span><span class="p">)</span> <span class="o">==</span> <span class="s1">&#39;confirmar&#39;</span><span class="p">:</span>
+        <span class="n">confirmacion</span> <span class="o">=</span> <span class="n">ConfirmarCambioForm</span><span class="p">(</span><span class="n">request</span><span class="o">.</span><span class="n">POST</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">confirmacion</span><span class="o">.</span><span class="n">is_valid</span><span class="p">():</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">resultado</span> <span class="o">=</span> <span class="n">services</span><span class="o">.</span><span class="n">confirmar_cambio</span><span class="p">(</span><span class="n">request</span><span class="o">.</span><span class="n">user</span><span class="p">,</span> <span class="n">pk</span><span class="p">,</span> <span class="n">confirmacion</span><span class="o">.</span><span class="n">cleaned_data</span><span class="p">[</span><span class="s1">&#39;cotizacion&#39;</span><span class="p">])</span>
+            <span class="k">except</span> <span class="n">ValidationError</span> <span class="k">as</span> <span class="n">error</span><span class="p">:</span>
+                <span class="n">messages</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="s1">&#39; &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">error</span><span class="o">.</span><span class="n">messages</span><span class="p">))</span>
+                <span class="k">return</span> <span class="n">redirect</span><span class="p">(</span><span class="s1">&#39;cajas:cambio&#39;</span><span class="p">,</span> <span class="n">pk</span><span class="o">=</span><span class="n">pk</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">messages</span><span class="o">.</span><span class="n">success</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="sa">f</span><span class="s1">&#39;Cambio #</span><span class="si">{</span><span class="n">resultado</span><span class="o">.</span><span class="n">pk</span><span class="si">}</span><span class="s1"> registrado. Se actualizaron ambas monedas.&#39;</span><span class="p">)</span>
+                <span class="k">return</span> <span class="n">redirect</span><span class="p">(</span><span class="s1">&#39;cajas:detalle&#39;</span><span class="p">,</span> <span class="n">pk</span><span class="o">=</span><span class="n">pk</span><span class="p">)</span>
+        <span class="n">form</span> <span class="o">=</span> <span class="n">CambioForm</span><span class="p">(</span><span class="n">caja</span><span class="o">=</span><span class="n">caja</span><span class="p">)</span>
+        <span class="n">form</span><span class="o">.</span><span class="n">add_error</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="s1">&#39;Confirmación inválida. Volvé a calcular.&#39;</span><span class="p">)</span>
+    <span class="k">elif</span> <span class="n">request</span><span class="o">.</span><span class="n">method</span> <span class="o">==</span> <span class="s1">&#39;POST&#39;</span> <span class="ow">and</span> <span class="n">form</span><span class="o">.</span><span class="n">is_valid</span><span class="p">():</span>
+        <span class="n">d</span> <span class="o">=</span> <span class="n">form</span><span class="o">.</span><span class="n">cleaned_data</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">cotizacion</span><span class="p">,</span> <span class="n">token</span> <span class="o">=</span> <span class="n">services</span><span class="o">.</span><span class="n">preparar_cambio</span><span class="p">(</span><span class="n">request</span><span class="o">.</span><span class="n">user</span><span class="p">,</span> <span class="n">pk</span><span class="p">,</span>
+                <span class="n">d</span><span class="p">[</span><span class="s1">&#39;moneda_recibida&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">pk</span><span class="p">,</span> <span class="n">d</span><span class="p">[</span><span class="s1">&#39;moneda_entregada&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">pk</span><span class="p">,</span> <span class="n">d</span><span class="p">[</span><span class="s1">&#39;monto&#39;</span><span class="p">],</span> <span class="n">d</span><span class="p">[</span><span class="s1">&#39;clave&#39;</span><span class="p">],</span> <span class="n">d</span><span class="p">[</span><span class="s1">&#39;referencia&#39;</span><span class="p">])</span>
+        <span class="k">except</span> <span class="n">ValidationError</span> <span class="k">as</span> <span class="n">error</span><span class="p">:</span>
+            <span class="n">form</span><span class="o">.</span><span class="n">add_error</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="n">error</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">render</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="s1">&#39;cajas/cambio.html&#39;</span><span class="p">,</span> <span class="p">{</span><span class="s1">&#39;caja&#39;</span><span class="p">:</span> <span class="n">caja</span><span class="p">,</span> <span class="s1">&#39;cotizacion&#39;</span><span class="p">:</span> <span class="n">cotizacion</span><span class="p">,</span>
+                <span class="s1">&#39;confirmacion&#39;</span><span class="p">:</span> <span class="n">ConfirmarCambioForm</span><span class="p">(</span><span class="n">initial</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;cotizacion&#39;</span><span class="p">:</span> <span class="n">token</span><span class="p">})})</span>
+    <span class="k">return</span> <span class="n">render</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="s1">&#39;cajas/cambio.html&#39;</span><span class="p">,</span> <span class="p">{</span><span class="s1">&#39;caja&#39;</span><span class="p">:</span> <span class="n">caja</span><span class="p">,</span> <span class="s1">&#39;form&#39;</span><span class="p">:</span> <span class="n">form</span><span class="p">})</span></div>
+
+
+<div class="viewcode-block" id="aceptacion"><a class="viewcode-back" href="../../../index.html#apps.cajas.views.aceptacion">[documentos]</a><span class="nd">@cajero_required</span>
+<span class="nd">@require_http_methods</span><span class="p">([</span><span class="s1">&#39;GET&#39;</span><span class="p">,</span> <span class="s1">&#39;POST&#39;</span><span class="p">])</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">aceptacion</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="n">pk</span><span class="p">):</span>
+    <span class="n">services</span><span class="o">.</span><span class="n">autorizar</span><span class="p">(</span><span class="n">request</span><span class="o">.</span><span class="n">user</span><span class="p">)</span>
+    <span class="n">caja</span> <span class="o">=</span> <span class="n">get_object_or_404</span><span class="p">(</span><span class="n">Caja</span><span class="p">,</span> <span class="n">pk</span><span class="o">=</span><span class="n">pk</span><span class="p">,</span> <span class="n">cajero</span><span class="o">=</span><span class="n">request</span><span class="o">.</span><span class="n">user</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">caja</span><span class="o">.</span><span class="n">cierre</span> <span class="ow">or</span> <span class="n">caja</span><span class="o">.</span><span class="n">habilitada</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">redirect</span><span class="p">(</span><span class="s1">&#39;cajas:detalle&#39;</span><span class="p">,</span> <span class="n">pk</span><span class="o">=</span><span class="n">pk</span><span class="p">)</span>
+    <span class="n">form</span> <span class="o">=</span> <span class="n">ConteoForm</span><span class="p">(</span><span class="n">request</span><span class="o">.</span><span class="n">POST</span> <span class="k">if</span> <span class="n">request</span><span class="o">.</span><span class="n">method</span> <span class="o">==</span> <span class="s1">&#39;POST&#39;</span> <span class="k">else</span> <span class="kc">None</span><span class="p">,</span> <span class="n">caja</span><span class="o">=</span><span class="n">caja</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">request</span><span class="o">.</span><span class="n">method</span> <span class="o">==</span> <span class="s1">&#39;POST&#39;</span> <span class="ow">and</span> <span class="n">form</span><span class="o">.</span><span class="n">is_valid</span><span class="p">():</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">conteo</span> <span class="o">=</span> <span class="n">services</span><span class="o">.</span><span class="n">aceptar_caja</span><span class="p">(</span><span class="n">request</span><span class="o">.</span><span class="n">user</span><span class="p">,</span> <span class="n">pk</span><span class="p">,</span> <span class="n">form</span><span class="o">.</span><span class="n">montos</span><span class="p">(),</span> <span class="n">form</span><span class="o">.</span><span class="n">cleaned_data</span><span class="p">[</span><span class="s1">&#39;observacion&#39;</span><span class="p">])</span>
+        <span class="k">except</span> <span class="n">ValidationError</span> <span class="k">as</span> <span class="n">error</span><span class="p">:</span>
+            <span class="n">form</span><span class="o">.</span><span class="n">add_error</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="n">error</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">conteo</span><span class="o">.</span><span class="n">coincide</span><span class="p">:</span>
+                <span class="n">messages</span><span class="o">.</span><span class="n">success</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="s1">&#39;Conteo correcto. Aceptaste la caja y ya podés operar.&#39;</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">messages</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="s1">&#39;El conteo no coincide con los fondos asignados. La caja sigue pendiente. Revisá las diferencias con el administrador y volvé a contar el efectivo real.&#39;</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">redirect</span><span class="p">(</span><span class="s1">&#39;cajas:detalle&#39;</span><span class="p">,</span> <span class="n">pk</span><span class="o">=</span><span class="n">pk</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">render</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="s1">&#39;cajas/aceptacion.html&#39;</span><span class="p">,</span> <span class="p">{</span><span class="s1">&#39;caja&#39;</span><span class="p">:</span> <span class="n">caja</span><span class="p">,</span> <span class="s1">&#39;form&#39;</span><span class="p">:</span> <span class="n">form</span><span class="p">})</span></div>
+</pre></div>
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../../../index.html">Global Exchange</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navegación</h3>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../../index.html">Documentation overview</a><ul>
+  <li><a href="../../index.html">Código de módulo</a><ul>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Búsqueda rápida</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Ir a" />
+    </form>
+    </div>
+</div>
+<script>document.getElementById('searchbox').style.display = "block"</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2026, Grupo 9.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 7.1.2</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.13</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>
